@@ -58,7 +58,7 @@ export default function Login() {
     }
   
     const signUp = () => {
-  
+      navigate("/user/register")
     }
   
     const closeModal = () => {
