@@ -1,0 +1,20 @@
+#document-container {
+    height: 100%;
+    max-width: 1650px;
+    display: flex;
+    gap: 12px;
+
+    .document-aside {
+        width: 300px;
+        background-color: white;
+        border-radius: 20px;
+        padding: 20px;
+    }
+    .document-main {
+        width: 1338px;
+        flex-grow: 1;
+        background-color: white;
+        border-radius: 20px;
+        padding: 20px;
+    }
+}

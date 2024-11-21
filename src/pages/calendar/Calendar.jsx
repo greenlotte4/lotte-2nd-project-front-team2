@@ -52,10 +52,10 @@ export default function Calendar() {
       <section className='calendar-main'>
         <section className='flex justify-end mb-16'>
           <article className='flex justify-center items-center w-80'>
-            <div className='h-11 px-4 border flex items-center cursor-pointer rounded-l-lg'>일</div>
-            <div className='h-11 px-4 border flex items-center cursor-pointer'>주</div>
-            <div className='h-11 px-4 border flex items-center cursor-pointer'>월</div>
-            <div className='h-11 px-4 border flex items-center cursor-pointer rounded-r-lg'>년</div>
+            <div className='h-11 px-4 border flex items-center cursor-pointer rounded-l-lg hover:bg-gray-200'>일</div>
+            <div className='h-11 px-4 border flex items-center cursor-pointer hover:bg-gray-200'>주</div>
+            <div className='h-11 px-4 border flex items-center cursor-pointer hover:bg-gray-200'>월</div>
+            <div className='h-11 px-4 border flex items-center cursor-pointer rounded-r-lg hover:bg-gray-200'>년</div>
           </article>
           <article className='mr-36'>
             <CustomSearch 
@@ -75,7 +75,7 @@ export default function Calendar() {
         isOpen={isOpen}
         onClose={onClose}
         text="일정 등록"
-        children={div}
+        children=""
       />
     </div>
   )

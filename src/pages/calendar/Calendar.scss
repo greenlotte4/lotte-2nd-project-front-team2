@@ -18,11 +18,17 @@
         padding: 20px;
     }
 
+    .fc-scrollgrid-sync-inner {
+        font-size: 12px;
+    }
+
     .fc-daygrid-day-frame {
         width: 15px;
         height: 15px;
         font-size: 8px;
     }
+
+    
 
     .fc-toolbar-chunk {
         .fc-today-button {
@@ -34,6 +40,11 @@
         width: 15px !important; 
         height: 15px !important;
         overflow: hidden;
+        &:hover {
+            background-color: gray;
+            opacity: 0.3;
+            color: white;
+        }
     }
 
     .fc-toolbar {

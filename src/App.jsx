@@ -17,6 +17,7 @@ import AdminOutSide from './pages/admin/OutSide'
 import ServicePage from './pages/rending/ServicePage'
 import RenderDefaultLayout from './layout/rending/RenderDefaultLayout'
 import { lazy, Suspense } from 'react'
+import PricePage from './pages/rending/PricePage'
 import Community from './pages/community/Community'
 import Project from './pages/project/Project'
 import Message from './pages/message/Message'
@@ -37,6 +38,7 @@ function App() {
         <Route path="/" element={<RenderDefaultLayout />}>
           <Route index element={<Suspense fallback={<div>Loading...</div>}><MainIndexComponent /></Suspense>} />
           <Route path="service" element={<ServicePage />} />
+          <Route path="price" element={<PricePage />} />
         </Route>
         {/* 유저 */}
         <Route path="/user">

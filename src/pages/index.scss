@@ -130,6 +130,215 @@
     height: 434px;
   }
 
+  .serviceInfo{
+    height: 425px;
+  }
+
+
+  .serviceInfo > .up h2{
+    top: 131px;
+    left: 776px;
+    font-size: 34px;
+  }
+  .serviceInfo > .up  p{
+    top: 171px;
+    left: 770px;
+    color: #808080;
+  }
+
+  .serviceInfo > .up .topinput {
+    top: 200px;
+    left: 770px;
+  }
+  .serviceInfo > .up .topinput > input{
+    width: 400px;
+    height: 30px;
+    text-indent: 38px;
+    line-height: 30px;
+    border-radius: 8px;
+  }
+  .serviceInfo > .up > img{
+    top: 205px;
+    left: 778px;
+
+    z-index: 20;
+    width: 20px;
+    height: 20px;
+
+  }
+
+  .serviceButton{
+    margin-top: 10px;
+    padding: 5px;
+    border: 1px solid #666CFF;
+    border-radius: 8px;
+    color: #666CFF;
+  }
+
+  .pricePart{
+    width: 100%;
+  }
+
+
+  .priceTop{
+    height: 237px;
+  }
+  .priceTop  .discountTap{
+    width: 100%;
+    height: 87px;
+  }
+  .priceTop  .discountTap .save{
+    border: 1px solid #ECEDFF;
+    padding: 5px 10px;
+    border-radius: 30px;
+    background-color: #ECEDFF;
+    color: #666CFF;
+    top: 15.5px;
+    left: 976px;
+  }
+
+  .priceTop  .discountTap img{
+      top: 15px;
+      left: 952px;
+  }
+
+  .priceTop .periodSelect{
+    text-align: center;
+  }
+
+  .pricePart .tabWrapper{
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: center;
+    margin-top: 40px;
+
+  }
+
+  .pricePart .priceTop h2{
+    width: 500px;
+    text-align: center;
+    margin: 80px auto 20px;
+    font-size: 30px;
+  
+  }
+
+  .pricePart .priceTop p{
+    text-align: center;
+    color: #959595;
+  }
+ 
+
+  .tabWrapper .tab{
+    width: 514px;
+    height: 586px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+  }
+  .tabWrapper .tab.active , .tabWrapper .tab:hover{
+    border-color:  #666CFF;
+
+  }
+
+
+
+  .tabWrapper .tab img{
+    width: 100px;
+    height: 100px;
+    text-align: center; 
+    margin: 20px auto;
+  }
+  .tabWrapper .tab > strong{
+    margin: 20px auto 5px;
+
+  }
+
+  .tabWrapper .tab >span{
+    margin: 5px auto;
+  }
+
+  .tabWrapper .tab .money > p{
+    color: #666CFF;
+  }
+
+  .tabWrapper .tab .doller0{
+    top: 10px;
+    left: 230px;
+    color: #808080;
+  }
+
+  .tabWrapper .tab .doller{
+    top: 10px;
+    left: 224px;
+    color: #808080;
+  }
+  .tabWrapper .tab .month0{
+    top: 26px;
+    left: 270px;
+    color: #808080;
+  }
+  .tabWrapper .tab .month{
+    top: 26px;
+    left: 280px;
+    color: #808080;
+  }
+  .tabWrapper .tab  ul li{
+    line-height: 21px;
+    margin-bottom: 16px;
+  }
+
+  .tabWrapper .tab .upgradeBtn{
+    width: 466px;
+    height: 38px;
+    margin: 20px auto;
+    border-radius: 8px;
+
+  }
+  .tabWrapper .tab .upgradeBtn.current{
+    color: #72E128;
+    border: 1px solid #B9F094;
+  }
+  .tabWrapper .tab .upgradeBtn{
+    color: #666CFF;
+    background-color: #ffffff;
+    border: 1px solid #666CFF;
+  }
+
+  .tabWrapper .tab .upgradeBtn:hover,.tabWrapper .tab .upgradeBtn.active{
+    color: #ffffff;
+    background-color: #666CFF;
+    border: 1px solid #666CFF;
+  }
+
+  .pricePart .ad{
+    width: 100%;
+    box-sizing: border-box;
+    background-color: #f9f9ff ;
+  }
+  .pricePart .ad .adWrapper{
+    box-sizing: border-box;
+    padding-top: 50px;
+  }
+  .pricePart .ad .trial{
+    width: 233px;
+    height: 38px;
+    padding: 7px 22px;
+    font-size: 14px;
+    color: #ffffff;
+    background-color: #666CFF;
+    border-radius: 8px;
+    margin-top: 40px;
+  }
+
+  .pricePart .ad .adWrapper >img{
+    width: 300px;
+    height: 300px;
+    right: 30px;
+    top: 0px;
+  }
+
 
   /* footer */
 

@@ -47,7 +47,7 @@ input,
 button,
 textarea{
   outline: none;
-  border: none;
+  // border: none;
 }
 
 /* 버튼 스타일 */
@@ -173,6 +173,9 @@ button{
   background-color: red;
 }
 
+.main-bg{
+  background-color: rgba(102, 108, 255, 0.1411764706);
+}
 .bg-purple {
   background-color: #7e7edf;
 }
