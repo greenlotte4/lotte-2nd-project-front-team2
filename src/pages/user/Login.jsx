@@ -34,7 +34,7 @@ export default function Login() {
         "pwd" : pwd
       }
       axiosInstance
-        .post("/user/login",data)
+        .post("/api/user/login",data)
         .then((resp)=>{
           if(resp.status === 200){
             const token = resp.data; 
@@ -79,7 +79,7 @@ export default function Login() {
   
     useEffect(() => {
       if (!alert&&token) {
-        navigate("/community")
+        navigate("/document")
       }
     }, [alert]);
   
