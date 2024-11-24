@@ -7,6 +7,15 @@ export default function Find() {
   const navigate = useNavigate();
   const [type, setType] = useState(0);
 
+  const pwHandler = (e) => {
+    e.preventDefault();
+    navigate("/user/resultPw");
+  }
+  const idHandler = (e) => {
+    e.preventDefault();
+    navigate("/user/resultId");
+  }
+
     return (
       <div className='find-container'>
         <div className='login-form'>
@@ -43,7 +52,7 @@ export default function Find() {
                 <button className="border rounded-lg border-indigo-500 ml-2 find-btn text-indigo-700">확인</button>
               </div>
               <p className="text-xs font-light ml-1">인증번호를 입력해주세요.</p>
-              <button className="bg-indigo-500 w-full h-[60px] rounded-lg text-white mt-20">다음</button>
+              <button onClick={idHandler} className="bg-indigo-500 w-full h-[60px] rounded-lg text-white mt-20">다음</button>
             </>
             }
             {type === 1 &&
@@ -65,7 +74,7 @@ export default function Find() {
                 <button className="border rounded-lg border-indigo-500 ml-2 find-btn text-indigo-700">확인</button>
               </div>
               <p className="text-xs font-light ml-1">인증번호를 입력해주세요.</p>
-              <button className="bg-indigo-500 w-full h-[60px] rounded-lg text-white mt-20">다음</button>
+              <button className="bg-indigo-500 w-full h-[60px] rounded-lg text-white mt-20" onClick={pwHandler}>다음</button>
             </>
             }
             

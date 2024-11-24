@@ -32,6 +32,8 @@ import Favorite from './pages/document/Favorite'
 import MyMain from './pages/my/My'
 import MyAttendance from './pages/my/Attendance'
 import FAQPage from './pages/rending/FAQPage'
+import ResultPw from './pages/user/ResultPw'
+import ResultId from './pages/user/ResultId'
 const MainIndexComponent = lazy(() => import("./components/render/main"))
 
 
@@ -47,12 +49,15 @@ function App() {
           <Route path="price" element={<PricePage />} />
           <Route path="faq" element={<FAQPage />} />
         </Route>
+
         {/* 유저 */}
         <Route path="/user">
           <Route path="login" element={<Login />} />
           <Route path="register" element={<Register />} />
           <Route path="terms" element={<Terms />} />
           <Route path="find" element={<Find />} />
+          <Route path='resultId' element={<ResultId/>}/>
+          <Route path='resultPw' element={<ResultPw />}/>
           <Route index element={<Login />} />
         </Route>
 
