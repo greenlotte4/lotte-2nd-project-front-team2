@@ -5,8 +5,6 @@ import Header from "@editorjs/header";
 import List from "@editorjs/list";
 import ImageTool from "@editorjs/image";
 import Delimiter from "./Delimiter";
-import Paragraph from '@editorjs/Paragraph';
-
 
 const Editor = () => {
     useEffect(() => {
