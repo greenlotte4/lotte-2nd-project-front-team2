@@ -161,6 +161,7 @@ export default function Login() {
             type={type}  // 알림의 타입 (success, error, info , basic 등)
             message={message}
             onClose={closeAlert}  // onClose는 closeAlert 함수로 전달
+            isOpen={alert}
           />
         )}
         {msg &&(
