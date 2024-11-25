@@ -12,9 +12,9 @@ export default function Main() {
   const [chat, setChat] = useState(false);
 
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const toggleSidebar = _.debounce(() => {
+  const toggleSidebar = () => {
     setIsCollapsed((prev) => !prev);
-  }, 300); // 300ms 간격으로 이벤트 실행
+  };
 
 
   

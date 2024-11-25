@@ -6,6 +6,7 @@ import '@/components/admin/AdminCard.scss'
 import { useDispatch, useSelector } from 'react-redux';
 import { setSelectedTeamId } from '../../store/store';
 export default function AdminSidebar({
+    onchange
 }) {
     const dispatch = useDispatch();
     const selectedTeamId = useSelector((state) => state.team.selectedTeamId);

@@ -1,0 +1,162 @@
+.pageCard{
+    width: 280px;
+    height: 270px;
+    background: white; /* Background color of the card */
+    border-radius: 16px; /* Smooth rounded corners */
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1), /* Subtle shadow for depth */
+                0px 1px 3px rgba(0, 0, 0, 0.06); /* Secondary shadow for a softer edge */
+    padding: 20px; /* Internal spacing */
+    max-width: 300px; /* Optional: adjust based on content */
+    text-align: center; /* Center align text */
+    font-family: Arial, sans-serif; /* Font styling */
+    .dropdown-menu {
+        position: absolute;
+        top: 40px; /* Adjust position based on the parent card */
+        right: 10px; /* Align to the right of the card */
+        background: white;
+        box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1), 
+                    0px 1px 3px rgba(0, 0, 0, 0.06);
+        border-radius: 8px;
+        padding: 10px;
+      }
+      
+     .dropdown-menu li {
+        list-style: none;
+        margin: 5px 0;
+        font-size: 14px;
+        color: #333;
+        cursor: pointer;
+      }
+      
+      .dropdown-menu li:hover {
+        background: rgba(0, 0, 0, 0.05); /* Highlight on hover */
+        border-radius: 4px;
+      }
+      .card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        position: relative;
+      }
+      
+      .card-avatar {
+        display: flex;
+        align-items: center;
+      }
+      
+      .avatar-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+      }
+      
+      .card-title h3 {
+        font-size: 18px;
+        margin-left: 10px;
+      }
+      
+      .menu-icon {
+        width: 17px;
+        height: 4px;
+        cursor: pointer;
+      }
+      
+      .dropdown-menu {
+        position: absolute;
+        top: 50px;
+        right: 10px;
+        background: white;
+        box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1), 
+                    0px 1px 3px rgba(0, 0, 0, 0.06);
+        border-radius: 8px;
+        padding: 10px;
+        z-index: 1000;
+      }
+      
+      .dropdown-menu li {
+        list-style: none;
+        padding: 8px 12px;
+        font-size: 14px;
+        cursor: pointer;
+        color: #333;
+      }
+      
+      .dropdown-menu li:hover {
+        background: rgba(0, 0, 0, 0.05);
+        border-radius: 4px;
+      }
+      
+      .card-content {
+        margin-top: 20px;
+      }
+      
+      .team-members {
+        display: flex;
+        gap: 5px;
+        margin-top: 10px;
+        justify-content: space-between;
+        position: relative;
+        gap: 0; /* No gap between avatars to ensure overlap */
+
+      }
+      .Members{
+        max-width: 60%;
+        overflow: hidden;
+        max-height: 50px;
+      }
+      .member-container {
+        position: relative;
+        margin-left: -15px;
+    }
+    .member-container:first-child{
+        margin-left: 0px;
+    }
+    .member-avatar:first-child {
+        margin-left: 0px;
+    } 
+      
+      .member-avatar {
+        width: 50px; /* Size of avatar */
+        height: 50px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid white; /* Optional: Add border for better visibility */
+        margin-left: -15px; /* Overlap previous avatar */
+        transition: transform 0.3s ease, z-index 0.3s ease;
+        cursor: pointer;
+
+      }
+      .member-avatar:hover {
+        transform: scale(1.1); /* Slight zoom on hover */
+        z-index: 10; /* Bring hovered avatar to the front */
+    }
+      
+      
+      .no-members {
+        font-size: 14px;
+        color: #999;
+        margin-top: 10px;
+        text-align: center;
+    }
+    
+    .badge {
+        display: inline-block;
+        background: #e8f5fd;
+        color: #007bff;
+        font-size: 12px;
+        padding: 4px 8px;
+        border-radius: 4px;
+        margin-top: 10px;
+        font-weight: bold;
+        height: 30px;
+    }
+    
+   
+    
+    .member-count {
+        font-size: 14px;
+        color: #555;
+        font-weight: bold;  
+    }
+
+}

@@ -25,10 +25,11 @@
   flex-direction: row;
   box-sizing: border-box;
   min-height: 850px;
+  max-height: 850px;
   width: 100%; /* 화면 전체 너비 */
   max-width: 1920px; /* 최대 너비 제한 */
   margin: 0 auto; /* 항상 화면 중앙에 위치 */
-
+  min-width: 1920px;
 }
 
 .content {
@@ -40,6 +41,7 @@
   flex-direction: column; /* 콘텐츠 내부 요소를 세로로 배치 */
   width: 100%; /* 사이드바 제외한 남은 영역 */
   min-height: 850px;
+  max-height: 850px;
   transition: margin-left 0.5s ease; /* 부드러운 전환 */
   margin-left: 230px; /* 기본 사이드바 확장 상태 */
   width: calc(100% - 230px); /* 화면 전체 너비에서 사이드바를 제외한 너비 */

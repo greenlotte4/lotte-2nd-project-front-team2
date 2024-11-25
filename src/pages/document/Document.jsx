@@ -215,9 +215,9 @@ export default function Document() {
                 </div>
                 <div className='drive-modal'>
                     <Modal
-                        isOpen={drive}
-                        onClose={driveClose}
-                        text="드라이브 만들기"
+                       isOpen={drive}
+                       onClose={() => setDrive(false)}
+                       text="드라이브 만들기"
                     />
                 </div>
             </section>

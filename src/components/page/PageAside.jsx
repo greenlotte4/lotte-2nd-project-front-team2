@@ -3,6 +3,10 @@ import {CustomSearch} from '@/components/Search'
 
 export default function PageAside(){
 
+    const newPageBtnHandler = () =>{    
+
+    }
+
     return(<>
         <aside className='page-aside1 overflow-scroll flex flex-col scrollbar-none'>
                 <section className='flex justify-center mb-8'><p className='text-lg'>내 페이지 (6)</p></section>
@@ -72,10 +76,10 @@ export default function PageAside(){
                         <p className='opacity-60 pt-1'>공유 폴더 3</p>
                     </div>
                 </section>
-                <section className='mt-auto flex flex-col gap-5'>
-                    <button className='bg-purple white h-8 rounded-md flex justify-center text-center items-center '>
+                <section className="newPage mt-auto flex flex-col gap-5 rounded-md">
+                    <Link to="/page/newPage" className="newPageBtn bg-purple white h-8 rounded-md flex justify-center text-center items-center" >
                         <img className="documentPen mr-[10px]"  src='/images/document-pen.png' />
-                    새 페이지 생성</button>
+                    새 페이지 생성</Link>
                 </section>
             </aside>
     </>);
