@@ -205,10 +205,144 @@
           .file-manager {
             margin-top: 10px;
             display: flex;
-            align-items: center;
+            align-items: flex-start;            
             justify-content: space-between;
             border-bottom: 1px solid #ddd;
             padding: 10px 0;
+            position: relative;
+
+            .add-property-btn {
+                background-color: #007bff;
+                color: white;
+                border: none;
+                padding: 10px 15px;
+                border-radius: 5px;
+                cursor: pointer;
+                font-size: 14px;
+              }
+              
+              .add-property-btn:hover {
+                background-color: #0056b3;
+              }
+              
+              .property-dropdown {
+                position: absolute;
+                top: 100%;
+                left: 0;
+                background: white;
+                border: 1px solid #ddd;
+                border-radius: 5px;
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+                width: 250px;
+                max-height: 500px;
+                overflow-y: auto;
+                z-index: 1000;
+                scrollbar-width:none;
+              }
+              
+              .property-list {
+                list-style: none;
+                margin: 0;
+                padding: 10px;
+              }
+              
+              .property-item {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                padding: 8px 10px;
+                cursor: pointer;
+              }
+              
+              .property-item:hover {
+                background-color: #f0f0f0;
+                border-radius: 4px;
+              }
+              
+              .property-icon {
+                font-size: 18px;
+              }
+              
+              .property-label {
+                font-size: 14px;
+                color: #333;
+              }
+
+              .typeList {
+                margin-bottom: 20px;
+              }
+              
+              .field-item {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                margin-bottom: 10px;
+                border: none;
+              }
+              
+              .field-name {
+                flex: 1;
+                padding: 5px;
+                border-radius: 4px;
+                cursor: pointer;
+              }
+              
+              .field-type {
+                color: #555;
+                font-size: 14px;
+              }
+              
+              .remove-field-btn {
+                background: none;
+                border: none;
+                color: red;
+                cursor: pointer;
+              }
+              
+              .add-property-btn {
+                background-color: #007bff;
+                color: white;
+                border: none;
+                padding: 10px 15px;
+                border-radius: 5px;
+                cursor: pointer;
+              }
+              
+              .add-property-btn:hover {
+                background-color: #0056b3;
+              }
+              
+              .property-dropdown {
+                position: absolute;
+                top: 100%;
+                left: 0;
+                background: white;
+                border: 1px solid #ddd;
+                border-radius: 5px;
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+                width: 250px;
+                z-index: 1000;
+              }
+              
+              .property-list {
+                list-style: none;
+                margin: 0;
+                padding: 10px;
+              }
+              
+              .property-item {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                padding: 8px 10px;
+                cursor: pointer;
+              }
+              
+              .property-item:hover {
+                background-color: #f0f0f0;
+                border-radius: 4px;
+              }
+
           }
         
             /* Overlay for background dimming */
@@ -265,31 +399,152 @@
 
     }
 
-    .dropdown-menu {
+    .sharing-menu-container {
         position: absolute;
-        top: 40px; /* Adjust position based on the parent card */
-        right: 10px; /* Align to the right of the card */
-        background: white;
-        box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1), 
-                    0px 1px 3px rgba(0, 0, 0, 0.06);
+        right: 20px;
+        top: 60px;
+        width: 100%;
+        max-width: 500px;
+        background-color: #fff;
+        padding: 20px;
+        border: 1px solid #ddd;
         border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      
+      .sharing-input-section {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 10px;
+      }
+      
+      .email-input {
+        flex: 1;
         padding: 10px;
-      }
-      
-     .dropdown-menu li {
-        list-style: none;
-        margin: 5px 0;
-        font-size: 14px;
-        color: #333;
-        cursor: pointer;
-      }
-      
-      .dropdown-menu li:hover {
-        background: rgba(0, 0, 0, 0.05); /* Highlight on hover */
+        border: 1px solid #ddd;
         border-radius: 4px;
+        font-size: 14px;
+      }
+      
+      .add-user-btn {
+        padding: 10px 20px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+      }
+      
+      .add-user-btn:hover {
+        background-color: #0056b3;
+      }
+      
+      .error-message {
+        color: red;
+        font-size: 12px;
+        margin-top: -10px;
+        margin-bottom: 10px;
+      }
+      
+      .sharing-permission {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+      }
+      
+      .global-permission-select {
+        padding: 5px 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+      }
+      
+      .user-list {
+        list-style: none;
+        padding: 0;
+      }
+      
+      .user-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px;
+        border-bottom: 1px solid #eee;
+      }
+      
+      .user-profile {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+      }
+      
+      .user-email {
+        flex: 1;
+        font-size: 14px;
+      }
+
+      .permission-dropdown {
+        position: relative;
+        display: inline-block;
+
+        .dropdown-btn {
+            background: none;
+            padding: 5px 10px;
+            font-size: 14px;
+            cursor: pointer;
+            border-radius: 4px;
+            color: black;
+          }
+          
+          .dropdown-options {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            list-style: none;
+            padding: 5px 0;
+            width: 150px;
+            z-index: 1000;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+          }
+          
+          .dropdown-options li {
+            padding: 8px 12px;
+            cursor: pointer;
+
+          }
+          button:hover {
+            background-color: #f0f0f0;
+          }
+          
+          .dropdown-options li:hover,
+          .dropdown-options li.active {
+            background-color: #f0f0f0;
+            font-weight: bold;
+          }
+      }
+      
+      .permission-select {
+        padding: 5px 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+      }
+      
+      .remove-user-btn {
+        background: none;
+        border: none;
+        color: red;
+        font-size: 16px;
+        cursor: pointer;
       }
  
 
 
 }
+
 

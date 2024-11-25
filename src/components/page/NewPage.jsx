@@ -65,7 +65,6 @@ export default function NewPage(){
 
                         </div>
                        
-
                          {/* 공유 메뉴 */}
                          {isDropdownOpen &&(
                              <SharingMenu sharingUsers={sharingUsers} setSharingUsers={setSharingUsers} />

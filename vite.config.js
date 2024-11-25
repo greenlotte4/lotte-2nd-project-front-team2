@@ -13,4 +13,7 @@ export default defineConfig({
   server: {
     port: 8010,
   },
+  optimizeDeps: {
+    include: ['react-editor-js'], // react-editor-js를 Vite로 강제로 번들링
+  },
 })
