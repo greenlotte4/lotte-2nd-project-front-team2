@@ -68,6 +68,8 @@ function App() {
           <Route path='attendance' element={<MyAttendance />}/>
         </Route>
 
+        {/* <Route path='/home' element */}
+
         {/* 관리자 */}
         <Route path="/admin" element={<Main />}>
           <Route index element={<AdminIndex />} />
