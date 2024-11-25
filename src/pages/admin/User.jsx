@@ -31,7 +31,14 @@ export default function AdminUser() {
     const closeDepartment = () => {setDepartment(false)};
     const openOutsourcing = () => {setOutsourcing(true)};
     const closeOutsourcing = () => {setOutsourcing(false)};
-    
+    // console.log(sel)
+    const [departmentEntity , setDepartmentEntity] = useState({
+        depName : "",
+        depDesc : "",
+        depLeader : "",
+        depMembers : [],
+        depLink : "",
+    })
     
     //                                      Handler                                            //
   return (

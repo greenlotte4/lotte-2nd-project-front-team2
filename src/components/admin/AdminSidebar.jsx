@@ -1,10 +1,12 @@
-import React, { useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import {CustomSearch} from '@/components/Search'
 import { CustomButton } from '../../components/Button'
 import { Modal } from '../Modal';
 import '@/components/admin/AdminCard.scss'
 import { useDispatch, useSelector } from 'react-redux';
 import { setSelectedTeamId } from '../../store/store';
+import DepartmentModal from './DepartmentModal';
+import CustomAlert from '../Alert';
 export default function AdminSidebar({
     onchange
 }) {
@@ -19,7 +21,6 @@ export default function AdminSidebar({
     const [selectOption, setSelectOption] = useState(0);
     const [teamNav,setTeamNav] = useState(true);
     const [departmentNav,setDepartmentNav] = useState(true);
-
     //                                       useState                                       //
     //                                        useRef                                        //
 
@@ -29,7 +30,9 @@ export default function AdminSidebar({
     //                                        useRef                                        //
 
     //                                        useEffect                                     //
-
+    useEffect (()=> {
+        
+    },[])
 
     //                                        useEffect                                     //
 
@@ -40,7 +43,6 @@ export default function AdminSidebar({
     }
     const optionChanger = (e)=>{
         setSelectOption(Number(e.target.value))
-        console.log(selectOption)
     }
     const openUser = () => {setUser(true)} 
     const closeUser = () => {setUser(false)}
@@ -104,7 +106,7 @@ export default function AdminSidebar({
             />
         </section>
         <section className='department-modal'>
-            <Modal
+            <DepartmentModal
                 isOpen={department}
                 onClose={closeDepartment}
                 text="부서 생성"
@@ -117,6 +119,7 @@ export default function AdminSidebar({
                 text="외주업체 등록"
             />
         </section>
+        
         <section className='flex justify-center mb-8'><p className='text-lg'>팀 / 부서 (6)</p></section>
         <section className='flex justify-center mb-8 w-26'>
             <select className='outline-none border rounded-l-md opacity-80 h-11 w-24 text-center text-sm'>
