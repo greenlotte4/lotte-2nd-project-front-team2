@@ -9,7 +9,7 @@ const projectColumns = [
     projects: [
       {
         title: "👋 Welcome to your board 👉",
-        description: "Here you'll submit and manage all of your design requests.",
+        content: "Here you'll submit and manage all of your design requests.",
         status: "active"
       }
     ]
@@ -21,14 +21,49 @@ const projectColumns = [
     projects: [
       {
         title: "화면구현 설계",
-        description: "figma 디자인 및 구현 상태 확인",
+        content: "figma 디자인 및 구현 상태 확인",
         status: "active",
         stats: [
           { icon: "􀋳", value: "0/1" },
           { icon: "􀉉", value: "Tomorrow" },
           { icon: "􂄹", value: "1" }
         ]
-      }
+      },
+      {
+        title: "화면 구현",
+        content: "Html로 React 실행 화면 되도록이면 구현하기. 불가능할시 다음주에 더 열심히 하기",
+        status: "active",
+        priority: 2,
+        subTasks:[
+            {
+                id: 1,
+                isChecked: false,
+                name: "화면 구현하기"
+            },
+            {
+                id: 2,
+                isChecked: true,
+                name: "DB 설계하기"
+            },
+        ],
+        checked: 1,
+        tags: ["Web app","HTML", "React"],
+        duedate: "2024-11-22",
+        commentsList: [
+            {
+                id: 1,
+                user: "chhak0503",
+                rdate: "24-11-21 17:05",
+                content: "나 철학인데 이거 이번주까지 아니다 정신 차려라"
+            },
+            {
+                id: 2,
+                user: "chhak0503",
+                rdate: "24-11-25 09:01",
+                content: "나 철학인데 이거 이번주까지다 정신 차려라"
+            },
+        ],
+    }
     ]
   },
   {
@@ -56,13 +91,8 @@ export default function Project() {
             <ProjectColumn key={index} {...column} />
           ))}
           <div className="flex flex-col w-64 text-center min-w-[240px] text-black text-opacity-50">
-            <div className="flex gap-2 items-center px-3 py-2 w-full rounded-lg bg-zinc-200 bg-opacity-30">
-              <div className="self-stretch px-1.5 py-px my-auto w-6 text-lg leading-none whitespace-nowrap">
-                􀅼
-              </div>
-              <div className="self-stretch my-auto text-sm leading-none">
-                새 보드
-              </div>
+            <div className="flex gap-2 items-center px-3 py-2 w-full text-sm rounded-lg bg-zinc-200 bg-opacity-30">
+              <i className="ico add text-color"></i> <span>새 보드</span>
             </div>
           </div>
         </div>

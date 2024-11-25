@@ -1,32 +1,4 @@
 
-.add {content: url('/images/project-linked-sprite.svg#add');}
-.add-checkbox {content: url('/images/project-linked-sprite.svg#add-checkbox');}
-.bar-chart {content: url('/images/project-linked-sprite.svg#bar-chart');}
-.calendar {content: url('/images/project-linked-sprite.svg#calendar');}
-.cancel {content: url('/images/project-linked-sprite.svg#cancel');}
-.checkbox {content: url('/images/project-linked-sprite.svg#checkbox');}
-.checkbox-checked {content: url('/images/project-linked-sprite.svg#checkbox-checked');}
-.circle-checked {content: url('/images/project-linked-sprite.svg#circle-checked');}
-.circle-checked-filled {content: url('/images/project-linked-sprite.svg#circle-checked-filled');}
-.circle-unchecked {content: url('/images/project-linked-sprite.svg#circle-unchecked');}
-.close {content: url('/images/project-linked-sprite.svg#close');}
-.comment {content: url('/images/project-linked-sprite.svg#comment');}
-.edit {content: url('/images/project-linked-sprite.svg#edit');}
-.expand-down {content: url('/images/project-linked-sprite.svg#expand-down');}
-.expand-up {content: url('/images/project-linked-sprite.svg#expand-up');}
-.group-add {content: url('/images/project-linked-sprite.svg#group-add');}
-.link {content: url('/images/project-linked-sprite.svg#link');}
-.more {content: url('/images/project-linked-sprite.svg#more');}
-.post-add {content: url('/images/project-linked-sprite.svg#post-add');}
-.rename {content: url('/images/project-linked-sprite.svg#rename');}
-.reply {content: url('/images/project-linked-sprite.svg#reply');}
-.subject {content: url('/images/project-linked-sprite.svg#subject');}
-.supervised-user {content: url('/images/project-linked-sprite.svg#supervised-user');}
-.tag {content: url('/images/project-linked-sprite.svg#tag')/"tag";}
-
-.checkbox{width: 20px; height: 20px;}
-.ico{width: 15px; height: 15px;}
-
-.text-color{filter: invert(77%) sepia(17%) saturate(152%) hue-rotate(197deg) brightness(81%) contrast(86%);}
-.point-color{filter: invert(49%) sepia(19%) saturate(1338%) hue-rotate(201deg) brightness(103%) contrast(89%);}
-.baby-point-color{filter: invert(79%) sepia(13%) saturate(5974%) hue-rotate(195deg) brightness(97%) contrast(85%);}
+#project-container *{
+    font-size: 14px;
+}
