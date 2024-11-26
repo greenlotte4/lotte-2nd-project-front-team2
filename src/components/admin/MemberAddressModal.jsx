@@ -24,7 +24,7 @@ export default function MemberAddressModal({ isOpen, onClose , text , data , cha
                   return (
                     <div className="flex justify-between" key={v.id}>
                       <div className="flex gap-4">
-                        <img src="/images/document-folder-profile.png" alt="User profile" className="cursor-pointer"  data-id={v.id} onClick={changeHandler} />
+                        <img src="/images/document-folder-profile.png" alt="User profile" className="cursor-pointer" data-id={v.id} data-email={v.email} data-uid={v.uid} onClick={changeHandler} />
                         <div className="flex flex-col justify-between">
                             
                             <p className="text-xs">{v.uid}</p>
@@ -53,10 +53,8 @@ export default function MemberAddressModal({ isOpen, onClose , text , data , cha
                   return (
                     <div className="flex justify-between" key={v.id}>
                       <div className="flex gap-4">
-                        <input onChange={selectBox} data-id={v.id} data-email={v.email} data-uid={v.uid} type="checkbox" />
-                        <img src="/images/document-folder-profile.png" alt="User profile" className="cursor-pointer"  data-id={v.id}/>
+                        <img onClick={selectBox} data-id={v.id} data-email={v.email} data-uid={v.uid} src="/images/document-folder-profile.png" alt="User profile" className="cursor-pointer" />
                         <div className="flex flex-col justify-between">
-                            
                             <p className="text-xs">{v.uid}</p>
                             <p className="text-xs text-gray-400">{v.email}</p>
                         </div>
