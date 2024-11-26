@@ -1,550 +1,727 @@
 #page-container1 {
-    height: 100%;
-    display: flex;
-    gap: 12px;
+  height: 100%;
+  display: flex;
+  gap: 12px;
 
-    .page-aside1 {
-        width: 300px;
-        background-color: white;
-        border-radius: 20px;
-        padding: 20px;
-        max-height: 810px;
-        min-width: 250px;
+  .page-aside1 {
+      width: 300px;
+      background-color: white;
+      border-radius: 20px;
+      padding: 20px;
+      max-height: 810px;
+      min-width: 250px;
+      overflow: hidden;
+      scrollbar-width: none;
+      
+      .newPage{
+          border: 1px solid #ddd;
+      }
+
+      .newPageBtn{
+          background: #7e7edf;
+          height: 40px;
+          
+      }
+
+      .newPageBtn:hover{
+          background: #5d5ddd
+      }
+
+      .flex-col {
+        overflow: hidden;
+        transition: all 0.1s ease;
+      }
+      
+      .max-h-0 {
+        max-height: 0;
+      }
+      
+      .max-h-screen {
+        max-height: 100vh; /* Or a fixed height depending on your content */
+      }
+      
+      .rotate-0 {
+        transform: rotate(0deg);
+      }
+      
+      .-rotate-90 {
+        transform: rotate(-180deg);
+      }
+
+      .searchSpace{
         
-        .newPage{
-            border: 1px solid #ddd;
+        label{
+          width: 20px;
         }
+      }
 
-        .newPageBtn{
-            background: #7e7edf;
-            height: 40px;
-            
-        }
-
-        .newPageBtn:hover{
-            background: #5d5ddd
-        }
-
-    }
-    .page-main1 {
-        flex-grow: 1;
-        background-color: white;
-        border-radius: 20px;
-        padding: 20px;
-        max-height: 810px;
-        box-sizing: border-box;
-
-        
-    }
-    .page-main-container{
-        max-height: 750px;
-    }
-
-    .page-aside1 .documentPen{
-        filter: invert(100%) sepia(21%) saturate(2%) hue-rotate(185deg) brightness(115%) contrast(101%);
-    }
-
-    .file-modal {
-        .modal-custom-fixed {
-            inset: inherit;
-            position: fixed;
-            left: 70%;
-            top: 30%;
-            background-color: transparent;
-        }
-
-        .modal-custom-width {
-            width: 400px;
-        }
-        /* 화면 너비가 1200px 이하일 때 */
-        @media screen and (max-width: 1200px) {
-            .modal-custom-fixed {
-                left: 60%;
-                top: 25%;
-            }
-
-            .modal-custom-width {
-                width: 350px;
-            }
-        }
-
-        /* 화면 너비가 900px 이하일 때 */
-        @media screen and (max-width: 900px) {
-            .modal-custom-fixed {
-                left: 50%;
-                top: 20%;
-            }
-
-            .modal-custom-width {
-                width: 300px;
-            }
-        }
-
-        /* 화면 너비가 600px 이하일 때 */
-        @media screen and (max-width: 600px) {
-            .modal-custom-fixed {
-                left: 50%;
-                top: 10%;
-            }
-
-            .modal-custom-width {
-                width: 250px;
-            }
-        }
-    }
-
-    .folder-modal {
-        .modal-custom-width {
-            width: 500px;
-        }
-    }
-
-    .drive-modal {
-        .modal-custom-width {
-            width: 500px;
-        }
-    }
+     
 
 
-    .CardContainer{
-        flex-wrap: wrap;
-        justify-content: space-between;
-        padding: 10px;
-        margin-top: 20px;
-        overflow-y: scroll;
-        height: 670px;
-        width: 100%;
-    }
 
-    .CardContainer .pageCard{
-        margin-bottom: 20px;
-        width: 25%;
-    }
+  }
+  .page-main1 {
+      flex-grow: 1;
+      background-color: white;
+      border-radius: 20px;
+      padding: 20px;
+      max-height: 810px;
+      box-sizing: border-box;
+      position: relative;
 
-
-   
-    .newPage-main-container{
-        width: 100%;
-        font-family: Arial, sans-serif;
-        color: #333;
-        max-height: 750px;
-        position: relative; /* Ensure relative positioning for absolute children */
-
-        button {
-            background: #7e7edf;
-            height: 40px;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            padding: 5px 10px;
-            cursor: pointer;
-          }
-          
-          button:hover {
-            background-color: #5d5ddd;
-          }
-          
-          input {
-            border: 1px solid #ccc;
-            padding: 5px;
-            border-radius: 5px;
-          }
-          
-          select {
-            border: 1px solid #ccc;
-            padding: 5px;
-            border-radius: 5px;
-          }
-          .titleHeader{
-            border-bottom: 1px solid #ddd;
-            width: 100%;
-            padding: 10px;
-            display: flex;
-            justify-content: space-between;
-            .title-input {
-                font-size: 1.5em;
-                border: none;
-                outline: none;
-            }
-            .shareBtn{
-                width: 100px;
-
-            }
-
-
-          }
-
-       
-       
-          .sharing-menu {
-            margin-top: 10px;
-          }
-          
-          .email-input {
-            padding: 5px;
-            width: 200px;
-          }
-          
-          .add-user-btn {
-            margin-left: 10px;
-            padding: 5px 10px;
-          }
-          
-          .user-list {
-            margin-top: 10px;
-            list-style: none;
-            padding: 0;
-          }
-          
-          .user-list li {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 5px;
-          }
-
-          .file-manager {
-            margin-top: 10px;
-            display: flex;
-            align-items: flex-start;            
-            justify-content: space-between;
-            border-bottom: 1px solid #ddd;
-            padding: 10px 0;
-            position: relative;
-
-            .add-property-btn {
-                background-color: #007bff;
-                color: white;
-                border: none;
-                padding: 10px 15px;
-                border-radius: 5px;
-                cursor: pointer;
-                font-size: 14px;
-              }
-              
-              .add-property-btn:hover {
-                background-color: #0056b3;
-              }
-              
-              .property-dropdown {
-                position: absolute;
-                top: 100%;
-                left: 0;
-                background: white;
-                border: 1px solid #ddd;
-                border-radius: 5px;
-                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-                width: 250px;
-                max-height: 500px;
-                overflow-y: auto;
-                z-index: 1000;
-                scrollbar-width:none;
-              }
-              
-              .property-list {
-                list-style: none;
-                margin: 0;
-                padding: 10px;
-              }
-              
-              .property-item {
-                display: flex;
-                align-items: center;
-                gap: 10px;
-                padding: 8px 10px;
-                cursor: pointer;
-              }
-              
-              .property-item:hover {
-                background-color: #f0f0f0;
-                border-radius: 4px;
-              }
-              
-              .property-icon {
-                font-size: 18px;
-              }
-              
-              .property-label {
-                font-size: 14px;
-                color: #333;
-              }
-
-              .typeList {
-                margin-bottom: 20px;
-              }
-              
-              .field-item {
-                display: flex;
-                align-items: center;
-                gap: 10px;
-                margin-bottom: 10px;
-                border: none;
-              }
-              
-              .field-name {
-                flex: 1;
-                padding: 5px;
-                border-radius: 4px;
-                cursor: pointer;
-              }
-              
-              .field-type {
-                color: #555;
-                font-size: 14px;
-              }
-              
-              .remove-field-btn {
-                background: none;
-                border: none;
-                color: red;
-                cursor: pointer;
-              }
-              
-              .add-property-btn {
-                background-color: #007bff;
-                color: white;
-                border: none;
-                padding: 10px 15px;
-                border-radius: 5px;
-                cursor: pointer;
-              }
-              
-              .add-property-btn:hover {
-                background-color: #0056b3;
-              }
-              
-              .property-dropdown {
-                position: absolute;
-                top: 100%;
-                left: 0;
-                background: white;
-                border: 1px solid #ddd;
-                border-radius: 5px;
-                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-                width: 250px;
-                z-index: 1000;
-              }
-              
-              .property-list {
-                list-style: none;
-                margin: 0;
-                padding: 10px;
-              }
-              
-              .property-item {
-                display: flex;
-                align-items: center;
-                gap: 10px;
-                padding: 8px 10px;
-                cursor: pointer;
-              }
-              
-              .property-item:hover {
-                background-color: #f0f0f0;
-                border-radius: 4px;
-              }
-
-          }
-        
-            /* Overlay for background dimming */
-        .emoji-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: rgba(0, 0, 0, 0.3); /* Semi-transparent background */
-            z-index: 999; /* Ensure it covers the entire page */
-        }
-        /* Popup for Emoji Picker */
-        .emoji-popup {
-            position: fixed;
-            top: 10%;
-            left: 50%;
-            transform: translate(-50%, -50%); /* Center the popup */
-            background: white;
-            border-radius: 12px;
-            width: 400px;
-            max-width: 90%;
-            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
-            padding: 20px;
-            z-index: 1000; /* Above the overlay */
-
-            .emoji-search {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            margin-bottom: 10px;
-            }
-
-            .emoji-list {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
-            gap: 10px;
-            max-height: 300px;
-            overflow-y: auto;
-
-            .emoji {
-                font-size: 20px;
-                text-align: center;
-                cursor: pointer;
-
-                &:hover {
-                background-color: #f5f5f5;
-                border-radius: 50%;
-                }
-            }
-            }
-            }
-
-    }
-
-    .sharing-menu-container {
+      .main-card-avatar {
+        display: inline-block;
+        width: 80px;
+        height: 80px;
+        font-size: 50px;
+        line-height: 80px;
+        text-align: center;
+        border-radius: 50%;
+        background-color: #f5f5f5;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+      
+      .main-card-avatar:hover {
+        background-color: #e0e0e0;
+      }
+      
+      .emoji-picker {
         position: absolute;
-        right: 20px;
-        top: 60px;
-        width: 100%;
-        max-width: 500px;
-        background-color: #fff;
-        padding: 20px;
+        top: 30px; /* Position above the card header */
+        left: 100px; /* Adjust horizontally */
+        background: white;
         border: 1px solid #ddd;
         border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-      }
-      
-      .sharing-input-section {
-        display: flex;
-        gap: 10px;
-        margin-bottom: 10px;
-      }
-      
-      .email-input {
-        flex: 1;
+        box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
         padding: 10px;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        font-size: 14px;
+        z-index: 10;
+        width: 250px;
+        max-height: 200px;
+        overflow-y: auto;
       }
       
-      .add-user-btn {
-        padding: 10px 20px;
-        background-color: #007bff;
-        color: white;
-        border: none;
-        border-radius: 4px;
+      .emoji-grid {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr); /* 6 emojis per row */
+        gap: 8px;
+      }
+      
+      .emoji-item {
+        font-size: 20px;
         cursor: pointer;
-        font-size: 14px;
-      }
-      
-      .add-user-btn:hover {
-        background-color: #0056b3;
-      }
-      
-      .error-message {
-        color: red;
-        font-size: 12px;
-        margin-top: -10px;
-        margin-bottom: 10px;
-      }
-      
-      .sharing-permission {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-      }
-      
-      .global-permission-select {
-        padding: 5px 10px;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        font-size: 14px;
-      }
-      
-      .user-list {
-        list-style: none;
-        padding: 0;
-      }
-      
-      .user-item {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        padding: 10px;
-        border-bottom: 1px solid #eee;
-      }
-      
-      .user-profile {
-        width: 30px;
-        height: 30px;
+        text-align: center;
+        padding: 5px;
         border-radius: 50%;
+        transition: background-color 0.2s;
       }
       
-      .user-email {
-        flex: 1;
-        font-size: 14px;
+      .emoji-item:hover {
+        background-color: #f0f0f0;
       }
 
-      .permission-dropdown {
+
+      .shareUsers {
+        gap: 5px;
+        margin-top: 10px;
+        justify-content: space-between;
         position: relative;
-        display: inline-block;
-
-        .dropdown-btn {
-            background: none;
-            padding: 5px 10px;
-            font-size: 14px;
-            cursor: pointer;
-            border-radius: 4px;
-            color: black;
-          }
-          
-          .dropdown-options {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            background: white;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            list-style: none;
-            padding: 5px 0;
-            width: 150px;
-            z-index: 1000;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-          }
-          
-          .dropdown-options li {
-            padding: 8px 12px;
-            cursor: pointer;
-
-          }
-          button:hover {
-            background-color: #f0f0f0;
-          }
-          
-          .dropdown-options li:hover,
-          .dropdown-options li.active {
-            background-color: #f0f0f0;
-            font-weight: bold;
-          }
+        gap: 0; /* No gap between avatars to ensure overlap */
+        // overflow: scroll;
+        overflow-x: auto; /* 스크롤 가능 */
+        }
+      .Members{
+        max-width: 60%;
+        overflow: hidden;
+        max-height: 50px;
       }
+      .member-container {
+        position: relative;
+        margin-left: -15px;
+       min-width: 50px;
+    }
+    .member-container:first-child{
+        margin-left: 0px;
+    }
+    .member-avatar:first-child {
+        margin-left: 0px;
+    } 
       
-      .permission-select {
-        padding: 5px 10px;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        font-size: 14px;
-      }
-      
-      .remove-user-btn {
-        background: none;
-        border: none;
-        color: red;
-        font-size: 16px;
+      .member-avatar {
+        width: 50px; /* Size of avatar */
+        height: 50px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid white; /* Optional: Add border for better visibility */
+        margin-left: -15px; /* Overlap previous avatar */
+        transition: transform 0.3s ease, z-index 0.3s ease;
         cursor: pointer;
+
       }
+      .member-avatar:hover {
+        transform: scale(1.1); /* Slight zoom on hover */
+        z-index: 10; /* Bring hovered avatar to the front */
+    }
+      
+      
+      .no-members {
+        font-size: 14px;
+        color: #999;
+        margin-top: 10px;
+        text-align: center;
+    }
+
+      
+  }
+  .page-main-container{
+      max-height: 750px;
+  }
+
+  .page-aside1 .documentPen{
+      filter: invert(100%) sepia(21%) saturate(2%) hue-rotate(185deg) brightness(115%) contrast(101%);
+  }
+
+  .file-modal {
+      .modal-custom-fixed {
+          inset: inherit;
+          position: fixed;
+          left: 70%;
+          top: 30%;
+          background-color: transparent;
+      }
+
+      .modal-custom-width {
+          width: 400px;
+      }
+      /* 화면 너비가 1200px 이하일 때 */
+      @media screen and (max-width: 1200px) {
+          .modal-custom-fixed {
+              left: 60%;
+              top: 25%;
+          }
+
+          .modal-custom-width {
+              width: 350px;
+          }
+      }
+
+      /* 화면 너비가 900px 이하일 때 */
+      @media screen and (max-width: 900px) {
+          .modal-custom-fixed {
+              left: 50%;
+              top: 20%;
+          }
+
+          .modal-custom-width {
+              width: 300px;
+          }
+      }
+
+      /* 화면 너비가 600px 이하일 때 */
+      @media screen and (max-width: 600px) {
+          .modal-custom-fixed {
+              left: 50%;
+              top: 10%;
+          }
+
+          .modal-custom-width {
+              width: 250px;
+          }
+      }
+  }
+
+  .folder-modal {
+      .modal-custom-width {
+          width: 500px;
+      }
+  }
+
+  .drive-modal {
+      .modal-custom-width {
+          width: 500px;
+      }
+  }
+
+
+  .CardContainer{
+      flex-wrap: wrap;
+      justify-content: space-between;
+      padding: 10px;
+      margin-top: 20px;
+      overflow-y: scroll;
+      height: 670px;
+      width: 100%;
+  }
+
+  .CardContainer .pageCard{
+      margin-bottom: 20px;
+      width: 25%;
+  }
+
+
  
+  .newPage-main-container{
+      width: 100%;
+      font-family: Arial, sans-serif;
+      color: #333;
+      max-height: 750px;
+      position: relative; /* Ensure relative positioning for absolute children */
+
+      button {
+          background: #7e7edf;
+          height: 40px;
+          color: white;
+          border: none;
+          border-radius: 8px;
+          padding: 5px 10px;
+          cursor: pointer;
+        }
+        
+        button:hover {
+          background-color: #5d5ddd;
+        }
+        
+        input {
+          border: 1px solid #ccc;
+          padding: 5px;
+          border-radius: 5px;
+        }
+        
+        select {
+          border: 1px solid #ccc;
+          padding: 5px;
+          border-radius: 5px;
+        }
+        .titleHeader{
+          border-bottom: 1px solid #ddd;
+          width: 100%;
+          padding: 10px;
+          display: flex;
+          justify-content: space-between;
+          .title-input {
+              font-size: 1.5em;
+              border: none;
+              outline: none;
+          }
+          .shareBtn{
+              width: 100px;
+
+          }
+
+
+        }
+
+     
+     
+        .sharing-menu {
+          margin-top: 10px;
+        }
+        
+        .email-input {
+          padding: 5px;
+          width: 200px;
+        }
+        
+        .add-user-btn {
+          margin-left: 10px;
+          padding: 5px 10px;
+        }
+        
+        .user-list {
+          margin-top: 10px;
+          list-style: none;
+          padding: 0;
+        }
+        
+        .user-list li {
+          display: flex;
+          justify-content: space-between;
+          margin-bottom: 5px;
+        }
+
+        .file-manager {
+          margin-top: 10px;
+          display: flex;
+          align-items: flex-start;            
+          justify-content: space-between;
+          border-bottom: 1px solid #ddd;
+          padding: 10px 0;
+          position: relative;
+
+          .add-property-btn {
+            background-color: #fff;
+            border: none;
+              color: rgb(77, 77, 77);
+              border: none;
+              padding: 10px 15px;
+              border-radius: 5px;
+              cursor: pointer;
+              font-size: 14px;
+            }
+            
+          
+            
+            .property-dropdown {
+              position: absolute;
+              top: 100%;
+              left: 0;
+              background: white;
+              border: 1px solid #ddd;
+              border-radius: 5px;
+              box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+              width: 250px;
+              max-height: 500px;
+              overflow-y: auto;
+              z-index: 1000;
+              scrollbar-width:none;
+            }
+            
+            .property-list {
+              list-style: none;
+              margin: 0;
+              padding: 10px;
+            }
+            
+            .property-item {
+              display: flex;
+              align-items: center;
+              gap: 10px;
+              padding: 8px 10px;
+              cursor: pointer;
+            }
+            
+            .property-item:hover {
+              background-color: #f0f0f0;
+              border-radius: 4px;
+            }
+            
+            .property-icon {
+              font-size: 18px;
+            }
+            
+            .property-label {
+              font-size: 14px;
+              color: #333;
+            }
+
+            .typeList {
+            }
+            
+            .field-item {
+              display: flex;
+              align-items: center;
+              gap: 10px;
+              margin-bottom: 10px;
+              border: none;
+            }
+            
+            .field-name {
+              flex: 1;
+              padding: 5px;
+              border-radius: 4px;
+              cursor: pointer;
+            }
+            
+            .field-type {
+              color: #555;
+              font-size: 14px;
+            }
+            
+            .remove-field-btn {
+              background: none;
+              border: none;
+              color: red;
+              cursor: pointer;
+            }
+            
+            
+            .add-property-btn:hover {
+              background-color: #ddd;
+            }
+            
+            .property-dropdown {
+              position: absolute;
+              top: 100%;
+              left: 0;
+              background: white;
+              border: 1px solid #ddd;
+              border-radius: 5px;
+              box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+              width: 250px;
+              z-index: 1000;
+            }
+            
+            .property-list {
+              list-style: none;
+              margin: 0;
+              padding: 10px;
+            }
+            
+            .property-item {
+              display: flex;
+              align-items: center;
+              gap: 10px;
+              padding: 8px 10px;
+              cursor: pointer;
+            }
+            
+            .property-item:hover {
+              background-color: #f0f0f0;
+              border-radius: 4px;
+            }
+
+        }
+      
+          /* Overlay for background dimming */
+      .emoji-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100vw;
+          height: 100vh;
+          background: rgba(0, 0, 0, 0.3); /* Semi-transparent background */
+          z-index: 999; /* Ensure it covers the entire page */
+      }
+      /* Popup for Emoji Picker */
+      .emoji-popup {
+          position: fixed;
+          top: 10%;
+          left: 50%;
+          transform: translate(-50%, -50%); /* Center the popup */
+          background: white;
+          border-radius: 12px;
+          width: 400px;
+          max-width: 90%;
+          box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+          padding: 20px;
+          z-index: 1000; /* Above the overlay */
+
+          .emoji-search {
+          width: 100%;
+          padding: 8px;
+          border: 1px solid #ccc;
+          border-radius: 6px;
+          margin-bottom: 10px;
+          }
+
+          .emoji-list {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+          gap: 10px;
+          max-height: 300px;
+          overflow-y: auto;
+
+          .emoji {
+              font-size: 20px;
+              text-align: center;
+              cursor: pointer;
+
+              &:hover {
+              background-color: #f5f5f5;
+              border-radius: 50%;
+              }
+          }
+          }
+          }
+
+  }
+
+  .sharing-menu-container {
+      position: absolute;
+      z-index: 2000;
+      right: 20px;
+      top: 60px;
+      width: 100%;
+      max-width: 500px;
+      background-color: #fff;
+      padding: 20px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .sharing-input-section {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    
+    .email-input {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    
+    .add-user-btn {
+      padding: 10px 20px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    
+    .add-user-btn:hover {
+      background-color: #0056b3;
+    }
+    
+    .error-message {
+      color: red;
+      font-size: 12px;
+      margin-top: -10px;
+      margin-bottom: 10px;
+    }
+    
+    .sharing-permission {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    
+    .global-permission-select {
+      padding: 5px 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    
+    .user-list {
+      list-style: none;
+      padding: 0;
+    }
+    
+    .user-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px;
+      border-bottom: 1px solid #eee;
+    }
+    
+    .user-profile {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+    }
+    
+    .user-email {
+      flex: 1;
+      font-size: 14px;
+    }
+
+    .permission-dropdown {
+      position: relative;
+      display: inline-block;
+
+      .dropdown-btn {
+          background: none;
+          padding: 5px 10px;
+          font-size: 14px;
+          cursor: pointer;
+          border-radius: 4px;
+          color: black;
+        }
+        
+        .dropdown-options {
+          position: absolute;
+          top: 100%;
+          left: 0;
+          background: white;
+          border: 1px solid #ddd;
+          border-radius: 4px;
+          list-style: none;
+          padding: 5px 0;
+          width: 150px;
+          z-index: 1000;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .dropdown-options li {
+          padding: 8px 12px;
+          cursor: pointer;
+
+        }
+        button:hover {
+          background-color: #f0f0f0;
+        }
+        
+        .dropdown-options li:hover,
+        .dropdown-options li.active {
+          background-color: #f0f0f0;
+          font-weight: bold;
+        }
+    }
+    
+    .permission-select {
+      padding: 5px 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    
+    .remove-user-btn {
+      background: none;
+      border: none;
+      color: red;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    #editorjs{
+      // width: 100%;
+      // text-align: left;
+
+      .ce-toolbar.ce-toolbar--opened{
+        top: 6px;
+      }
+      .ce-toolbar{
+        margin-left: 40px;
+      }
+      .ce-block{
+        margin-left: 40px;
+
+      }
+
+      .ce-toolbar__content {
+        max-width: 100%;
+      }
+      .ce-block__content {
+        max-width: 100%;
+
+      }
+
+      // .ce-block__content{
+      //   max-width: 90%;
+      //   margin-left: 40px;
+      // }
+
+      // .ce-toolbar.ce-toolbar--opened{
+      //   top:0px;
+      //   left: 30px;
+        
+        
+
+      // }
+
+
+      // .ce-toolbar {
+      //   position: absolute; /* 기본적으로 absolute로 위치 */
+      //   top: 10px; /* 원하는 위치로 조정 */
+      //   left: 10px; /* 원하는 위치로 조정 */
+      //   z-index: 100; /* 다른 요소 위에 표시되도록 설정 */
+      // }
+      
+      // .ce-toolbar--opened {
+      //   /* 툴바가 열렸을 때 추가 스타일 */
+      //   transform: translateY(-50%); /* 예시: 위치 조정 */
+      // }
+     
+    }
+
 
 
 }
-
-

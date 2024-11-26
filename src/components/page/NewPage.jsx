@@ -73,7 +73,7 @@ export default function NewPage(){
 
 
                         {/* 파일 및 속성 관리 */}
-                        <FileManager />
+                        {/* <FileManager /> */}
 
                         {/* 텍스트 에디터 */}
                          <Editor />

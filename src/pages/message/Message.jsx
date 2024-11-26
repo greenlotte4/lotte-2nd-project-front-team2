@@ -4,6 +4,7 @@ import MessageToolTip from "../../components/message/MessageToolTip";
 import InviteModal from "../../components/message/InviteModal";
 import ShowMoreModal from "../../components/message/ShowMoreModal";
 import AttachFileModal from "../../components/message/AttachFileModal";
+import ProfileModal from "../../components/message/ProfileModal";
 
 export default function Message() {
   const [isOpen, setIsOpen] = useState(false);
@@ -14,7 +15,10 @@ export default function Message() {
     setIsOpen(false);
     setOption(2);
   };
-
+  const [profile, setProfile] = useState(false);
+  const profileHandler = () => {
+    setProfile(!profile);
+  };
   const [option, setOption] = useState(2);
   const optionHandler = (e) => {
     e.preventDefault();
@@ -27,39 +31,11 @@ export default function Message() {
     }
   };
 
-  const [selectedUsers, setSelectedUsers] = useState([]);
-  const selectUser = (e) => {
-    e.preventDefault();
-  };
-  const addUser = (user) => {
-    setSelectedUsers((prevUsers) => {
-      // 중복 추가 방지
-      if (!prevUsers.find((u) => u.id === user.id)) {
-        return [...prevUsers, user];
-      }
-      return prevUsers;
-    });
-  };
-
-  const removeUser = (userId) => {
-    setSelectedUsers((prevUsers) =>
-      prevUsers.filter((user) => user.id !== userId)
-    );
-  };
-
-  const clearAllUsers = () => {
-    setSelectedUsers([]);
-  };
-
   const propsObject = {
     isOpen,
     closeHandler,
     option,
     optionHandler,
-    selectedUsers,
-    addUser,
-    removeUser,
-    clearAllUsers,
   };
 
   const [search, setSearch] = useState(false);
@@ -157,9 +133,17 @@ export default function Message() {
       <div className="aside">
         <div className="aside-top">
           <div className="profile">
-            <img src="../images/sample_item1.jpg" alt="" />
-            <MessageToolTip tooltip={"프로필을 설정할 수 있습니다"} />
+            <img
+              src="../images/sample_item1.jpg"
+              alt=""
+              onClick={profileHandler}
+            />
+            {profile == true ? (
+              <ProfileModal profile={profile} profileHandler={profileHandler} />
+            ) : null}
+            <MessageToolTip tooltip={"프로필 보기"} />
           </div>
+
           <div className="search">
             <img className="searchImg" src="../images/image.png" alt="" />
             <MessageToolTip tooltip={"대화방을 검색해보세요"} />

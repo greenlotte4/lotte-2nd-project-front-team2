@@ -2,7 +2,10 @@ import React, { useEffect, useState } from 'react'
 import axiosInstance from '@/services/axios.jsx'
 import MemberAddressModal from './MemberAddressModal';
 import CustomAlert from '../Alert';
+<<<<<<< HEAD
 import { useQuery } from '@tanstack/react-query';
+=======
+>>>>>>> bbe06782a502c8b247204cddfb153d86dc198d1f
 
 export default function GroupInfoModifyModal({isOpen,text,onClose}) {
     if(!isOpen) return null;
@@ -15,8 +18,11 @@ export default function GroupInfoModifyModal({isOpen,text,onClose}) {
     const [type, setType] = useState("");
     const [message, setMessage] = useState("");
     const [alert, setAlert] = useState(false);
+<<<<<<< HEAD
     const [addressIsOpen2, setAddressIsOpen2] = useState(false);
     const [updateGroupName , setUpdateGroupName] = useState("") ;
+=======
+>>>>>>> bbe06782a502c8b247204cddfb153d86dc198d1f
     //  useEffect   //
     useEffect (()=> {
         axiosInstance
@@ -27,6 +33,7 @@ export default function GroupInfoModifyModal({isOpen,text,onClose}) {
             .catch((e)=> {
 
             })
+<<<<<<< HEAD
         axiosInstance
             .get(`/api/group/users?team=${text}`)
             .then((resp)=>{
@@ -41,6 +48,11 @@ export default function GroupInfoModifyModal({isOpen,text,onClose}) {
     },[])
 
     
+=======
+        
+    },[])
+
+>>>>>>> bbe06782a502c8b247204cddfb153d86dc198d1f
     //  Handler    //
     const selectLeader = (e) => {
         setLeader(prev => ({
@@ -69,6 +81,7 @@ export default function GroupInfoModifyModal({isOpen,text,onClose}) {
                 }, 1000);
             })
     }
+<<<<<<< HEAD
     const openAddress2 = () => {
         setAddressIsOpen2(true)
         axiosInstance
@@ -90,6 +103,9 @@ export default function GroupInfoModifyModal({isOpen,text,onClose}) {
     }
     const closeAddress = () => {setAddressIsOpen(false)}
     const closeAddress2 = () => {setAddressIsOpen2(false)}
+=======
+    const closeAddress = () => {setAddressIsOpen(false)}
+>>>>>>> bbe06782a502c8b247204cddfb153d86dc198d1f
     const patchLeader = () => {
         axiosInstance
             .patch(`/api/group/leader?id=${leader.id}&name=${text}`,null)
@@ -112,6 +128,7 @@ export default function GroupInfoModifyModal({isOpen,text,onClose}) {
                 }, 1000);
             })
     }
+<<<<<<< HEAD
     const patchMembers = () => {
         
         axiosInstance
@@ -176,6 +193,8 @@ export default function GroupInfoModifyModal({isOpen,text,onClose}) {
         const filteredUser = user.filter(v => !(v.id == e.target.dataset.id))
         setUser(filteredUser)
     }
+=======
+>>>>>>> bbe06782a502c8b247204cddfb153d86dc198d1f
     const closeAlert = () => {setAlert(false)}
   return (
     <div className="fixed inset-0 bg-gray-500 bg-opacity-50 flex justify-center items-center z-50">
@@ -191,13 +210,19 @@ export default function GroupInfoModifyModal({isOpen,text,onClose}) {
             </button>
             <button
                 className="block w-full bg-gray-100 hover:bg-blue-100 px-4 py-2 text-sm text-gray-700 border rounded-md"
+<<<<<<< HEAD
                 onClick={() => setPage(2)}
+=======
+>>>>>>> bbe06782a502c8b247204cddfb153d86dc198d1f
             >
                 그룹원 변경
             </button>
             <button
                 className="block w-full bg-gray-100 hover:bg-blue-100 px-4 py-2 text-sm text-gray-700 border rounded-md"
+<<<<<<< HEAD
                 onClick={() => setPage(3)}
+=======
+>>>>>>> bbe06782a502c8b247204cddfb153d86dc198d1f
             >
                 그룹 이름 변경
             </button>
@@ -219,7 +244,11 @@ export default function GroupInfoModifyModal({isOpen,text,onClose}) {
             </div>
             <div className="flex gap-2">
                 <input className="h-10 w-52 border rounded-md p-2 text-xs" placeholder="구성원 또는 조직으로 검색"></input>
+<<<<<<< HEAD
                 <button onClick={openAddress} className="h-10 w-20 rounded-md px-3 text-xs text-gray-400 bg-gray-100">주소록</button>
+=======
+                <button onClick={openAddress} className="border h-10 w-20 rounded-md px-3 text-xs text-gray-400 bg-gray-100">주소록</button>
+>>>>>>> bbe06782a502c8b247204cddfb153d86dc198d1f
             </div>
             <MemberAddressModal 
                 isOpen={addressIsOpen}
@@ -231,6 +260,7 @@ export default function GroupInfoModifyModal({isOpen,text,onClose}) {
 
         </>
         }
+<<<<<<< HEAD
         {page === 2 &&
         <>
             <h3 className="text-lg font-semibold mb-4 text-center">그룹원 변경</h3>
@@ -275,6 +305,8 @@ export default function GroupInfoModifyModal({isOpen,text,onClose}) {
             </div>
         </>
         }
+=======
+>>>>>>> bbe06782a502c8b247204cddfb153d86dc198d1f
             <div className='flex justify-end w-full gap-4 mt-8 mb-4'>
                 <button 
                     className="px-4 py-2 bg-purple text-white rounded-md"
@@ -290,6 +322,7 @@ export default function GroupInfoModifyModal({isOpen,text,onClose}) {
                     변경하기
                 </button>
                 }
+<<<<<<< HEAD
                 {page === 2 &&
                 <button 
                     className="px-4 py-2 bg-purple text-white rounded-md"
@@ -306,6 +339,8 @@ export default function GroupInfoModifyModal({isOpen,text,onClose}) {
                     변경하기
                 </button>
                 }
+=======
+>>>>>>> bbe06782a502c8b247204cddfb153d86dc198d1f
             </div>
             <CustomAlert 
               type={type}  // 알림의 타입 (success, error, info , basic 등)

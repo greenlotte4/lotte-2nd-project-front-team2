@@ -34,10 +34,9 @@ export default function AdminSidebar({
     const departmentNavRef = useRef(null);
 
     //                                        useRef                                        //
-    
-    
+
     //                                        useEffect                                     //
-    
+
     const { data: departmentData, isLoading: isLoadingDepartments, isError: isErrorDepartments, error: departmentError } = useQuery({
         queryKey: ['departments'],
         queryFn: async () => {
@@ -64,7 +63,7 @@ export default function AdminSidebar({
     }
 
     if (isErrorDepartments) {
-        return <p>Error loading departments: {departmentError.message}</p>; 
+        return <p>Error loading departments: {departmentError.message}</p>;
     }
 
     if (isErrorTeams) {
@@ -76,7 +75,7 @@ export default function AdminSidebar({
     const changeActiveHandler = (e) => {
         const teamId = e.target.dataset.id;  // 클릭한 팀의 id 값 가져오기
         dispatch(setSelectedTeamId(teamId));
-        
+
         axiosInstance
             .get(`/api/group/users/detail?team=${selectedTeamId}`,null)
             .then((resp)=>{
@@ -90,7 +89,8 @@ export default function AdminSidebar({
     const optionChanger = (e)=>{
         setSelectOption(Number(e.target.value))
     }
-    const openUser = () => {setUser(true)} 
+
+    const openUser = () => {setUser(true)}
     const closeUser = () => {setUser(false)}
     const openTeam = () => {setTeam(true)} 
     const closeTeam = () => {setTeam(false)}
@@ -224,7 +224,7 @@ export default function AdminSidebar({
                     </div>
                     )
                 })}
-                
+
             </article>
         </section>
         <section className='mt-auto flex flex-col gap-5'>

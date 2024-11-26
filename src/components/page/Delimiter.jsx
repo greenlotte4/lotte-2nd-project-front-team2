@@ -1,6 +1,5 @@
 import React, { useRef, useEffect } from "react";
 
-
 export default class Delimiter {
     static get toolbox() {
       return {

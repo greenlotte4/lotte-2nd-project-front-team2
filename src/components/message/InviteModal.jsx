@@ -1,18 +1,33 @@
 import InviteModal_orgChart from "./InviteModal_orgChart";
 import InviteModal_frequent from "./InviteModal_frequent";
 import InviteModal_userSearch from "./InviteModal_userSearch";
+import { useState } from "react";
 
 export default function InviteModal(props) {
-  const {
-    isOpen,
-    closeHandler,
-    option,
-    optionHandler,
-    selectedUsers,
-    addUser,
-    removeUser,
-    clearAllUsers,
-  } = props;
+  const { isOpen, closeHandler, option, optionHandler } = props;
+
+  const [selectedUsers, setSelectedUsers] = useState([]);
+  const [users, setUsers] = useState([]);
+  const addUser = (user) => {
+    setSelectedUsers((prevUsers) => {
+      // 중복 추가 방지
+      if (!prevUsers.find((u) => u.id === user.id)) {
+        return [...prevUsers, user];
+      }
+      return prevUsers;
+    });
+  };
+
+  const removeUser = (userId) => {
+    setSelectedUsers((prevUsers) =>
+      prevUsers.filter((user) => user.id !== userId)
+    );
+  };
+
+  const clearAllUsers = () => {
+    setSelectedUsers([]);
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -55,11 +70,29 @@ export default function InviteModal(props) {
           {(() => {
             switch (option) {
               case 1:
-                return <InviteModal_userSearch selectedUsers={selectedUsers} />;
+                return (
+                  <InviteModal_userSearch
+                    addUser={addUser}
+                    setSelectedUsers={setSelectedUsers}
+                    setUsers={setUsers}
+                  />
+                );
               case 2:
-                return <InviteModal_orgChart selectedUsers={selectedUsers} />;
+                return (
+                  <InviteModal_orgChart
+                    addUser={addUser}
+                    setSelectedUsers={setSelectedUsers}
+                    setUsers={setUsers}
+                  />
+                );
               case 3:
-                return <InviteModal_frequent selectedUsers={selectedUsers} />;
+                return (
+                  <InviteModal_frequent
+                    addUser={addUser}
+                    setSelectedUsers={setSelectedUsers}
+                    setUsers={setUsers}
+                  />
+                );
               default:
                 return null;
             }
@@ -72,11 +105,11 @@ export default function InviteModal(props) {
           <div className="selected-Users-List">
             <div className="selected-title">
               <span>선택한 대상</span>
-              <button className="resetBtn" onClick={null}>
+              <button className="resetBtn" onClick={clearAllUsers}>
                 초기화
               </button>
             </div>
-            <div className="selected-Users" ref={selectedUsers}>
+            <div className="selected-Users">
               <div className="selected-User_cancelBtn">
                 <div className="selected-User">
                   <img
@@ -95,7 +128,7 @@ export default function InviteModal(props) {
                   className="cancelBtn"
                   src="../images/closeBtn.png"
                   alt=""
-                  onClick={null}
+                  onClick={removeUser}
                 />
               </div>
               <div className="selected-User_cancelBtn">
@@ -116,7 +149,7 @@ export default function InviteModal(props) {
                   className="cancelBtn"
                   src="../images/closeBtn.png"
                   alt=""
-                  onClick={null}
+                  onClick={removeUser}
                 />
               </div>
               <div className="selected-User_cancelBtn">
@@ -137,7 +170,7 @@ export default function InviteModal(props) {
                   className="cancelBtn"
                   src="../images/closeBtn.png"
                   alt=""
-                  onClick={null}
+                  onClick={removeUser}
                 />
               </div>
             </div>

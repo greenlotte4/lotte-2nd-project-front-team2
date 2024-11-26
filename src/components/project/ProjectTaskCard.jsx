@@ -2,103 +2,136 @@
 /* eslint-disable react/prop-types */
 import { CustomSVG } from "./CustomSVG";
 
-export const TaskCard = ({ title, content, priority, status, duedate, subTasks=[], checked=0, tags=[], commentsList=[] }) => {
-
-   
+export const TaskCard = ({
+  title,
+  content,
+  priority,
+  status,
+  duedate,
+  subTasks = [],
+  checked = 0,
+  tags = [],
+  commentsList = [],
+}) => {
+    let color = "#00000050";
+  if(priority<2){color = "#EC6240";}
+  else if(priority===2){color = "#F3AF3D";}
+  else if(priority>2){color = "#2A63F6";}
   return (
-    <article className="flex gap-2 items-start p-3 mt-2 w-full bg-white rounded-lg border border-solid shadow-sm border-black border-opacity-10">
-      <div className="flex flex-col flex-1 shrink w-full basis-0">
-        <div className="flex justify-between items-start py-px pl-1.5 w-full">
-            <h3 className="py-0.5 w-auto">{title}</h3>
-            <CustomSVG id={'p'+priority} />
+    <article className="flex gap-2 p-3 mt-2 w-full bg-white rounded-lg border shadow-sm border-black/10">
+      <div className="flex flex-col flex-1 w-full">
+        {/* Title and Priority */}
+        <div className="flex justify-between items-start py-px pl-1.5">
+        {status && (
+        <div className="flex flex-col justify-center items-center px-0.5 py-px w-6 text-lg leading-none whitespace-nowrap min-h-[24px]">
+          <CustomSVG 
+            id={
+              status === "active" 
+                ? "circle-unchecked" 
+                : status === "completed" 
+                ? "circle-checked-filled" 
+                : "circle-checked"
+            } 
+            color={color} 
+          />
         </div>
-        {content&&
-        <section className="flex gap-1.5 items-start pt-1.5 mt-1.5 max-w-full rounded-lg w-[231px]">
-            <div className="flex flex-col justify-center items-start pr-1">
-                <CustomSVG id="subject" color="#00000050" />
+      )}
+          <h3>{title}</h3>
+          <CustomSVG id={`p${priority}`} />
+        </div>
+
+        {/* Content Section */}
+        {content && (
+          <section className="flex gap-1.5 items-start pt-1.5">
+            <CustomSVG id="subject" color="#00000050" />
+            <p className="flex-1 text-sm text-black/50">{content}</p>
+          </section>
+        )}
+
+        {/* Subtasks Section */}
+        <section className="flex flex-col mt-1.5">
+          {subTasks.map((subTask) => (
+            <div className="flex items-center gap-1.5 h-[22px]" key={subTask.id}>
+              <CustomSVG
+                id={subTask.isChecked ? "checkbox-checked" : "checkbox"}
+                color={subTask.isChecked ? "#A2A2E6" : "#8A8AE2"}
+              />
+              <p className="flex-1 text-neutral-500">{subTask.name}</p>
             </div>
-            <p className="flex flex-col flex-1 shrink w-full text-sm leading-4 basis-0 text-black text-opacity-50">
-                <span className="gap-2 w-full">{content}</span>
-            </p>
+          ))}
+          <button className="flex items-center justify-center gap-1.5 py-1.5 mt-2 text-sm rounded-lg bg-gray-600/10 text-gray-600/60">
+            <CustomSVG id="add-checkbox" />
+            <span>
+              {checked}/{subTasks.length} 새 하위 목표 생성
+            </span>
+          </button>
         </section>
-}
-        <section className="flex flex-col mt-1.5 w-full">
-            {subTasks.map((subTask)=>(
-                <div className="flex gap-1.5 items-center w-full h-[22px]" key={subTask.id}>
-                    <div className="flex items-end self-stretch py-0.5 my-auto w-5">
-                        {subTask.isChecked?(<CustomSVG id="checkbox-checked" color="#A2A2E6" />)
-                        :(<CustomSVG id="checkbox" color="#8A8AE2" />)}
-                    </div>
-                    <div className="flex flex-1 shrink gap-1.5 items-center self-stretch my-auto leading-6 basis-0 text-neutral-500">
-                        <p className="self-stretch my-auto">{subTask.name}</p>
-                        <div className="flex shrink-0 self-stretch my-auto w-4 h-5" />
-                    </div>
-                </div>
+
+        {/* Tags Section */}
+        {tags.length > 0 && (
+          <section className="flex flex-wrap gap-2 mt-1.5 text-xs text-black/50">
+            <CustomSVG id="tag" />
+            {tags.map((tag, index) => (
+              <div
+                key={index}
+                className="px-2 py-1 rounded-2xl bg-zinc-700/10 text-xs"
+              >
+                {tag}
+              </div>
             ))}
-            
-            <button className="flex overflow-hidden gap-1.5 justify-center items-center py-1.5 mt-2 w-full text-sm tracking-normal leading-none rounded-lg bg-gray-600 bg-opacity-10 text-gray-600 text-opacity-60">
-                <CustomSVG id="add-checkbox" />
-                <span className="self-stretch my-auto">{checked}/{subTasks.length} 새 하위 목표 생성</span>
-            </button>
-        </section>
-        {tags.length>0 &&
-            <section className="flex overflow-hidden flex-wrap gap-2.5 items-start mt-1.5 w-full text-xs leading-none text-black text-opacity-50">
-                <div className="flex flex-wrap flex-1 shrink gap-1.5 items-center pt-1.5 w-full basis-0">
-                <CustomSVG id="tag" />
-                {tags.map((tag, index) => (
-                    <div key={index} className="flex items-center self-stretch p-0.5 my-auto leading-none rounded-2xl bg-zinc-700 bg-opacity-10 text-black text-opacity-50">
-                    <div className="self-stretch px-1.5 py-1 my-auto">{tag}</div>
-                    </div>
-                ))}
-                </div>
-            </section>
-        }
-        <section className="flex overflow-hidden flex-wrap gap-2 items-start mt-1.5 w-full text-sm tracking-normal leading-none text-gray-600 text-opacity-60">
-            {duedate && 
-            <div className="flex flex-1 shrink gap-1.5 items-center pt-1.5 whitespace-nowrap basis-5">
-                <CustomSVG id="calendar" />
-                <time className="self-stretch my-auto">{duedate}</time>
+          </section>
+        )}
+
+        {/* Due Date and Comments Section */}
+        <section className="flex flex-wrap gap-2 mt-1.5 text-sm text-gray-600/60">
+          {duedate && (
+            <div className="flex items-center gap-1.5 w-[232px]">
+              <CustomSVG id="calendar" />
+              <time>{duedate}</time>
             </div>
-            }
-            <div className="flex gap-1.5 items-center pt-1.5 min-h-[25px] w-[232px]">
-                <CustomSVG id="comment" />
-                <span className="self-stretch my-auto">의견 {commentsList.length}</span>
-            </div>
-            {commentsList?.map((comment)=>(
-                <article className="flex gap-1.5 items-start leading-4 w-[232px]" key={comment.id}>
-                    <img
-                        loading="lazy"
-                        src="https://cdn.builder.io/api/v1/image/assets/TEMP/5005caf306e020a63875ae89317ed34981ec083804afbfa938c3ea7760d10078?placeholderIfAbsent=true&apiKey=64129ff822ae4d01a6810b1149e35589"
-                        alt=""
-                        className="object-contain shrink-0 w-5 aspect-square min-h-[20px]"
-                    />
-                    <div className="flex-1 shrink basis-0">
-                        <span className="text-gray-600">{comment.user}</span>
-                        <time className="text-gray-600"> {comment.rdate}</time>
-                        <p>{comment.content}</p>
-                    </div>
-                </article>
-            ))}
-            
-            <form className="flex gap-1.5 items-center px-2.5 py-1 rounded-lg bg-gray-600 bg-opacity-10 min-h-[25px] w-[232px]">
-                <CustomSVG id="reply" />
-                <input
-                    type="text"
-                    placeholder="의견 작성하기"
-                    className="self-stretch my-auto w-[185px] bg-transparent border-none outline-none"
-                    aria-label="의견 작성하기"
-                />
-            </form>
+          )}
+          <div className="flex items-center gap-1.5">
+            <CustomSVG id="comment" />
+            <span>의견 {commentsList.length}</span>
+          </div>
+          {commentsList.map((comment) => (
+            <article
+              className="flex gap-1.5 items-start w-[232px] text-sm"
+              key={comment.id}
+            >
+              <img
+                src="https://cdn.builder.io/api/v1/image/assets/TEMP/5005caf306e020a63875ae89317ed34981ec083804afbfa938c3ea7760d10078"
+                alt=""
+                className="w-5 h-5 rounded-full"
+              />
+              <div className="flex-1">
+                <span className="text-gray-600">{comment.user}</span>
+                <time className="text-gray-600"> {comment.rdate}</time>
+                <p>{comment.content}</p>
+              </div>
+            </article>
+          ))}
+          <form className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gray-600/10">
+            <CustomSVG id="reply" />
+            <input
+              type="text"
+              placeholder="의견 작성하기"
+              className="w-full bg-transparent outline-none"
+              aria-label="의견 작성하기"
+            />
+          </form>
         </section>
-        <section className="flex gap-1.5 justify-center items-start pt-2.5 mt-1.5 w-full text-sm font-medium tracking-wide leading-6 uppercase whitespace-nowrap text-slate-500">
-            <button className="flex overflow-hidden flex-col justify-center items-center rounded-lg border border-solid border-slate-500 border-opacity-50">
-            <span className="overflow-hidden px-6 py-1 max-md:px-5">수정</span>
-            </button>
-            <button className="flex overflow-hidden flex-col justify-center items-center rounded-lg">
-            <span className="overflow-hidden px-4 py-1">삭제</span>
-            </button>
+
+        {/* Action Buttons */}
+        <section className="flex justify-center gap-1.5 mt-1.5 text-sm text-slate-500">
+          <button className="px-6 py-1 border rounded-lg border-slate-500/50">
+            수정
+          </button>
+          <button className="px-4 py-1 border rounded-lg border-transparent">
+            삭제
+          </button>
         </section>
       </div>
     </article>
   );
-}
+};

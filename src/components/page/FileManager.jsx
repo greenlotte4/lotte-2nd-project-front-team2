@@ -94,14 +94,6 @@ const FileManager = () => {
               </span>
             )}
             <input className="field-type" type={field.type} />
-            <button
-              onClick={() =>
-                addField(propertyOptions[Math.floor(Math.random() * propertyOptions.length)])
-              }
-              className="add-field-btn"
-            >
-              + 속성 추가
-            </button>
 
             {isContextMenuOpen && selectedFieldId && (
                 <div className="context-menu">

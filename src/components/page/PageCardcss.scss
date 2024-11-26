@@ -1,6 +1,9 @@
 .pageCard{
     width: 280px;
     height: 270px;
+
+    position: relative;
+
     background: white; /* Background color of the card */
     border-radius: 16px; /* Smooth rounded corners */
     box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1), /* Subtle shadow for depth */
@@ -157,6 +160,57 @@
         font-size: 14px;
         color: #555;
         font-weight: bold;  
+    }
+
+    .card-avatar {
+      display: inline-block;
+      width: 50px;
+      height: 50px;
+      font-size: 24px;
+      line-height: 50px;
+      text-align: center;
+      border-radius: 50%;
+      background-color: #f5f5f5;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .card-avatar:hover {
+      background-color: #e0e0e0;
+    }
+    
+    .emoji-picker {
+      position: absolute;
+      top: 0px; /* Position above the card header */
+      left: 50px; /* Adjust horizontally */
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+      padding: 10px;
+      z-index: 10;
+      width: 250px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    
+    .emoji-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr); /* 6 emojis per row */
+      gap: 8px;
+    }
+    
+    .emoji-item {
+      font-size: 20px;
+      cursor: pointer;
+      text-align: center;
+      padding: 5px;
+      border-radius: 50%;
+      transition: background-color 0.2s;
+    }
+    
+    .emoji-item:hover {
+      background-color: #f0f0f0;
     }
 
 }

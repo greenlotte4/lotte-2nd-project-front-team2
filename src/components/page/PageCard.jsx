@@ -1,11 +1,76 @@
+import { useState } from "react";
+import { Link } from "react-router-dom";
 
 export default function PageCard({ isDropdownOpen, toggleDropdown, teamMembers, relatedProject }){
+
+    const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false); // State for emoji picker
+  const [selectedEmoji, setSelectedEmoji] = useState("🐶"); // Default avatar emoji
+
+  const toggleEmojiPicker = () => {
+    setIsEmojiPickerOpen((prev) => !prev); // Toggle emoji picker
+  };
+
+  const handleEmojiSelect = (emoji) => {
+    setSelectedEmoji(emoji); // Set selected emoji as avatar
+    setIsEmojiPickerOpen(false); // Close the picker
+  };
+
+  const emojiList = [
+    "😀",
+    "😃",
+    "😄",
+    "😁",
+    "😆",
+    "😅",
+    "😂",
+    "🤣",
+    "😊",
+    "😇",
+    "🙂",
+    "🙃",
+    "😉",
+    "😌",
+    "😍",
+    "🥰",
+    "😘",
+    "😗",
+    "😙",
+    "😚",
+    "😋",
+    "😜",
+    "🤪",
+    "😝",
+    "🤑",
+    "🤗",
+    "🤔",
+    "🤭",
+  ]; // Example emoji list
+
+
     return(<>
     <article className="pageCard">
                         <div className="card-header">
-                            <div className="card-avatar">
-                            &#128054;
+                            <div className="card-avatar cursor-pointer"
+                                onClick={toggleEmojiPicker} // Toggle emoji picker on click
+                            >
+                                {selectedEmoji}
                             </div>
+                            {/* Emoji Picker */}
+                            {isEmojiPickerOpen && (
+                            <div className="emoji-picker">
+                                <div className="emoji-grid">
+                                {emojiList.map((emoji, index) => (
+                                    <span
+                                    key={index}
+                                    className="emoji-item"
+                                    onClick={() => handleEmojiSelect(emoji)}
+                                    >
+                                    {emoji}
+                                    </span>
+                                ))}
+                                </div>
+                            </div>
+                            )}
                             <div className="card-title">
                             <h3>Support Team</h3>
                             </div>
@@ -25,10 +90,12 @@ export default function PageCard({ isDropdownOpen, toggleDropdown, teamMembers, 
                             )}
                         </div>
                         <div className="card-content">
-                            <p>
-                            Support your team. The customer support team is fielding the good, the
-                            bad, and the ugly day in and day out.
-                            </p>
+                            <Link to="/page/view">
+                                <p>
+                                Support your team. The customer support team is fielding the good, the
+                                bad, and the ugly day in and day out.
+                                </p>
+                            </Link>
                             <div className="team-members">
                                 <div className="Members flex ">
                             {teamMembers && teamMembers.length > 0 ? (
@@ -60,6 +127,7 @@ export default function PageCard({ isDropdownOpen, toggleDropdown, teamMembers, 
                                 )}
                             </div>
                          </div>
+                         
                         </article>
     
     </>);
