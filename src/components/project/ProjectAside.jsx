@@ -1,7 +1,6 @@
 import * as React from "react";
 import ProjectAsideSection from "./ProjectAsideSection";
 import {CustomSearch} from "../Search";
-import ProjectAsideItem from "./ProjectAsideItem";
 
 const projectData = {
   waiting: {
