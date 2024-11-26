@@ -38,6 +38,7 @@ import Home from './pages/home/Home'
 import MyModify from './pages/my/MyModify'
 import NewPagePages from './pages/page/NewPage'
 import MyApproval from './pages/my/Approval'
+import MyModify from './pages/my/MyModify'
 const MainIndexComponent = lazy(() => import("./components/render/main"))
 
 
