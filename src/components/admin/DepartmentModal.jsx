@@ -4,6 +4,7 @@ import MemberAddressModal from "./MemberAddressModal";
 import CustomAlert from "../Alert";
 export default function DepartmentModal({ isOpen, onClose , text }) {
     if (!isOpen) return null;
+    let newId;
     //                                              useState                                             //
     const [user, setUser] = useState([])
     const [user2, setUser2] = useState([])
@@ -21,7 +22,17 @@ export default function DepartmentModal({ isOpen, onClose , text }) {
     //                                              useState                                             //
 
     //                                              useEffect                                               //
-    
+    useEffect (()=>{
+      axiosInstance
+        .get("/api/users")
+        .then((resp) => {
+            if(resp.status === 200){
+              const users = resp.data;
+              setUser2(users);  
+            }
+        })
+        .catch()
+    },[])
     //                                              useEffect                                               //
     const getMembers = () => {
       axiosInstance
@@ -34,26 +45,18 @@ export default function DepartmentModal({ isOpen, onClose , text }) {
         })
         .catch()
         setAddressIsOpen(true)
-        
     }
 
     const getMembers2 = () => {
-      axiosInstance
-        .get("/api/users")
-        .then((resp) => {
-            if(resp.status === 200){
-              const users = resp.data;
-              setUser2(users);  
-              setAddressIsOpen2(true)
-            }
-        })
-        .catch()
-        
+      setAddressIsOpen2(true)
     }
     
     const selectLeader = (e) => {
-        setSelectedLeader(e.target.dataset.id)
-        setAddressIsOpen(false)
+      newId = e.target.dataset.id;
+      const filteredUser2 = user2.filter(user => !(user.id == newId));
+      setSelectedLeader(newId);
+      setUser2(filteredUser2);
+      setAddressIsOpen(false);
     }
 
     const changeDepName = (e) => {setDepName(e.target.value)}
@@ -85,7 +88,38 @@ export default function DepartmentModal({ isOpen, onClose , text }) {
               setLink('');
               setTimeout(() => {
                 setAlert(false);  // 알림 숨기기
-              }, 3000);
+                window.location.reload()
+              }, 2000);
+            }
+        })
+        .catch()
+    }
+
+    const makeTeam = (e) => {
+      const data = {
+        "name" : depName,
+        "discription" : depDiscription,
+        "leader" : selectedLeader,
+        "members" : selectedMembers.map(v => v.id),
+        "link" : link
+      }
+      console.log(data)
+      axiosInstance
+        .post("/api/team",data)
+        .then((resp)=>{
+            if(resp.status === 200){
+              setAlert(true)
+              setType("success")
+              setMessage("팀 등록이 성공하엿습니다.")
+              setDepName('');
+              setDepDiscription('');
+              setSelectedLeader(null);
+              setSelectedMembers([]);
+              setLink('');
+              setTimeout(() => {
+                setAlert(false);  // 알림 숨기기
+                window.location.reload()
+              }, 2000);
             }
         })
         .catch()
@@ -101,23 +135,16 @@ export default function DepartmentModal({ isOpen, onClose , text }) {
         const newId = e.target.dataset.id;
         const newUid = e.target.dataset.uid;
         const newEmail = e.target.dataset.email;
-        const isChecked = e.target.checked; // 체크 상태 확인
       
-        if (isChecked) {
           // 체크박스가 선택되었을 경우
-          setMembers(prevMembers => {
-            const updatedMembers = [...prevMembers, { id: newId, uid: newUid, email: newEmail }];
-            setSelectedMembers(updatedMembers); // selectedMembers도 업데이트
-            return updatedMembers;
-          });
-        } else {
-          // 체크박스가 해제되었을 경우
-          setMembers(prevMembers => {
-            const updatedMembers = prevMembers.filter(member => member.id !== newId);
-            setSelectedMembers(updatedMembers); // selectedMembers도 업데이트
-            return updatedMembers;
-          });
-        }
+        setMembers(prevMembers => {
+          const updatedMembers = [...prevMembers, { id: newId, uid: newUid, email: newEmail }];
+          setSelectedMembers(updatedMembers); // selectedMembers도 업데이트
+          const filteredUser2 = user2.filter(user => !(user.id == newId));
+          setUser2(filteredUser2)
+          return updatedMembers;
+        });
+        
       };
 
     const closeAddress = () => {setAddressIsOpen(false)}
@@ -158,20 +185,13 @@ export default function DepartmentModal({ isOpen, onClose , text }) {
                 {selectedLeader && 
                 <>
                     {user
-                    .filter(v => v.id == selectedLeader)  // selectedLeader와 일치하는 항목만 필터링
+                    .filter(v => v.id == selectedLeader)
                     .map(v => (
-                    <div className="flex gap-6" key={v.id}>
+                    <div className="flex gap-4" key={v.id}>
                       <img src="/images/document-folder-profile.png" alt="User profile" className="cursor-pointer"  data-id={v.id} />
                       <div className="flex flex-col justify-between">
                         <p className="text-xs">{v.uid}</p>
                         <p className="text-xs text-gray-400">{v.email}</p>
-                      </div>
-                      <div className="flex items-center">
-                        <select className="outline-none text-xs text-center text-gray-400">
-                          <option>읽기</option>
-                          <option>쓰기</option>
-                          <option>모든권한</option>
-                        </select>
                       </div>
                     </div>
                     ))
@@ -223,7 +243,12 @@ export default function DepartmentModal({ isOpen, onClose , text }) {
             </div>
             <div className="mb-8 flex justify-end gap-2 mb-8">
               <button onClick={onClose} className="bg-gray-100 w-20 h-8 rounded-md text-xs">취소</button>
+              {text === '부서 생성' &&
               <button onClick={makeDep} className="bg-purple white w-20 h-8 rounded-md text-xs">만들기</button>
+              }
+              {text === '팀 생성' &&
+              <button onClick={makeTeam} className="bg-purple white w-20 h-8 rounded-md text-xs">만들기</button>
+              }
             </div>
             </div>
         </div>
@@ -237,7 +262,7 @@ export default function DepartmentModal({ isOpen, onClose , text }) {
         isOpen={addressIsOpen}
         onClose={closeAddress}
         text="부서장등록"
-        data={user}
+        data={user2}
         changeHandler={selectLeader}
         />
         <MemberAddressModal 
