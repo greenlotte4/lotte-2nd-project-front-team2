@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import React from "react";
 import ProjectAsideItem from "./ProjectAsideItem";
 import { CustomSVG } from "./CustomSVG";
