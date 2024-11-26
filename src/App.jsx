@@ -37,6 +37,7 @@ import ResultId from './pages/user/ResultId'
 import Home from './pages/home/Home'
 import MyModify from './pages/my/MyModify'
 import NewPagePages from './pages/page/NewPage'
+import MyApproval from './pages/my/Approval'
 const MainIndexComponent = lazy(() => import("./components/render/main"))
 
 
@@ -73,6 +74,7 @@ function App() {
         <Route path='/my' element={<Main />}>
           <Route index element={<MyMain />}/>
           <Route path='modify' element={<MyModify />}/>
+          <Route path='approval' element={<MyApproval />}/>
           <Route path='attendance' element={<MyAttendance />}/>
         </Route>
 

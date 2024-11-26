@@ -1,50 +1,41 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import '@/pages/my/My.scss'
-import { Link } from 'react-router-dom'
+import MyAside from '@/components/my/MyAside.jsx';
+import { useNavigate, useParams } from "react-router-dom";
+
 
 export default function MyMain() {
 
+  const params = useParams();
+  const navigate = useNavigate();
   const [progress, setProgress] = useState(65)
+  const [menuActive, setMenuActive] = useState("")
+
+  useEffect(() => {
+    if (params.page) {
+      setMenuActive(params.page); // e.g., 'my' from /my or other params
+    }else{
+      setMenuActive("")
+    }
+  }, [params.page]);
+  
+
+
+  
+  const profileModify = (e) => {
+    e.preventDefault();
+    navigate("/my/modify");
+  }
 
   return (
     <div id='my-main-container'>
-      <aside className='my-aside flex flex-col justify-between'>
-        <div>
-          <h2 className='text-xl'>마이페이지</h2>
-          <div className='mt-[20px]'>
-            <Link to="/my">
-                <li className='flex justify-between items-center h-[50px]'>
-                  <p>나의 프로필</p>
-                  <img className='my-menu-allow' src="/images/arrowRight.png" alt='allow' />
-                </li>
-            </Link>
-            <Link to="/my">
-                <li className='flex justify-between items-center h-[50px]'>
-                  <p>나의 결재현황</p>
-                  <img className='my-menu-allow' src="/images/arrowRight.png" alt='allow' />
-                </li>
-            </Link>
-            <Link to="/my">
-                <li className='flex justify-between items-center h-[50px]'>
-                  <p>나의 출퇴근현황</p>
-                  <img className='my-menu-allow' src="/images/arrowRight.png" alt='allow' />
-                </li>
-            </Link>
-            <Link to="/my">
-                <li className='flex justify-between items-center h-[50px]'>
-                  <p>나의 결제정보</p>
-                  <img className='my-menu-allow' src="/images/arrowRight.png" alt='allow' />
-                </li>
-            </Link>
-          </div>
-        </div>
-      </aside>
+      <MyAside menuActive={menuActive} />
       <section className='my-main-main'>
         <article className='my-profile flex flex-col justify-center'>
           <div className='flex flex-row justify-left items-center p-10 ml-[30px]'>
             <img className='profile-img' src="/images/user_face_icon.png" alt="user-face-icon" />
             <div className='flex flex-col ml-[40px]'>
-              <h3 className='text-lg mb-1'>닉네임</h3>
+              <h3 className='text-lg mb-3 font-light text-gray-500'>yeonwha****</h3>
               <div className='speech-bubble drop-shadow-lg py-[20px] px-[40px] flex items-center'>
                 <span>안녕하세요. 개발팀 박연화입니다.<br/> 어쩌고</span>
               </div>
@@ -90,7 +81,8 @@ export default function MyMain() {
                     </tr>
                   </tbody>
                 </table>
-                <button className='btn-profile bg-indigo-500 mt-20 float-right text-white  absolute bottom-[20px] right-[20px]'>프로필 수정</button>
+                <button onClick={profileModify}
+                className='btn-profile bg-indigo-500 mt-20 float-right text-white  absolute bottom-[20px] right-[20px]'>프로필 수정</button>
               </div>
             </div>
             <div className='current-plan relative border p-[20px]  h-[450px] '>

@@ -88,7 +88,6 @@ export default function Login() {
         } else {
           navigate("/my")
         }
-          
       }
     }, [alert]);
   
