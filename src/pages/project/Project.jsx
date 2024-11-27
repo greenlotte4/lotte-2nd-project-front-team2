@@ -7,39 +7,34 @@ import ShareMember from "../../components/ShareMember";
 const projectColumns = [
   {
     title: "Get Started",
-    count: 4,
     color:
-      "bg-[linear-gradient(0deg,rgba(245,35,75,0.40_0%,rgba(245,35,75,0.40)_100%),#F5234B)]",
+      "linear-gradient(0deg,rgba(245,35,75,0.40)0%,rgba(245,35,75,0.40)100%),#F5234B",
     projects: [
       {
         title: "👋 Welcome to your board 👉",
         status: "active",
         content: "Here you'll submit and manage all of your design requests.",
+        priority: 4,
       },
     ],
   },
   {
     title: "🛠️ In Progress",
-    count: 1,
     color:
-      "bg-[linear-gradient(0deg,rgba(0,112,245,0.40_0%,rgba(0,112,245,0.40)_100%),#0070F5)]",
+      "linear-gradient(0deg,rgba(0,112,245,0.40)0%,rgba(0,112,245,0.40)100%),#0070F5",
     projects: [
       {
         title: "화면구현 설계",
         content: "figma 디자인 및 구현 상태 확인",
-        status: "active",
-        stats: [
-          { icon: "􀋳", value: "0/1" },
-          { icon: "􀉉", value: "Tomorrow" },
-          { icon: "􂄹", value: "1" },
-        ],
+        status: "completed",
+        priority: 2,
       },
       {
         title: "화면 구현",
         content:
           "Html로 React 실행 화면 되도록이면 구현하기. 불가능할시 다음주에 더 열심히 하기",
         status: "active",
-        priority: 2,
+        priority: 0,
         subTasks: [
           { id: 1, isChecked: false, name: "화면 구현하기" },
           { id: 2, isChecked: true, name: "DB 설계하기" },
@@ -56,15 +51,13 @@ const projectColumns = [
   },
   {
     title: "✅ Approved",
-    count: 17,
     color:
-      "bg-[linear-gradient(0deg,rgba(30,195,55,0.40_0%,rgba(30,195,55,0.40)_100%),#1EC337)]",
+      "linear-gradient(0deg,rgba(30,195,55,0.40)0%,rgba(30,195,55,0.40)100%),#1EC337",
     projects: [
       {
         title: "Search history for Backlinks and Keywords tool",
         priority: 1,
         status: "completed",
-        stats: [{ icon: "􀋳", value: "2/2" }],
       },
     ],
   },
@@ -73,7 +66,7 @@ const projectColumns = [
 export default function Project() {
   // Tailwind CSS 클래스 묶음
   const containerClass = "flex pb-2.5 w-full rounded-none max-md:max-w-full";
-  const headerButtonClass = "flex flex-col justify-center items-end px-9 py-2 rounded-xl bg-slate-100 max-md:pl-5";
+  const headerButtonClass = "flex flex-col justify-center items-end px-9 py-2 rounded-xl bg-zinc-200 max-md:pl-5";
   const addBoardClass = "flex gap-2 items-center px-3 py-2 w-full text-sm rounded-lg bg-zinc-200 bg-opacity-30";
 
   return (

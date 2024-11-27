@@ -24,16 +24,18 @@ export const ProjectTaskDynamic = ({
   const color = getPriorityColor();
 
   return (
-    <div className="flex gap-2 p-3 mt-2 w-full bg-white rounded-lg border shadow-sm border-black/10" onClick={handleToggle}>
+    <div className="flex gap-1 p-3 mt-2 w-full bg-white rounded-lg border shadow-sm border-black/10 cursor-pointer" onClick={handleToggle}>
       
 
         {/* Conditionally Render Content */}
         {isSelected ? (
           <div className="flex flex-col flex-1 w-full">
           {/* Title and Priority */}
-          <div className="flex justify-between items-start py-px pl-1.5">
-            <h3>{title}</h3>
-            <CustomSVG id={`p${priority}`} color={color} />
+          <div className="flex justify-between items-start py-px pl-1.5 gap-2">
+            <div className="text-sm">{title}</div>
+            <div className="w-[20px]">
+              <CustomSVG id={`p${priority}`} color={color}/>
+            </div>
           </div>
             {/* Content Section */}
             {content && (
@@ -139,28 +141,27 @@ export const ProjectTaskDynamic = ({
             }
             
             <div className="flex flex-col flex-1 shrink basis-0 text-black text-opacity-50">
-              <div className="text-sm leading-4 min-h-[24px] ">{title}</div>
+              <div className={`${status==='active'?'':'line-through'} text-sm leading-4 min-h-[24px] `}>{title}</div>
               {content && (
-                <div className={`${status&&
-                  'max-w-[200px]'||'max-w-[220px]'} leading-4 whitespace-nowrap text-ellipsis overflow-hidden`}>{content}</div>
+                <div className={`${status==='active'?'':'line-through'} max-w-[200px] leading-4 truncate text-xs`}>{content}</div>
               )}
               {subTasks && duedate &&commentsList && 
                 <div className="flex flex-wrap gap-2 items-start pt-3 w-full text-xs leading-none">
                   {subTasks && 
                     <div className="flex gap-1 items-center whitespace-nowrap">
-                      <CustomSVG id="add-checkbox" />
+                      <CustomSVG id="add-checkbox" size="18"/>
                       <div className="self-stretch my-auto text-ellipsis">{checked}/{subTasks.length}</div>
                     </div>
                   }
                   {duedate && 
                     <div className="flex gap-1 items-center whitespace-nowrap">
-                      <CustomSVG id="calendar" />
+                      <CustomSVG id="calendar" size="18"/>
                       <div className="self-stretch my-auto text-ellipsis">{duedate}</div>
                     </div>
                   }
                   {commentsList && 
                     <div className="flex gap-1 items-center whitespace-nowrap">
-                      <CustomSVG id="comment"/>
+                      <CustomSVG id="comment" size="18"/>
                       <div className="self-stretch my-auto text-ellipsis">{commentsList.length}</div>
                     </div>
                   }
@@ -169,7 +170,7 @@ export const ProjectTaskDynamic = ({
               {/* Tags */}
               {tags.length>0 && (
                 <div className="flex items-center gap-1 pt-2 text-sm">
-                  <CustomSVG id="tag" />
+                  <CustomSVG id="tag" size="18"/>
                   <div>
                     {tags[0]}
                     {tags.length > 1 && ` +${tags.length - 1}`}
