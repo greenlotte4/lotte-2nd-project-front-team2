@@ -87,4 +87,14 @@ input[type=color]::-webkit-color-swatch {
   border-radius: 6px;
   border: none;
 }
+.screen-reader { /* 스크린 리더를 고려해서 체크박스를 화면에서 숨김 */
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  margin: -1px;
+  clip-path: inset(50%);
+}
 }

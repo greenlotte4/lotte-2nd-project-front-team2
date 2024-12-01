@@ -1,4 +1,5 @@
 /* eslint-disable react/prop-types */
+import { useState } from "react";
 import { CustomSVG } from "./CustomSVG";
 
 export const ProjectTaskDynamic = ({
@@ -14,7 +15,9 @@ export const ProjectTaskDynamic = ({
   commentsList = [],
   handleToggle,
 }) => {
-  
+  const [showInput, setShowInput] = useState(false); // 입력창 표시 상태
+  const [newSubTask, setNewSubTask] = useState(""); // 새로운 하위 목표 값
+
   const getPriorityColor = () => {
     if (priority < 2) return "#EC6240";
     if (priority > 2) return "#2A63F6";
@@ -23,7 +26,25 @@ export const ProjectTaskDynamic = ({
   };
 
   const color = getPriorityColor();
-  
+  const handleAddSubTask = () => {
+    if (newSubTask.trim() === "") return; // 빈 입력 무시
+    // 하위 목표 추가 로직 (API 호출 또는 상태 업데이트)
+    console.log("New SubTask:", newSubTask);
+    setNewSubTask(""); // 입력창 초기화
+    setShowInput(false); // 입력창 닫기
+  };
+  const [nowSubTasks, setSubTasks] = useState(subTasks);
+
+  // 체크박스 상태 업데이트 함수
+  const handleCheckboxChange = (id) => {
+    setSubTasks((prevSubTasks) =>
+      prevSubTasks.map((subTask) =>
+        subTask.id === id
+          ? { ...subTask, isChecked: !subTask.isChecked }
+          : subTask
+      )
+    );
+  };
 
 
   return (
@@ -48,28 +69,70 @@ export const ProjectTaskDynamic = ({
                 <p className="flex-1 text-sm text-black/50">{content}</p>
               </section>
             )}
-
-            {/* Subtasks Section */}
-            <section className="flex flex-col mt-1.5">
-              {subTasks.map((subTask) => (
-                <div
-                  className="flex items-center gap-1.5 h-[22px]"
-                  key={subTask.id}
-                >
+{/* 하위 목표 */}
+<section className="flex flex-col mt-1.5">
+            {nowSubTasks.map((subTask,index) => (
+              <div
+                className="flex items-center gap-1.5 h-[22px]"
+                key={subTask.id}
+              >
+                <input id={"check"+index} checked={subTask.isChecked ? true : false} type="checkbox" className="screen-reader" 
+            onChange={(e) => {
+              e.stopPropagation(); handleCheckboxChange(subTask.id)}}/>
+                <label htmlFor={"check"+index} className="flex-1 text-neutral-500">
                   <CustomSVG
                     id={subTask.isChecked ? "checkbox-checked" : "checkbox"}
                     color={subTask.isChecked ? "#A2A2E6" : "#8A8AE2"}
                   />
-                  <p className="flex-1 text-neutral-500">{subTask.name}</p>
-                </div>
-              ))}
-              <button className="flex items-center justify-center gap-1.5 py-1.5 mt-2 text-sm rounded-lg bg-gray-600/10 text-gray-600/60">
+                  {subTask.name}
+                </label>
+                
+              </div>
+            ))}
+            {/* 새 하위 목표 추가 버튼 및 입력창 */}
+            {showInput ? (
+              <div className="flex items-center gap-2 mt-2">
+                
+                <button
+                  className=" text-gray-500 bg-gray-200 rounded-xl"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowInput(false);}}
+                >
+                <CustomSVG id="close" />
+                </button>
+                <input
+                  type="text"
+                  value={newSubTask}
+                  onClick={(e) => {e.stopPropagation();}}
+                  onChange={(e) => setNewSubTask(e.target.value)}
+                  placeholder="새 하위 목표 입력"
+                  className="flex-1 px-2 py-1 border rounded-lg outline-none text-sm"
+                />
+                <button
+                  className=" text-white bg-blue-500 rounded-xl"
+                  onClick={(e) => {
+                    e.stopPropagation();handleAddSubTask}}
+                >
+                  
+                <CustomSVG id="add" />
+                </button>
+                
+              </div>
+            ) : (
+              <button
+                className="flex items-center justify-center gap-1.5 py-1.5 mt-2 text-sm rounded-lg bg-gray-600/10 text-gray-600/60"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowInput(true);}}
+              >
                 <CustomSVG id="add-checkbox" />
                 <span className="text-sm">
                   {checked}/{subTasks.length} 새 하위 목표 생성
                 </span>
               </button>
-            </section>
+            )}
+          </section>
 
             {/* Tags Section */}
             {tags.length > 0 && (
