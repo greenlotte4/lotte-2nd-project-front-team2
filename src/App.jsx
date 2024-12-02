@@ -62,7 +62,14 @@ function App() {
   const logout = useAuthStore((state) => state.logout);
 
   // 검증 제외 경로
-  const excludedRoutesSet = new Set(["/", "/service", "/price", "/faq", "/user/login", "/user/register"]);
+  const excludedRoutesSet = new Set([
+    "/",
+    "/service",
+    "/price",
+    "/faq",
+    "/user/login",
+    "/user/register",
+  ]);
 
   useEffect(() => {
     const checkToken = async () => {
@@ -70,17 +77,18 @@ function App() {
       if (excludedRoutesSet.has(location.pathname)) {
         console.log("Excluded route, skipping token check.");
         return;
-      }; // 제외 경로는 검증하지 않음
+      } // 제외 경로는 검증하지 않음
 
       const accessToken = getAccessToken();
       console.log("현재 액세스 토큰 :", accessToken);
-
 
       const tokenExpired = isTokenExpired();
       if (tokenExpired) {
         console.log("액세스 토큰 만료됨. 재발급 받을 거임...");
         const newToken = await refreshAccessToken();
-        console.log("리프래시액새스토큰 쭈스탠드에서 꺼내 쓴 거 결과임 "+ newToken)
+        console.log(
+          "리프래시액새스토큰 쭈스탠드에서 꺼내 쓴 거 결과임 " + newToken
+        );
         if (!newToken) {
           console.error("액세스 토큰 재발급 실패함. Redirecting to login...");
           alert("로그인 세션이 만료되었습니다. 다시 로그인해주세요."); // 사용자 알림 추가
@@ -110,10 +118,11 @@ function App() {
           />
           <Route path="service" element={<ServicePage />} />
           <Route path="price" element={<PricePage />} />
-            <Route path="faq" element={<FAQPage />} />
-          <Route path="faq" element={<FAQLayout />}></Route>
+          <Route path="faq" element={<FAQPage />} />
+          <Route path="faq" element={<FAQLayout />}>
             <Route index element={<FAQPage />} />
             <Route path="write" element={<FAQWrite />} />
+          </Route>
         </Route>
 
         {/* 홈 */}
@@ -138,7 +147,7 @@ function App() {
           <Route path="modify" element={<MyModify />} />
           <Route path="approval" element={<MyApproval />} />
           <Route path="attendance" element={<MyAttendance />} />
-          <Route path='payment' element={<MyPayment />}/>
+          <Route path="payment" element={<MyPayment />} />
         </Route>
 
         {/* <Route path='/home' element */}
