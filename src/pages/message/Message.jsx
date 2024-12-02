@@ -5,6 +5,9 @@ import InviteModal from "../../components/message/InviteModal";
 import ShowMoreModal from "../../components/message/ShowMoreModal";
 import AttachFileModal from "../../components/message/AttachFileModal";
 import ProfileModal from "../../components/message/ProfileModal";
+import axiosInstance from "../../services/axios";
+import { useQuery } from "@tanstack/react-query";
+import { useAuthStore } from "../../store/useAuthStore";
 
 export default function Message() {
   const [isOpen, setIsOpen] = useState(false);
@@ -14,11 +17,14 @@ export default function Message() {
   const [moreFn, setMoreFn] = useState(false);
   const [file, setFile] = useState(false);
   const [fileInfos, setFileInfos] = useState([]);
+
+  const decodeAccessToken = useAuthStore((state) => state.decodeAccessToken);
+  const payload = decodeAccessToken();
+
   const fileRef = useRef();
   const profileRef = useRef();
   const inviteRef = useRef();
   const showMoreRef = useRef();
-  const attachFileRef = useRef();
 
   const openHandler = () => {
     setIsOpen(true);
@@ -81,13 +87,13 @@ export default function Message() {
       alert("파일은 최대 5개까지 첨부 가능합니다.");
       return;
     } else {
-      // 파일 크기 제한 (10MB)
-      const maxSize = 10 * 1024 * 1024; // 5MB
+      // 파일 크기 제한 (16MB)
+      const maxSize = 16 * 1024 * 1024; // 16MB
       const oversizedFiles = selectedFiles.filter(
         (file) => file.size > maxSize
       );
       if (oversizedFiles.length > 0) {
-        alert("파일 크기가 너무 큽니다. 10MB 이하의 파일만 선택해주세요.");
+        alert("파일 크기는 최대 16MB를 초과할 수 없습니다.");
         return;
       }
       const readFilePromises = selectedFiles.map((file) => {
@@ -134,6 +140,23 @@ export default function Message() {
     }
   };
 
+  const {
+    data: roomData,
+    isLoading: isRoomLoading,
+    isError: isRoomError,
+    error: roomError,
+  } = useQuery({
+    queryKey: ["get-rooms"],
+    queryFn: async () => {
+      const response = await axiosInstance.get(
+        `/api/message/room/${payload.sub}`
+      );
+      return response.data;
+    },
+  });
+
+  console.log("roomData : ", roomData);
+
   return (
     <div id="message-container">
       <div className="aside">
@@ -155,7 +178,6 @@ export default function Message() {
 
           <div className="search">
             <img className="searchImg" src="../images/image.png" alt="" />
-            <MessageToolTip tooltip={"대화방을 검색해보세요"} />
             <input type="text" placeholder="Search..." />
           </div>
         </div>

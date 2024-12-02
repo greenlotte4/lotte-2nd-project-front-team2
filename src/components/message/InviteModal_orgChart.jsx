@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import { useEffect, useRef, useState } from "react";
 import axiosInstance from "../../services/axios";
 import { useQuery } from "@tanstack/react-query";
@@ -8,13 +9,13 @@ export default function InviteModal_orgChart({
   setUsers,
   setSelectedGroup_Id_Name,
   selectedGroup_Id_Name,
-  selectedUserIds,
-  setSelectedUserIds,
+  selectedUserUids,
+  setSelectedUserUids,
   userList,
   setUserList,
   selectHandler,
 }) {
-  const [userIds, setUserIds] = useState([]);
+  const [userUids, setUserUids] = useState([]);
 
   const [depts, setDepts] = useState([]);
   const [teams, setTeams] = useState([]);
@@ -47,6 +48,8 @@ export default function InviteModal_orgChart({
     cacheTime: 10 * 60 * 1000, // 10 minutes
     enabled: !!selectedGroup_Id_Name.group_name, // group_name이 존재할 때만 실행
   });
+
+  console.log("members:", JSON.stringify(groupMembersData));
 
   const [showList, setShowList] = useState({
     type1: false,
@@ -98,7 +101,7 @@ export default function InviteModal_orgChart({
   }, []);
 
   const setUsersHandler = (member) => {
-    if (!userIds.includes(member.id)) {
+    if (!userUids.includes(member.uid)) {
       setUsers([...users, member]);
     }
   };
@@ -172,15 +175,15 @@ export default function InviteModal_orgChart({
           ? groupMembersData.map((member) => (
               <div
                 className={`orgs-User ${
-                  selectedUserIds.some(
-                    (selectedUserId) => selectedUserId === member.id
+                  selectedUserUids.some(
+                    (selectedUserUid) => selectedUserUid === member.uid
                   )
                     ? "selectedUser"
                     : ""
                 }`}
-                key={member.id}
+                key={member.uid}
                 onClick={(e) => {
-                  selectHandler(e, member.id);
+                  selectHandler(e, member.uid);
                   setUsersHandler(member);
                 }}
               >

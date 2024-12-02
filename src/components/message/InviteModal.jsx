@@ -2,21 +2,22 @@
 import InviteModal_orgChart from "./InviteModal_orgChart";
 import InviteModal_frequent from "./InviteModal_frequent";
 import InviteModal_userSearch from "./InviteModal_userSearch";
-import { useRef, useState } from "react";
-import axiosInstance from "../../services/axios";
+import { useState } from "react";
 import useOnClickOutSide from "./useOnClickOutSide";
+import InviteModal_chatRoomName from "./InviteModal_chatRoomName";
 
 export default function InviteModal(props) {
   const { isOpen, closeHandler, option, optionHandler, inviteRef } = props;
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [users, setUsers] = useState([]);
-  const [selectedUserIds, setSelectedUserIds] = useState([]);
+  const [selectedUserUids, setSelectedUserUids] = useState([]);
   const [selectedGroup_Id_Name, setSelectedGroup_Id_Name] = useState({
     group_id: null,
     group_name: null,
   });
   const [userList, setUserList] = useState([]);
-  const [userIds, setUserIds] = useState([]);
+  const [userUids, setUserUids] = useState([]);
+  const [roomNameModal, setRoomNameModal] = useState(false);
 
   const addUser = () => {
     setSelectedUsers((prevUsers) => {
@@ -28,60 +29,60 @@ export default function InviteModal(props) {
     });
     setUsers([]);
     setSelectedGroup_Id_Name({ group_id: null, group_name: null });
-    setSelectedUserIds([]);
   };
 
-  const removeUser = (userId) => {
+  const removeUser = (userUid) => {
     setSelectedUsers((prevUsers) =>
-      prevUsers.filter((user) => user.id !== userId)
+      prevUsers.filter((user) => user.id !== userUid)
     );
-    setUserIds((prevIds) => prevIds.filter((id) => id !== userId));
-    setUsers((prevUsers) => prevUsers.filter((user) => user.id !== userId));
+    setUserUids((prevUids) => prevUids.filter((uid) => uid !== userUid));
+    setSelectedUserUids((prevUids) =>
+      prevUids.filter((uid) => uid !== userUid)
+    );
+    setUsers((prevUsers) => prevUsers.filter((user) => user.id !== userUid));
   };
 
   const clearAllUsers = () => {
     setSelectedUsers([]);
     setSelectedGroup_Id_Name({ group_id: null });
-    setSelectedUserIds([]);
-    setUserIds([]);
+    setSelectedUserUids([]);
+    setUserUids([]);
   };
 
-  const selectHandler = (e, user_Id) => {
+  const selectHandler = (e, user_Uid) => {
     e.preventDefault();
     if (!e.currentTarget.className.trim().includes("selectedUser")) {
-      if (userIds.includes(user_Id)) {
-        setUserIds((prevIds) => prevIds.filter((id) => id !== user_Id));
+      if (userUids.includes(user_Uid)) {
+        setUserUids((prevUids) => prevUids.filter((uid) => uid !== user_Uid));
       } else {
-        setUserIds((prevIds) => [...prevIds, user_Id]);
+        setUserUids((prevUids) => [...prevUids, user_Uid]);
       }
-      setSelectedUserIds([...selectedUserIds, user_Id]);
+      setSelectedUserUids([...selectedUserUids, user_Uid]);
     } else {
-      setUserIds((prevIds) => prevIds.filter((id) => id !== user_Id));
+      setUserUids((prevUids) => prevUids.filter((uid) => uid !== user_Uid));
       setUsers((prevUsers) =>
-        prevUsers.filter((user) => user.user_id !== user_Id)
+        prevUsers.filter((user) => user.user_Uid !== user_Uid)
       );
-      setSelectedUserIds((prevSelectedIds) =>
-        prevSelectedIds.filter((prevSelectedId) => prevSelectedId !== user_Id)
+      setSelectedUserUids((prevSelectedUids) =>
+        prevSelectedUids.filter((prevSelectedId) => prevSelectedId !== user_Uid)
       );
     }
   };
 
-  const formdata = new FormData();
-  formdata.append("chatMembers", JSON.stringify(selectedUsers));
-  for (let pair of formdata.entries()) {
-    console.log(pair[0] + ": " + pair[1]);
-  }
+  const submitHandler = async (e) => {
+    e.preventDefault();
+    if (selectedUserUids && selectedUserUids.length > 0) {
+      roomNameHandler();
+    }
+  };
 
-  const submitHandler = () => {
-    axiosInstance
-      .post("/api/message/room", formdata, {
-        headers: { "Content-Type": "multipart/form-data" },
-      })
-      .then((resp) => console.log(JSON.stringify(resp.data)))
-      .catch((err) => console.log(err));
+  const roomNameHandler = () => {
+    setRoomNameModal(!roomNameModal);
   };
 
   useOnClickOutSide(inviteRef, closeHandler);
+
+  console.log("selectedUserUids:", selectedUserUids);
 
   if (!isOpen) return null;
   console.log("selectedUsers :" + JSON.stringify(selectedUsers));
@@ -132,8 +133,8 @@ export default function InviteModal(props) {
                     setUsers={setUsers}
                     setSelectedGroup_Id_Name={setSelectedGroup_Id_Name}
                     selectedGroup_Id_Name={selectedGroup_Id_Name}
-                    selectedUserIds={selectedUserIds}
-                    setSelectedUserIds={setSelectedUserIds}
+                    selectedUserUids={selectedUserUids}
+                    setSelectedUserUids={setSelectedUserUids}
                     userList={userList}
                     setUserList={setUserList}
                     selectHandler={selectHandler}
@@ -146,8 +147,8 @@ export default function InviteModal(props) {
                     setUsers={setUsers}
                     setSelectedGroup_Id_Name={setSelectedGroup_Id_Name}
                     selectedGroup_Id_Name={selectedGroup_Id_Name}
-                    selectedUserIds={selectedUserIds}
-                    setSelectedUserIds={setSelectedUserIds}
+                    selectedUserUids={selectedUserUids}
+                    setSelectedUserUids={setSelectedUserUids}
                     userList={userList}
                     setUserList={setUserList}
                     selectHandler={selectHandler}
@@ -160,8 +161,8 @@ export default function InviteModal(props) {
                     setUsers={setUsers}
                     setSelectedGroup_Id_Name={setSelectedGroup_Id_Name}
                     selectedGroup_Id_Name={selectedGroup_Id_Name}
-                    selectedUserIds={selectedUserIds}
-                    setSelectedUserIds={setSelectedUserIds}
+                    selectedUserUids={selectedUserUids}
+                    setSelectedUserUids={setSelectedUserUids}
                     userList={userList}
                     setUserList={setUserList}
                     selectHandler={selectHandler}
@@ -214,6 +215,15 @@ export default function InviteModal(props) {
             </div>
           </div>
         </div>
+
+        {roomNameModal == true ? (
+          <InviteModal_chatRoomName
+            roomNameHandler={roomNameHandler}
+            selectedUsers={selectedUsers}
+            selectedUserUids={selectedUserUids}
+            closeHandler={closeHandler}
+          />
+        ) : null}
 
         <div className="confirmBtn_cancelBtn">
           <button className="confimBtn" onClick={submitHandler}>
