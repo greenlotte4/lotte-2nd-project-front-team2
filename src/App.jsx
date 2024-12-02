@@ -48,6 +48,8 @@ import DocumentList from "./pages/document/DocumentList";
 import PageListPage from "./pages/page/PageList";
 import PageViewPages from "./pages/page/PageView";
 import { useAuthStore } from "./store/useAuthStore";
+import FAQWrite from "./pages/rending/WritePage";
+import FAQLayout from "./layout/rending/faqLayout";
 const MainIndexComponent = lazy(() => import("./components/render/main"));
 
 function App() {
@@ -108,7 +110,10 @@ function App() {
           />
           <Route path="service" element={<ServicePage />} />
           <Route path="price" element={<PricePage />} />
-          <Route path="faq" element={<FAQPage />} />
+            <Route path="faq" element={<FAQPage />} />
+          <Route path="faq" element={<FAQLayout />}></Route>
+            <Route index element={<FAQPage />} />
+            <Route path="write" element={<FAQWrite />} />
         </Route>
 
         {/* 홈 */}
