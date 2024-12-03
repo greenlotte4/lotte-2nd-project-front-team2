@@ -24,105 +24,81 @@ export default function Register() {
                 <img src="/images/Logo_font.png" alt="logo" className="w-[110px] h-[35px]" />
               </Link>
             </div>
-            {count === 0 &&
-                <div className='inp-box'>
-                <div className='flex justify-between'>
-                  <div className='flex items-center mt-5'>
-                    <img className='register-icon mr-3' src="/images/Base-Step-Elements.png" alt="O" />
-                    <h1 className='text-3xl mr-2'>01</h1>
-                    <div className='flex flex-col relative bottom-1'>
-                      <p className='text-md relative top-1'>Account</p>
-                      <span className='text-2xs text-gray-500'>Account Details</span>
-                    </div>
-                  </div>
-                  <div className='flex items-center mt-5'>
-                    <img className='register-icon mr-3 opacity-20' src="/images/Base-Step-Elements.png" alt="O" />
-                    <h1 className='text-3xl mr-2'>02</h1>
-                    <div className='flex flex-col relative bottom-1'>
-                      <p className='text-md relative top-1'>Personal</p>
-                      <span className='text-2xs text-gray-500'>Enter Infomation</span>
-                    </div>
-                  </div>
-                  <div className='flex items-center mt-5'>
-                    <img className='register-icon mr-3 opacity-20' src="/images/Base-Step-Elements.png" alt="O" />
-                    <h1 className='text-3xl mr-2'>03</h1>
-                    <div className='flex flex-col relative bottom-1'>
-                      <p className='text-md relative top-1'>Billing</p>
-                      <span className='text-2xs text-gray-500'>Payment Details</span>
-                    </div>
-                  </div>
+            <div className='flex justify-between mt-[30px]'>
+              <div className='flex items-center mt-5'>
+                <img className={`register-icon mr-3${count === 0 ? '': ' opacity-20'}`} src="/images/Base-Step-Elements.png" alt="O" />
+                <h1 className='text-3xl mr-2'>01</h1>
+                <div className='flex flex-col relative bottom-1'>
+                  <p className='text-md relative top-1'>Account</p>
+                  <span className='text-2xs text-gray-500'>Account Details</span>
                 </div>
-                  <div className='sub-title'>
-                    <h2 className='text-xl'>Account Infomation</h2>
-                    <p className='text-sm'>이메일 계정 인증으로 Plantry를 시작하세요.</p>
-                  </div>
-                  <p className='text-xs guide-text mt-3'>이메일 인증 메일이 발송되었습니다.</p>
+              </div>
+              <div className='flex items-center mt-5'>
+                <img className={`register-icon mr-3${count === 1 ? '': ' opacity-20'}`} src="/images/Base-Step-Elements.png" alt="O" />
+                <h1 className='text-3xl mr-2'>02</h1>
+                <div className='flex flex-col relative bottom-1'>
+                  <p className='text-md relative top-1'>Personal</p>
+                  <span className='text-2xs text-gray-500'>Enter Infomation</span>
+                </div>
+              </div>
+              <div className='flex items-center mt-5'>
+                <img className={`register-icon mr-3 ${count === 2 ? '': ' opacity-20'}`} src="/images/Base-Step-Elements.png" alt="O" />
+                <h1 className='text-3xl mr-2'>03</h1>
+                <div className='flex flex-col relative bottom-1'>
+                  <p className='text-md relative top-1'>Billing</p>
+                  <span className='text-2xs text-gray-500'>Payment Details</span>
+                </div>
+              </div>
+            </div>
+            {count === 0 &&
+              <div className='inp-box'>
+                <div className='sub-title mb-1'>
+                  <h2 className='text-xl'>Account Infomation</h2>
+                  <p className='text-sm'>이메일 계정 인증으로 Plantry를 시작하세요.</p>
+                </div>
+                <div className=' flex flex-col justify-end h-[70px]'>
+                  {/* <p className='text-xs guide-text'>이메일 인증 메일이 발송되었습니다.</p> */}
                   <input type='text' placeholder='이메일을 입력해 주세요.'
                   className="signup-input-lg" ></input>
-                  {/* <div className='flex justify-between items-center'>
-                    <input type='text' placeholder='인증번호를 입력해 주세요.'
-                    className="signup-input-md mt-10" ></input>
-                    <button className='btn-confirm mt-10'>확인</button>
-                  </div> */}
-                  <input type='text' placeholder='아이디를 입력해 주세요.'
-                  className="signup-input-lg mt-10" ></input>
-                  <div className='flex justify-between '>
-                    <input type='text' placeholder='비밀번호를 입력해 주세요.'
-                    className="xl-inp border rounded mr-1 mt-10" ></input>
-                    <input type='text' placeholder='비밀번호를 한 번 더 입력해 주세요.'
-                    className="xl-inp mt-10" ></input>
-                  </div>
-                  <div className='flex justify-between reg-btn'>
-                    <button className='btn-prev' onClick={() => navigate("/user/terms")}>이전</button>
-                    <button className='btn-next' onClick={() => {setCount(count + 1);}}>다음</button>
-                  </div>
                 </div>
+                {/* <div className='flex justify-between items-center'>
+                  <input type='text' placeholder='인증번호를 입력해 주세요.'
+                  className="signup-input-md mt-10" ></input>
+                  <button className='btn-confirm mt-10'>확인</button>
+                </div> */}
+                <input type='text' placeholder='아이디를 입력해 주세요.'
+                className="signup-input-lg mt-10" ></input>
+                <div className='flex justify-between '>
+                  <input type='text' placeholder='비밀번호를 입력해 주세요.'
+                  className="signup-input-md border rounded mr-1 mt-10" ></input>
+                  <input type='text' placeholder='비밀번호를 한 번 더 입력해 주세요.'
+                  className="signup-input-md mt-10" ></input>
+                </div>
+                <div className='flex justify-between reg-btn'>
+                  <button className='btn-prev' onClick={() => navigate("/user/terms")}>이전</button>
+                  <button className='btn-next' onClick={() => {setCount(count + 1);}}>다음</button>
+                </div>
+              </div>
               
             }
       {count === 1 &&
           <div className='inp-box'>
-          <div className='flex justify-between'>
-            <div className='flex items-center mt-5'>
-              <img className='register-icon mr-3 opacity-20' src="/images/Base-Step-Elements.png" alt="O" />
-              <h1 className='text-3xl mr-2'>01</h1>
-              <div className='flex flex-col relative bottom-1'>
-                <p className='text-md relative top-1'>Account</p>
-                <span className='text-2xs text-gray-500'>Account Details</span>
-              </div>
-            </div>
-            <div className='flex items-center mt-5'>
-              <img className='register-icon mr-3' src="/images/Base-Step-Elements.png" alt="O" />
-              <h1 className='text-3xl mr-2'>02</h1>
-              <div className='flex flex-col relative bottom-1'>
-                <p className='text-md relative top-1'>Personal</p>
-                <span className='text-2xs text-gray-500'>Enter Infomation</span>
-              </div>
-            </div>
-            <div className='flex items-center mt-5'>
-              <img className='register-icon mr-3 opacity-20' src="/images/Base-Step-Elements.png" alt="O" />
-              <h1 className='text-3xl mr-2'>03</h1>
-              <div className='flex flex-col relative bottom-1'>
-                <p className='text-md relative top-1'>Billing</p>
-                <span className='text-2xs text-gray-500'>Payment Details</span>
-              </div>
-            </div>
-          </div>
             <div className='sub-title'>
               <h2 className='text-xl'>Personal Infomation</h2>
               <p className='text-sm'>유저 정보를 기입해주세요.</p>
             </div>
             <div className='flex justify-between custom-mt-20'>
               <input type='text' placeholder='성'
-              className="xl-inp mr-1 mt-10" ></input>
+              className="signup-input-md mr-1 mt-10" ></input>
               <input type='text' placeholder='이름'
-              className="xl-inp mt-10" ></input>
+              className="signup-input-md mt-10" ></input>
             </div>
             <input type='text' placeholder='전화번호'
             className="signup-input-lg mt-10" ></input>
             <div className='flex justify-between '>
               <input type='text' placeholder='도시명'
-              className="xl-inp mr-1 mt-10" ></input>
-              <select name="country" className="xl-inp mt-10">
+              className="signup-input-md mr-1 mt-10" ></input>
+              <select name="country" className="signup-input-md mt-10">
                 <option value="">대한민국</option>
                 <option value="">미국</option>
                 <option value="">중국</option>
@@ -145,32 +121,6 @@ export default function Register() {
           }
           {count === 2 &&
               <div className="inp-box">
-              <div className='flex justify-between'>
-                <div className='flex items-center mt-5'>
-                  <img className='register-icon mr-3 opacity-20' src="/images/Base-Step-Elements.png" alt="O" />
-                  <h1 className='text-3xl mr-2'>01</h1>
-                  <div className='flex flex-col relative bottom-1'>
-                    <p className='text-md relative top-1'>Account</p>
-                    <span className='text-2xs text-gray-500'>Account Details</span>
-                  </div>
-                </div>
-                <div className='flex items-center mt-5'>
-                  <img className='register-icon mr-3 opacity-20' src="/images/Base-Step-Elements.png" alt="O" />
-                  <h1 className='text-3xl mr-2'>02</h1>
-                  <div className='flex flex-col relative bottom-1'>
-                    <p className='text-md relative top-1'>Personal</p>
-                    <span className='text-2xs text-gray-500'>Enter Infomation</span>
-                  </div>
-                </div>
-                <div className='flex items-center mt-5'>
-                  <img className='register-icon mr-3' src="/images/Base-Step-Elements.png" alt="O" />
-                  <h1 className='text-3xl mr-2'>03</h1>
-                  <div className='flex flex-col relative bottom-1'>
-                    <p className='text-md relative top-1'>Billing</p>
-                    <span className='text-2xs text-gray-500'>Payment Details</span>
-                  </div>
-                </div>
-              </div>
                 <div className="sub-title">
                   <h2 className="text-xl">Select Plan</h2>
                   <p className="text-sm">Plantry의 이용 플랜을 선택해주세요.</p>
