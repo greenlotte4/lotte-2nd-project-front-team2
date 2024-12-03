@@ -1,10 +1,44 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom"; // React Router 사용
 
 export default function FAQ() {
-  const [activeIndex, setActiveIndex] = useState(0); // 활성화된 아이템의 인덱스를 저장
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [activeItem, setActiveItem] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false); // 모달 상태
+  const [isAdmin, setIsAdmin] = useState(true); // 관리자 여부 (true: 관리자, false: 일반 회원)
+  const navigate = useNavigate(); // 페이지 이동을 위한 useNavigate 훅
 
   const handleActive = (index) => {
-    setActiveIndex(index === activeIndex ? 0 : index); // 같은 항목 클릭 시 비활성화
+    setActiveIndex(index === activeIndex ? 0 : index);
+    setActiveItem(null);
+  };
+
+  const handleItemClick = (item) => {
+    setActiveItem(item); // 클릭된 항목 설정
+    setIsModalOpen(true); // 모달 열기
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false); // 모달 닫기
+    setActiveItem(null);
+  };
+
+  const handleDelete = (item) => {
+    alert(`Deleted: ${item.title}`);
+    handleCloseModal();
+  };
+
+  const handleEdit = (item) => {
+    alert(`Edit: ${item.title}`);
+    handleCloseModal();
+  };
+
+  const handleButtonClick = (buttonLabel) => {
+    if (buttonLabel === "Ask a Question") {
+      navigate("/faq/write"); // "Ask a Question" 클릭 시 이동
+    } else {
+      alert(`Action for: ${buttonLabel}`);
+    }
   };
 
   const contents = [
@@ -12,10 +46,18 @@ export default function FAQ() {
       title: "PAYMENT",
       image: "/images/paymentIcon_gray.png",
       items: [
-        "Does my subscription automatically renew?",
-        "Can I store the item on an intranet so everyone has access?",
-        "What does non-exclusive mean?",
-        "Is the Regular License the same thing as an editorial license?",
+        {
+          title: "Does my subscription automatically renew?",
+          content:
+            "Yes, your subscription will automatically renew unless you cancel it before the renewal date.",
+          author: "John Doe",
+        },
+        {
+          title: "Can I store the item on an intranet so everyone has access?",
+          content:
+            "No, items cannot be stored on an intranet. Each user needs to purchase their own license.",
+          author: "Jane Smith",
+        },
       ],
       buttonLabel: "Manage Payment",
     },
@@ -23,10 +65,18 @@ export default function FAQ() {
       title: "CANCELLATION & RETURN",
       image: "/images/return.png",
       items: [
-        "What is the refund policy?",
-        "How do I cancel an order?",
-        "Can I exchange an item?",
-        "What is the process for a return?",
+        {
+          title: "What is the refund policy?",
+          content:
+            "You can request a refund within 30 days of purchase. Refunds are subject to approval.",
+          author: "Alice Brown",
+        },
+        {
+          title: "How do I cancel an order?",
+          content:
+            "To cancel an order, please go to your order history and click 'Cancel Order'.",
+          author: "Charlie Green",
+        },
       ],
       buttonLabel: "Request Refund",
     },
@@ -34,10 +84,18 @@ export default function FAQ() {
       title: "QNA",
       image: "/images/CardGiftcard.png",
       items: [
-        "Where can I find FAQs?",
-        "How do I ask a question?",
-        "Can I contact customer support?",
-        "Are there tutorial videos?",
+        {
+          title: "Where can I find FAQs?",
+          content:
+            "FAQs can be found on our website under the 'Help Center' section.",
+          author: "Sarah Lee",
+        },
+        {
+          title: "How do I ask a question?",
+          content:
+            "You can ask a question by clicking 'Ask a Question' and submitting your query.",
+          author: "Michael Brown",
+        },
       ],
       buttonLabel: "Ask a Question",
     },
@@ -45,10 +103,18 @@ export default function FAQ() {
       title: "PRODUCT & SERVICES",
       image: "/images/Settings.png",
       items: [
-        "What services do you offer?",
-        "Are there any discounts available?",
-        "How can I customize a product?",
-        "What is your product warranty?",
+        {
+          title: "What services do you offer?",
+          content:
+            "We offer a variety of services including consulting, product customization, and technical support.",
+          author: "David Wilson",
+        },
+        {
+          title: "Are there any discounts available?",
+          content:
+            "Yes, discounts are available during promotional periods. Check our website for updates.",
+          author: "Emily Davis",
+        },
       ],
       buttonLabel: "View Services",
     },
@@ -56,8 +122,8 @@ export default function FAQ() {
 
   return (
     <>
-      <div className="mainIn">
-        <section className="serviceInfo relative main-bg">
+      <div className="mainIn bg-white min-h-screen">
+        <section className="serviceInfo relative bg-white">
           <div className="up">
             <div className="h2Wrapper">
               <h2 className="absolute">Hello, how can we help?</h2>
@@ -83,122 +149,55 @@ export default function FAQ() {
           <div className="Faq h-max mb-[20px] pb-[20px] flex my-[40px] w-full lg:w-1/3">
             <aside className="w-full lg:w-[300px]">
               <ul className="m-[20px]">
-                {/* PAYMENT */}
-                <li
-                  className={`faqTitle ${
-                    activeIndex === 0 ? "active" : ""
-                  } p-5px leading-[38px] mb-[10px]`}
-                  onClick={() => handleActive(0)}
-                >
-                  <div className="flex leading-[38px] text-center items-center">
-                    <img
-                      className={`w-[20px] h-[20px] ml-[20px] ${
-                        activeIndex === 0 ? "filter brightness-0 invert" : ""
-                      }`}
-                      src="\images\paymentIcon_gray.png"
-                      alt="카드 아이콘"
-                    />
-                    <span className="ml-[10px]">PAYMENT</span>
-                  </div>
-                </li>
-
-                {/* CANCELLATION & RETURN */}
-                <li
-                  className={`faqTitle ${
-                    activeIndex === 1 ? "active" : ""
-                  } p-5px leading-[38px] mb-[10px]`}
-                  onClick={() => handleActive(1)}
-                >
-                  <div className="flex leading-[38px] text-center items-center">
-                    <img
-                      className={`w-[20px] h-[20px] ml-[20px] ${
-                        activeIndex === 1 ? "filter brightness-0 invert" : ""
-                      }`}
-                      src="\images\return.png"
-                      alt=""
-                    />
-                    <span className="ml-[10px]">CANCELLATION & RETURN</span>
-                  </div>
-                </li>
-
-                {/* QNA */}
-                <li
-                  className={`faqTitle ${
-                    activeIndex === 2 ? "active" : ""
-                  } p-5px leading-[38px] mb-[10px]`}
-                  onClick={() => handleActive(2)}
-                >
-                  <div className="flex leading-[38px] text-center items-center">
-                    <img
-                      className={`w-[20px] h-[20px] ml-[20px] ${
-                        activeIndex === 2 ? "filter brightness-0 invert" : ""
-                      }`}
-                      src="\images\CardGiftcard.png"
-                      alt=""
-                    />
-                    <span className="ml-[10px]">QNA</span>
-                  </div>
-                </li>
-
-                {/* PRODUCT & SERVICES */}
-                <li
-                  className={`faqTitle ${
-                    activeIndex === 3 ? "active" : ""
-                  } p-5px leading-[38px] mb-[10px]`}
-                  onClick={() => handleActive(3)}
-                >
-                  <div className="flex leading-[38px] text-center items-center">
-                    <img
-                      className={`w-[20px] h-[20px] ml-[20px] ${
-                        activeIndex === 3 ? "filter brightness-0 invert" : ""
-                      }`}
-                      src="\images\Settings.png"
-                      alt=""
-                    />
-                    <span className="ml-[10px]">PRODUCT & SERVICES</span>
-                  </div>
-                </li>
+                {contents.map((content, index) => (
+                  <li
+                    key={index}
+                    className={`faqTitle ${
+                      activeIndex === index ? "active" : ""
+                    } p-5px leading-[38px] mb-[10px] hover:bg-gray-100 hover:shadow-md transition-all`}
+                    onClick={() => handleActive(index)}
+                  >
+                    <div className="flex leading-[38px] text-center items-center">
+                      <img
+                        className={`w-[20px] h-[20px] ml-[20px] ${
+                          activeIndex === index
+                            ? "filter brightness-0 invert"
+                            : ""
+                        }`}
+                        src={content.image}
+                        alt="아이콘"
+                      />
+                      <span className="ml-[10px]">{content.title}</span>
+                    </div>
+                  </li>
+                ))}
               </ul>
             </aside>
           </div>
           <article className="w-full lg:w-[1548px] lg:ml-[40px]">
-            <div className="flex">
-              <div className="icon w-[42px] h-[42px]">
-                <img
-                  src={contents[activeIndex].image}
-                  alt={contents[activeIndex].title}
-                  className="w-[20px] h-[20px]" // 이미지 크기 조정
-                />
-              </div>
-              <section>
-                <h2 className="text-xl leading-[42px] ml-[10px] font-semibold mb-3">
-                  {contents[activeIndex].title}
-                </h2>
-                <span></span>
-              </section>
-            </div>
             <div className="faqlist bg-white rounded-lg shadow-xl ">
               <ul className="w-full pl-5 space-y-3 rounded-[8px]">
-                {contents[activeIndex].items.map((item, idx) => (
+                {contents[activeIndex]?.items.map((item, idx) => (
                   <li
                     key={idx}
-                    className="border-b leading-[51px] flex justify-between"
+                    className="border-b leading-[51px] flex justify-between items-center cursor-pointer hover:bg-gray-100 hover:text-blue-600 transition-all duration-200"
+                    onClick={() => handleItemClick(item)}
                   >
-                    {item}{" "}
-                    <img
-                      className="w-[30px] h-[30px] mr-[20px]"
-                      src="/images/Star.png"
-                      alt=""
-                    />
+                    <span>{item.title}</span>
                   </li>
                 ))}
               </ul>
             </div>
-            <div
-              className="Qtop w-[200px] h-auto py-[12px] px-[20px] border cursor-pointer mt-6 mx-auto text-center bg-purple-200 hover:bg-purple-300 transition-all lg:mx-0 lg:ml-auto lg:mr-auto"
-              onClick={() => (window.location.href = "/faq/write")}
-            >
-              {contents[activeIndex].buttonLabel}
+            <div className="mt-6 text-center">
+              <button
+                className="px-6 py-2 rounded-lg hover:opacity-90"
+                style={{ backgroundColor: "#666bff", color: "white" }}
+                onClick={() =>
+                  handleButtonClick(contents[activeIndex]?.buttonLabel)
+                }
+              >
+                {contents[activeIndex]?.buttonLabel}
+              </button>
             </div>
           </article>
         </section>
@@ -213,7 +212,7 @@ export default function FAQ() {
               <div className="w-[42px] h-[42px] ">
                 <img src="/images/phoneIcon.png" alt="phone" />
               </div>
-              <span>+ (810) 2548 2568</span>
+              <span>82+ (010) 2548 2568</span>
               <p>We are always happy to help!</p>
             </div>
             <div className="w-full lg:w-[384px] h-[167px] box-border text-center flex justify-center flex-col items-center bg-[#F6F6F7] shadow-md">
@@ -225,6 +224,53 @@ export default function FAQ() {
             </div>
           </article>
         </section>
+
+        {isModalOpen && activeItem && (
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50"
+            onClick={handleCloseModal}
+          >
+            <div
+              className="bg-white rounded-lg p-6 shadow-lg"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h2 className="text-xl font-bold mb-4">FAQ Details</h2>
+              <p className="text-gray-700">
+                <strong>Title:</strong> {activeItem.title}
+              </p>
+              <p className="text-gray-700">
+                <strong>Content:</strong> {activeItem.content}
+              </p>
+              <p className="text-gray-700">
+                <strong>Author:</strong> {activeItem.author}
+              </p>
+              {isAdmin && (
+                <div className="mt-4 flex justify-end space-x-4">
+                  <button
+                    className="px-4 py-2 bg-red-500 text-white rounded-lg"
+                    onClick={() => handleDelete(activeItem)}
+                  >
+                    Delete
+                  </button>
+                  <button
+                    className="px-4 py-2 bg-yellow-500 text-white rounded-lg"
+                    onClick={() => handleEdit(activeItem)}
+                  >
+                    Edit
+                  </button>
+                </div>
+              )}
+              <div className="mt-4 text-right">
+                <button
+                  className="px-4 py-2 bg-blue-500 text-white rounded-lg"
+                  onClick={handleCloseModal}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );
