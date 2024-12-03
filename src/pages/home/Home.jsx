@@ -22,7 +22,17 @@ export default function Home() {
   const dateParts = formattedDate.split('.');
   const finalDate = `${dateParts[0]}-${dateParts[1]}-${dateParts[2]}`;
 
+  const decodeAccessToken = useAuthStore((state)=>state.decodeAccessToken);
+  const getAccessToken = useAuthStore((state)=>state.getAccessToken);
+
+  
   useEffect(() => {
+    const access = getAccessToken();
+    const decode = decodeAccessToken(access);
+
+    console.log(decode);
+
+    
     let timeoutId;
     const updateTime = () => {
       if (!isActive || !timeRef.current) return; // 활성 상태가 아니거나 DOM이 없으면 중단
@@ -49,7 +59,6 @@ export default function Home() {
       setIsActive(false); // 비활성화 상태로 변경
     };
   }, [isActive]);
-
 
     return (
       <div id='home-container'>

@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import { useEffect, useState } from "react";
 import axiosInstance from "../../services/axios";
 import { useQuery } from "@tanstack/react-query";
@@ -8,8 +9,8 @@ export default function InviteModal_userSearch(props) {
     setUsers,
     setSelectedGroup_Id_Name,
     selectedGroup_Id_Name,
-    selectedUserIds,
-    setSelectedUserIds,
+    selectedUserUids,
+    setSelectedUserUids,
     userList,
     setUserList,
     selectHandler,
@@ -32,7 +33,7 @@ export default function InviteModal_userSearch(props) {
 
   setUserList(allUsers);
 
-  const [userIds, setUserIds] = useState([]);
+  const [userUids, setUserUids] = useState([]);
 
   const [keyword, setKeyword] = useState("");
   const [searchResult, setSearchResult] = useState([]);
@@ -50,7 +51,7 @@ export default function InviteModal_userSearch(props) {
   };
 
   const setUsersHandler = (result) => {
-    if (!userIds.includes(result.id)) {
+    if (!users.includes(result)) {
       setUsers([...users, result]);
     }
   };
@@ -81,17 +82,17 @@ export default function InviteModal_userSearch(props) {
             ? searchResult.map((result) => (
                 <div
                   className={`orgs-User ${
-                    selectedUserIds.some(
-                      (selectedUserId) => selectedUserId === result.id
+                    selectedUserUids.some(
+                      (selectedUserUid) => selectedUserUid === result.uid
                     )
                       ? "selectedUser"
                       : null
                   }`}
                   onClick={(e) => {
-                    selectHandler(e, result.id);
+                    selectHandler(e, result.uid);
                     setUsersHandler(result);
                   }}
-                  key={result.id}
+                  key={result.uid}
                 >
                   <img
                     className="profile"

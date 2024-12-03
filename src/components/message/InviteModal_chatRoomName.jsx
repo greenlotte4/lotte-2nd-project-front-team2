@@ -13,7 +13,6 @@ export default function InviteModal_chatRoomName({
   const selectedUsersName = selectedUsers.map((user) => user.name);
   const [roomName, setRoomName] = useState("");
   const [isAlertOpen, setIsAlertOpen] = useState(false);
-
   const decodeAccessToken = useAuthStore((state) => state.decodeAccessToken);
   const payload = decodeAccessToken();
 
