@@ -238,22 +238,7 @@ export default function CommunitySidebar({
           ))}
       </div>
 
-      {/* 내 게시판 */}
-      <div className="mb-6">
-        <div
-          className="flex justify-between items-center px-4 py-2 cursor-pointer"
-          onClick={() => toggleSection("myBoards")}
-        >
-          <p className="font-semibold">내 게시판</p>
-          <img
-            className="w-3 h-2 transition-transform duration-300"
-            src="/images/arrow-top.png"
-            alt="toggle"
-            style={{
-              transform: sections.myBoards ? "rotate(0deg)" : "rotate(180deg)",
-            }}
-          />
-        </div>
+ 
         {sections.myBoards &&
           boards.map((board) => (
             <div
@@ -268,7 +253,7 @@ export default function CommunitySidebar({
               <p className="flex-grow">{board.label}</p>
             </div>
           ))}
-      </div>
+ 
 
       {/* 새 게시글 작성 버튼 */}
       <Link
@@ -283,66 +268,9 @@ export default function CommunitySidebar({
         새 게시글 작성
       </Link>
 
-      {/* 새 개인 게시판 생성 버튼 */}
-      <button
-        onClick={handleOpenModal}
-        className="new-user-board-button flex items-center justify-center px-4 py-2 mt-4 space-x-2 w-full min-w-[150px] rounded-md"
-      >
-        <img
-          src="/images/Vector.png"
-          alt="새 개인 게시판"
-          className="w-5 h-5 mr-2"
-        />
-        새 개인 게시판 생성
-      </button>
+      
+ 
 
-      {/* 모달 */}
-      {isModalOpen && (
-        <div
-          className="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-black bg-opacity-50 z-50"
-          onClick={handleCloseModal}
-        >
-          <div
-            className="bg-white rounded-lg p-6 w-96"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h2 className="text-lg font-semibold mb-4">새 개인 게시판 생성</h2>
-            <div className="mb-4">
-              <label className="block font-medium mb-1">게시판 이름</label>
-              <input
-                type="text"
-                value={newBoardName}
-                onChange={(e) => setNewBoardName(e.target.value)}
-                className="w-full px-3 py-2 border rounded-md"
-                placeholder="게시판 이름을 입력하세요"
-              />
-            </div>
-            <div className="mb-4">
-              <label className="block font-medium mb-1">게시판 설명</label>
-              <textarea
-                value={newBoardDescription}
-                onChange={(e) => setNewBoardDescription(e.target.value)}
-                className="w-full px-3 py-2 border rounded-md"
-                placeholder="게시판 설명을 입력하세요"
-              />
-            </div>
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={handleCloseModal}
-                className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md"
-              >
-                취소
-              </button>
-              <button
-                onClick={handleCreateBoard}
-                className="bg-blue-500 text-white px-4 py-2 rounded-md"
-              >
-                생성
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </aside>
   );
 }

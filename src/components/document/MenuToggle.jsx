@@ -112,15 +112,15 @@ export const MenuToggle = ({
                         </li>
                         {isAlertOpen && (
                                 <CustomAlert
-                                type="warning" // success, error, warning, info 중 선택
-                                title="확인"
-                                message="폴더를 삭제하시겠습니까?"
-                                subMessage="해당 폴더 삭제시 폴더 안의 파일 까지 삭제됩니다."
-                                onConfirm={handleConfirm} // 확인 버튼 클릭 핸들러
-                                onCancel={handleCancel} // 취소 버튼 클릭 핸들러
-                                confirmText="예"
-                                cancelText="아니오"
-                                showCancel={true} // 취소 버튼 표시 여부
+                                    type="warning" // success, error, warning, info 중 선택
+                                    title="확인"
+                                    message="폴더를 삭제하시겠습니까?"
+                                    subMessage="해당 폴더 삭제시 폴더 안의 파일 까지 삭제됩니다."
+                                    onConfirm={handleConfirm} // 확인 버튼 클릭 핸들러
+                                    onCancel={handleCancel} // 취소 버튼 클릭 핸들러
+                                    confirmText="예"
+                                    cancelText="아니오"
+                                    showCancel={true} // 취소 버튼 표시 여부
                                 />
                             )}
                         <li

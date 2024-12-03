@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState ,forwardRef } from 'react';
 import { X, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import axiosInstance from '../../services/axios';
@@ -12,27 +12,28 @@ const RenameModal = ({
   isOpen,
   id,
   type,
-  path
+  path,
 }) => {
   const [newName, setNewName] = useState(initialName);
   const [isLoading, setIsLoading] = useState(false);
   const queryClient = useQueryClient(); // Access query client
-  const updatedPath = `${path.substring(0, path.lastIndexOf('/'))}/${newName}`; // 기존 경로에서 새로운 이름 적용
 
   console.log(id);
 
   if (!isOpen) return null;
   
 
-  const payload = {
-    id: id, // 폴더 ID
-    type: "folder", // 폴더 타입
-    newName: newName, // 새 이름
-    currentPath : path,
-    newPath : updatedPath,
-};
+ 
 
   const handleRename = async () => {
+    const updatedPath = `${path.substring(0, path.lastIndexOf('/'))}/${newName}`; // 기존 경로에서 새로운 이름 적용
+    const payload = {
+      id: id, // 폴더 ID
+      type: "folder", // 폴더 타입
+      newName: newName, // 새 이름
+      currentPath : path,
+      newPath : updatedPath,
+  };
     try {
       setIsLoading(true);
       console.log(payload);
@@ -40,6 +41,7 @@ const RenameModal = ({
       if (response.status === 200) {
         queryClient.invalidateQueries(['folderContents']); // Replace with the relevant query key
         alert('이름 변경 성공');
+        onRename(newName); // 부모 컴포넌트에 상태 전달
         onCancel(); // Close modal
       } else {
         console.error('Failed to rename:', response.data);
@@ -92,7 +94,7 @@ const RenameModal = ({
         </button>
         <button 
             onClick={handleRename}
-            disabled={!newName.trim() || isLoading}
+            disabled={!newName || isLoading}
           className="w-1/2 py-3 text-[#007AFF] font-semibold 
                      disabled:opacity-50 
                      active:bg-gray-100 transition-colors"

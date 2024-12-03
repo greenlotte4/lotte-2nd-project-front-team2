@@ -22,7 +22,8 @@ export default function InviteModal(props) {
   const addUser = () => {
     setSelectedUsers((prevUsers) => {
       const usersToAdd = users.filter(
-        (user) => !prevUsers.some((selectedUser) => selectedUser.id === user.id)
+        (user) =>
+          !prevUsers.some((selectedUser) => selectedUser.uid === user.uid)
       );
 
       return [...prevUsers, ...usersToAdd];
@@ -33,13 +34,13 @@ export default function InviteModal(props) {
 
   const removeUser = (userUid) => {
     setSelectedUsers((prevUsers) =>
-      prevUsers.filter((user) => user.id !== userUid)
+      prevUsers.filter((user) => user.uid !== userUid)
     );
     setUserUids((prevUids) => prevUids.filter((uid) => uid !== userUid));
     setSelectedUserUids((prevUids) =>
       prevUids.filter((uid) => uid !== userUid)
     );
-    setUsers((prevUsers) => prevUsers.filter((user) => user.id !== userUid));
+    setUsers((prevUsers) => prevUsers.filter((user) => user.uid !== userUid));
   };
 
   const clearAllUsers = () => {
@@ -49,29 +50,34 @@ export default function InviteModal(props) {
     setUserUids([]);
   };
 
-  const selectHandler = (e, user_Uid) => {
+  const selectHandler = (e, user_uid) => {
     e.preventDefault();
     if (!e.currentTarget.className.trim().includes("selectedUser")) {
-      if (userUids.includes(user_Uid)) {
-        setUserUids((prevUids) => prevUids.filter((uid) => uid !== user_Uid));
+      if (userUids.includes(user_uid)) {
+        setUserUids((prevUids) => prevUids.filter((uid) => uid !== user_uid));
       } else {
-        setUserUids((prevUids) => [...prevUids, user_Uid]);
+        setUserUids((prevUids) => [...prevUids, user_uid]);
       }
-      setSelectedUserUids([...selectedUserUids, user_Uid]);
+      setSelectedUserUids([...selectedUserUids, user_uid]);
     } else {
-      setUserUids((prevUids) => prevUids.filter((uid) => uid !== user_Uid));
+      setUserUids((prevUids) => prevUids.filter((uid) => uid !== user_uid));
       setUsers((prevUsers) =>
-        prevUsers.filter((user) => user.user_Uid !== user_Uid)
+        prevUsers.filter((user) => user.uid !== user_uid)
       );
       setSelectedUserUids((prevSelectedUids) =>
-        prevSelectedUids.filter((prevSelectedId) => prevSelectedId !== user_Uid)
+        prevSelectedUids.filter(
+          (prevSelectedUid) => prevSelectedUid !== user_uid
+        )
       );
     }
   };
+  console.log("userUids:", userUids);
+  console.log("selectedUserUids:", selectedUserUids);
+  console.log("users:", users);
 
   const submitHandler = async (e) => {
     e.preventDefault();
-    if (selectedUserUids && selectedUserUids.length > 0) {
+    if (selectedUsers && selectedUsers.length > 0) {
       roomNameHandler();
     }
   };
@@ -226,9 +232,20 @@ export default function InviteModal(props) {
         ) : null}
 
         <div className="confirmBtn_cancelBtn">
-          <button className="confimBtn" onClick={submitHandler}>
-            확인
-          </button>
+          {selectedUsers && selectedUsers.length > 0 ? (
+            <button className="confimBtn" onClick={submitHandler}>
+              확인
+            </button>
+          ) : (
+            <button
+              className="confimBtn"
+              onClick={submitHandler}
+              disabled
+              style={{ backgroundColor: "gray", cursor: "default" }}
+            >
+              확인
+            </button>
+          )}
           <button className="cancel-Btn" onClick={closeHandler}>
             취소
           </button>

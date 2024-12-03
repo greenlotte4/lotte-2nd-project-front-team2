@@ -6,6 +6,7 @@ import CustomAlert from './CustomAlert';
 import axiosInstance from '../../services/axios';
 import { useQueryClient } from '@tanstack/react-query';
 import { MenuToggle } from './MenuToggle';
+import ContextMenu from './ContextMenu';
 
 export const DocumentCard1 = ({
     cnt,
@@ -17,6 +18,8 @@ export const DocumentCard1 = ({
     onDragOver, 
     onDrop,
     updatedAt,
+    onContextMenu,
+
 }) => {
     const [isMenuOpen, setIsMenuOpen] = useState(false); // 토글 상태 관리
     const [isAlertOpen, setIsAlertOpen] = useState(false);
@@ -29,10 +32,11 @@ export const DocumentCard1 = ({
     const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 }); // 메뉴 위치
 
 
-    const toggleMenu = () => {
-        setIsMenuOpen((prev) => !prev); // 메뉴 열고 닫기 토글
+    const toggleMenu = (e) => {
+        e.preventDefault(); // 기본 컨텍스트 메뉴 방지
+        setMenuPosition({ top: e.clientY, left: e.clientX }); // 클릭 위치 기반으로 위치 설정
+        setIsMenuOpen(true); // 메뉴 열기
     };
-
     const openRenameModal = () => {
         setIsRenameModalOpen(true);
         setIsMenuOpen(false); // 메뉴 닫기
@@ -59,6 +63,7 @@ export const DocumentCard1 = ({
             }
         });
     }
+
 
      // 메뉴 바깥 클릭 시 닫기
    /*   useEffect(() => {
@@ -126,6 +131,8 @@ export const DocumentCard1 = ({
 
     return (
         <div className="document-card1 flex flex-row items-center z-1"  draggable
+                    onContextMenu={(e) => onContextMenu(e, folder)} // Trigger the context menu
+
                     onDragStart={(e) => {
                         e.stopPropagation(); // Prevent event propagation
                         onDragStart(folder); // Call the passed onDragStart function
@@ -159,9 +166,17 @@ export const DocumentCard1 = ({
                     src="/images/button-dot.png"
                     alt="버튼"
                     onClick={toggleMenu} // 메뉴 열기
+
                 />
             {isMenuOpen && (
-               <MenuToggle folderName={folderName} folderId={folderId} path={path}/>
+                 <ContextMenu
+                    visible={true}
+                    position={menuPosition}
+                    folder={folder}
+                    folderName={folderName}
+                    folderId={folderId}
+                    path={path}
+                />
             )}
                        
 

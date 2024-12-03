@@ -10,6 +10,7 @@ import MyDropzone from '../../components/DropZone';
 import { Modal } from '../../components/Modal';
 import { Link } from 'react-router-dom';
 import DocumentAside from '../../components/document/DocumentAside';
+import DocumentLayout from '../../layout/document/DocumentLayout';
 export default function Document() {
     const [selectOption, setSelectOption] = useState(0);
     const [isOpen, setIsOpen] = useState(false);
@@ -53,9 +54,7 @@ export default function Document() {
         setDrive(true)
     }
     return (
-        <div id='document-container1'>
-            <DocumentAside />
-            <section className='document-main1'>
+       <DocumentLayout>
                 <section className='flex gap-4 items-center'>
                     <p className='text-2xl ml-4 mt-4'>폴더명</p><img className='w-6 h-6 mt-3' src='/images/document-pen.png'></img>
                 </section>
@@ -321,8 +320,6 @@ export default function Document() {
                     />
                 </div>
                
-            </section>
-
-        </div>
+            </DocumentLayout>
     )
 }

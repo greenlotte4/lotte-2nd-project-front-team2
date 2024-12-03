@@ -58,8 +58,8 @@ export default function FAQWrite() {
                   key={index}
                   className={`flex items-center p-3 rounded-lg cursor-pointer ${
                     activeIndex === index
-                      ? "bg-purple-500 text-white"
-                      : "bg-transparent text-gray-700 hover:bg-gray-100"
+                      ? "bg-[#666bff] text-white"
+                      : "bg-white text-black"
                   }`}
                   onClick={() => handleMenuClick(index)}
                 >
@@ -106,7 +106,7 @@ export default function FAQWrite() {
                     htmlFor="content"
                     className="block text-sm font-medium text-gray-700 mb-2"
                   >
-                    detail
+                    Detail
                   </label>
                   <textarea
                     id="content"
@@ -159,10 +159,10 @@ export default function FAQWrite() {
 
                 {/* 문의 제출 버튼 */}
                 <button
-                type="submit"
-                className="py-4 px-6 bg-purple-600 text-white font-semibold rounded-md hover:bg-purple-700 focus:ring focus:ring-purple-300 mx-auto block"
+                  type="submit"
+                  className="py-4 px-6 bg-[#666bff] text-white font-semibold rounded-md hover:bg-[#5555ee] focus:ring focus:ring-[#9999ff] mx-auto block"
                 >
-                Submit inquiry
+                  Submit inquiry
                 </button>
               </form>
             </div>

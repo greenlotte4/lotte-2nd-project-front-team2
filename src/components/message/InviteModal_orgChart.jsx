@@ -101,7 +101,7 @@ export default function InviteModal_orgChart({
   }, []);
 
   const setUsersHandler = (member) => {
-    if (!userUids.includes(member.uid)) {
+    if (!users.includes(member)) {
       setUsers([...users, member]);
     }
   };
