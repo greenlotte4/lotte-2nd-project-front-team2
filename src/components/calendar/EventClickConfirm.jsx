@@ -2,8 +2,9 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import React, { useEffect, useState } from 'react'
 import axiosInstance from '@/services/axios.jsx'
 import CustomAlert from '../Alert';
+import useWebSocket from '../../util/useWebSocket';
 
-export default function EventClickConfirm({isOpen, onclose,selectedId,clickedDate,selectedGroupId}) {
+export default function EventClickConfirm({isOpen, onclose,selectedId}) {
    
     const queryClient = useQueryClient();
     const prevData = queryClient.getQueryData(['calendar-date']);
@@ -20,6 +21,8 @@ export default function EventClickConfirm({isOpen, onclose,selectedId,clickedDat
     const [customAlert, setCustomAlert] = useState(false);
     const [customAlertType, setCustomAlertType] = useState("");
     const [customAlertMessage, setCustomAlertMessage] = useState("");
+    const { sendWebSocketMessage } = useWebSocket({});
+    const [prevId, setPrevId] = useState();
 
     useEffect(() => {
         if (selectedData && typeof selectedData === 'object') {
@@ -30,6 +33,8 @@ export default function EventClickConfirm({isOpen, onclose,selectedId,clickedDat
             setImportance(selectedData.importance)
             setAlert(selectedData.alert)
             setMemo(selectedData.memo)
+            setCalendarId(selectedData.sheave)
+            setPrevId(selectedData.sheave)
         }
     }, [selectedData]);
     
@@ -56,9 +61,10 @@ export default function EventClickConfirm({isOpen, onclose,selectedId,clickedDat
             setCustomAlert(true)
             setCustomAlertType("success")
             setCustomAlertMessage(data.message)
-            queryClient.setQueryData(['calendar-date'], (prevData) => {
-                return prevData.filter((v) => v.id !== data.id);
-            });
+            const messagedata = {
+                calendarId,
+            }
+            sendWebSocketMessage(messagedata, '/app/calendar/contents/delete');
             setTimeout(()=>{
                 setCustomAlert(false);
                 onclose();
@@ -109,38 +115,20 @@ export default function EventClickConfirm({isOpen, onclose,selectedId,clickedDat
             setCustomAlert(true)
             setCustomAlertType("error")
             setCustomAlertMessage(err)
-
+            
             setTimeout(()=>{
                 setCustomAlert(false)
             },1000)
         },
         onSuccess: (data) => {
-            queryClient.setQueryData(['calendar-date'], (prevData) => {
-                // selectedId에 맞는 일정을 찾기
-                const updatedData = prevData.map((v) => {
-                    if (v.id == selectedId) {
-                        return {
-                            ...v,
-                            title: title,
-                            start: sdate,
-                            end: edate,
-                            location: location,
-                            alert: alert,
-                            importance: importance,
-                            sheave: calendarId,
-                            memo: memo,
-                            color: data.color
-                        };
-                    }
-                    return v;
-                });
-
-                return updatedData; // 새로운 배열 반환
-            });
             setCustomAlert(true)
             setCustomAlertType("success")
             setCustomAlertMessage(data.message)
-
+            const messagedata = {
+                calendarId,
+                prevId
+            }
+            sendWebSocketMessage(messagedata, '/app/calendar/contents/put2');
             setTimeout(()=>{
                 setCustomAlert(false)
                 onclose();

@@ -23,6 +23,12 @@ export default function ClickDateModal({confirm,onclose,clickedDate}) {
         }
     }, [clickedDate]);
 
+    useEffect(()=>{
+        if(calendarNames){
+            setCalendarNameState(calendarNames)
+        }
+    },[calendarNames])
+
     const {data : tasksData , isLoading : isLoadingTasksData }
         = useQuery({
         queryKey : ['calendar-content-morning',clickedDate],

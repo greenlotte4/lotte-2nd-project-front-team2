@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import axiosInstance from "../../services/axios";
 import { useQuery } from "@tanstack/react-query";
 import { getDeptsAndTeams } from "./Message_API";
+import CustomAlert from "../Alert";
 
 export default function InviteModal_orgChart({
   users,
@@ -16,9 +17,11 @@ export default function InviteModal_orgChart({
   selectHandler,
 }) {
   const [userUids, setUserUids] = useState([]);
-
   const [depts, setDepts] = useState([]);
   const [teams, setTeams] = useState([]);
+  const [type, setType] = useState("");
+  const [message, setMessage] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
 
   const handleGroupClick = (group_Id, group_Name) => {
     setSelectedGroup_Id_Name((prev) => ({
@@ -100,9 +103,46 @@ export default function InviteModal_orgChart({
       .catch((err) => console.log(err));
   }, []);
 
-  const setUsersHandler = (member) => {
+  const setUsersHandler = (member, group) => {
     if (!users.includes(member)) {
-      setUsers([...users, member]);
+      const newMember = {
+        ...member,
+        group: group,
+      };
+      setUsers([...users, newMember]);
+    }
+  };
+
+  const [uid, setUid] = useState(() => localStorage.getItem("uid"));
+
+  const favoriteSetHandler = async (e, member) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    try {
+      const resp = await axiosInstance.patch(
+        "/api/message/frequentMembers",
+        {},
+        {
+          params: {
+            uid: uid,
+            frequentUid: member.uid,
+          },
+        }
+      );
+
+      setType(resp.data);
+      if (resp.data === "success") {
+        setMessage("즐겨찾기에 등록되었습니다.");
+      } else {
+        setMessage("즐겨찾기 등록 실패!");
+      }
+      setIsOpen(true);
+      setTimeout(() => {
+        setIsOpen(false);
+      }, 1500);
+    } catch (error) {
+      console.error(error);
     }
   };
 
@@ -184,7 +224,7 @@ export default function InviteModal_orgChart({
                 key={member.uid}
                 onClick={(e) => {
                   selectHandler(e, member.uid);
-                  setUsersHandler(member);
+                  setUsersHandler(member, selectedGroup_Id_Name.group_name);
                 }}
               >
                 <img
@@ -198,9 +238,16 @@ export default function InviteModal_orgChart({
                     <span>{selectedGroup_Id_Name.group_name}</span>
                   </div>
                 </div>
+                <button
+                  className="favoriteBtn"
+                  onClick={(e) => favoriteSetHandler(e, member)}
+                >
+                  즐겨찾기 추가
+                </button>
               </div>
             ))
           : null}
+        <CustomAlert type={type} message={message} isOpen={isOpen} />
       </div>
     </div>
   );

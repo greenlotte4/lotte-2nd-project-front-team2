@@ -17,7 +17,7 @@ export const AddProjectModal = ({
   const [searchKeyword, setSearchKeyword] = useState("");
   const [selectedGroupId, setSelectedGroupId] = useState(0);
   const [listType, setListType] = useState("");
-  const [project,setProject] = useState({title: "", type:"", coworkers:selectedUsers})
+  const [project,setProject] = useState({title: "새 프로젝트", type:1, coworkers:selectedUsers})
 
   const fetchAllUsers = async ({ pageParam }) => {
     try {
@@ -214,7 +214,7 @@ const handleProjectChange = (e) => {
                 <input
                   type="text"
                   className="border rounded-md h-[45px] indent-4"
-                  placeholder="새 프로젝트 1"
+                  placeholder="프로젝트 이름을 입력해주세요"
                     onChange={handleProjectChange}
                     value={project.title}
                     name="title"
@@ -231,7 +231,7 @@ const handleProjectChange = (e) => {
                     name="type"
                     className="border rounded-md h-[60px] indent-4 mr-2 text-sm"
                   >
-                    <option value="1">부서 내 프로젝트</option>
+                    <option value="1" selected>부서 내 프로젝트</option>
                     <option value="2">회사 내 프로젝트</option>
                     <option value="3">협력 프로젝트</option>
                     <option value="4">공개 프로젝트</option>
@@ -344,7 +344,7 @@ const handleProjectChange = (e) => {
                                 key={m.id}
                                 onClick={() => handleMemberClick(m)}
                                 className={`flex rounded-3xl p-3 mt-2 cursor-pointer border border-transparent  ${
-                                    project.coworkers.includes(m)
+                                    project.coworkers.some(coworker => coworker.id === m.id)
                                     ? "bg-indigo-100 hover:border-indigo-300" // 선택된 멤버의 배경색
                                     : "bg-gray-100 hover:border-gray-300"
                                 }`}
@@ -394,7 +394,7 @@ const handleProjectChange = (e) => {
                       key={m.id}
                       onClick={() => handleMemberClick(m)}
                       className={`rounded-3xl px-3 py-3 flex mt-2 cursor-pointer border border-transparent  ${
-                        project.coworkers.includes(m)
+                        project.coworkers.some(coworker => coworker.id === m.id)
                           ? "bg-indigo-100 hover:border-indigo-300" // 선택된 멤버의 배경색
                           : "bg-gray-100 hover:border-gray-300"
                       }`}

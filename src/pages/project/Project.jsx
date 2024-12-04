@@ -5,7 +5,6 @@ import { CustomSVG } from "@/components/project/_CustomSVG";
 import { AddProjectModal } from "@/components/project/_Modal";
 import { ProjectColumn } from "@/components/project/Column";
 import { DynamicTask } from "@/components/project/Task";
-import { DynamicTaskEditor } from "@/components/project/TaskEdit";
 import { useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import Sortable from "sortablejs";
@@ -59,7 +58,7 @@ const initialData = {
   ],
   columns: [
     {
-      id: 0,
+      id: 1,
       title: "Get Started",
       color: "#F5234B",
       tasks: [
@@ -76,7 +75,7 @@ const initialData = {
       ],
     },
     {
-      id: 1,
+      id: 2,
       title: "🛠️ In Progress",
       color: "#0070F5",
       tasks: [
@@ -121,7 +120,7 @@ const initialData = {
       ],
     },
     {
-      id: 2,
+      id: 3,
       title: "✅ Approved",
       color: "#1EC337",
       tasks: [
@@ -290,7 +289,7 @@ export default function Project() {
     <div id="project-container" className="flex min-h-full">
       {/* 사이드바 */}
       <div className="w-[270px]">
-        <ProjectAside />
+        <ProjectAside setData={setData} />
       </div>
 
       {/* 메인 섹션 */}
@@ -338,7 +337,7 @@ export default function Project() {
                 isOpen={isModalOpen}
                 onClose={setIsModalOpen}
                 text="작업자 추가"
-                coworker={data.coworkers}
+                selectedUsers={data.coworkers}
               />
             </ShareMember>
           </div>

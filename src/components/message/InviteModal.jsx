@@ -71,9 +71,6 @@ export default function InviteModal(props) {
       );
     }
   };
-  console.log("userUids:", userUids);
-  console.log("selectedUserUids:", selectedUserUids);
-  console.log("users:", users);
 
   const submitHandler = async (e) => {
     e.preventDefault();
@@ -88,10 +85,7 @@ export default function InviteModal(props) {
 
   useOnClickOutSide(inviteRef, closeHandler);
 
-  console.log("selectedUserUids:", selectedUserUids);
-
   if (!isOpen) return null;
-  console.log("selectedUsers :" + JSON.stringify(selectedUsers));
 
   return (
     <div id="invitation-modal">
@@ -196,7 +190,7 @@ export default function InviteModal(props) {
             </div>
             <div className="selected-Users">
               {selectedUsers.map((selectedUser) => (
-                <div className="selected-User_cancelBtn" key={selectedUser.id}>
+                <div className="selected-User_cancelBtn" key={selectedUser.uid}>
                   <div className="selected-User">
                     <img
                       className="profile"
@@ -214,7 +208,7 @@ export default function InviteModal(props) {
                     className="cancelBtn"
                     src="../images/closeBtn.png"
                     alt=""
-                    onClick={() => removeUser(selectedUser.id)}
+                    onClick={() => removeUser(selectedUser.uid)}
                   />
                 </div>
               ))}

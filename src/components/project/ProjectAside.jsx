@@ -5,7 +5,7 @@ import { AddProjectModal } from "./_Modal";
 import { useQuery } from "@tanstack/react-query";
 import axiosInstance from "@/services/axios.jsx";
 
-function ProjectAside() {
+function ProjectAside({ setData }) {
 
   const [openSections, setOpenSections] = useState({
     waiting: true,
@@ -19,7 +19,7 @@ function ProjectAside() {
   const handleCloseModal = () => setIsModalOpen(false);
 
   // 프로젝트 데이터를 가져오는 함수
-  const fetchProjects = async () => {
+  const fetchProjectsList = async () => {
     try {
       const response = await axiosInstance.get("/api/projects");
       return response.data;
@@ -31,7 +31,7 @@ function ProjectAside() {
   // useQuery 사용, refetch는 반환되는 객체에서 가져옴
   const { data, error, isLoading, refetch } = useQuery({
     queryKey: ["projects", openSections], // openSections 상태가 변경될 때마다 쿼리 새로 호출
-    queryFn: fetchProjects,
+    queryFn: fetchProjectsList,
   });
 
   const projects = {
@@ -42,8 +42,26 @@ function ProjectAside() {
 
   const count = data?.count;
 
-  const handleItemClick = (id) => {
+ // 프로젝트 데이터를 가져오는 함수
+ const fetchProject = async (id) => {
+  try {
+    const response = await axiosInstance.get(`/api/project/${id}`);
+    return response.data;
+  } catch (err) {
+    return err;
+  }
+};
+
+  const handleItemClick = async (id) => {
     setActiveItemId(id); // 클릭된 항목의 ID를 활성화
+    try {
+      const projectData = await fetchProject(id); // API 호출
+      console.log(projectData)
+      setData(projectData); // 데이터를 상태로 설정
+    } catch (err) {
+      console.error(err)
+      setData(null); // 기존 데이터 초기화
+    }
   };
   const toggleSection = (key) => {
     setOpenSections((prev) => ({ ...prev, [key]: !prev[key] }));

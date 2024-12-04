@@ -212,13 +212,26 @@
     flex-direction: column;
     justify-content: space-between;
     align-items: flex-end;
-    & > img {
-      align-self: flex-end;
-      width: 15px;
-      height: 15px;
-    }
     & > span {
       font-size: 12px;
+    }
+  }
+
+  .unReadCnt {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 16px;
+    border-radius: 10px;
+    background-color: red;
+    color: white;
+    font-size: 10px;
+    padding: 5px 5px 7px 5px;
+    & > span {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
     }
   }
 
@@ -292,6 +305,12 @@
         cursor: default;
       }
     }
+  }
+
+  .chatRoomName {
+    display: flex;
+    justify-content: center;
+    align-items: center;
   }
 
   .search_more {
@@ -732,10 +751,22 @@
   }
 
   .name_dept {
+    width: 100%;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: flex-start;
+  }
+
+  .favoriteBtn {
+    width: 140px;
+    padding: 5px;
+    border-radius: 8px;
+    border: 1px solid #7e7edf;
+    font-size: 12px;
+    &:hover {
+      background-color: #7e7edf8f;
+    }
   }
 
   .dept > span {
@@ -865,7 +896,7 @@
 
   .selected-User_cancelBtn {
     width: 100%;
-    height: 60px;
+    height: 65px;
     display: flex;
     justify-content: space-between;
     align-items: center;

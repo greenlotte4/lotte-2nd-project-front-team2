@@ -27,7 +27,6 @@ export default function Document() {
     const [editing, setEditing] = useState(false); // 이름 변경 모드
     const [newFolderName, setNewFolderName] = useState(''); // 새로운 폴더 이름
     const [isRenameModalOpen, setIsRenameModalOpen] = useState(false); // 모달 열림 상태
-    const [drives,setDrives] = useState([]);
     const [folderId,setFolderId] =useState("null");
     const queryClient = useQueryClient();
     const [draggedFolder, setDraggedFolder] = useState(null); // 드래그된 폴더
@@ -43,6 +42,11 @@ export default function Document() {
         setSelectedFolder(folder); // 선택된 폴더 정보 설정
         setIsDetailVisible(!isDetailVisible);
     };
+
+    const closeDetailView = () => {
+        setIsDetailVisible(false);
+        setSelectedFolder(null);
+      };
 
 
     const makeDrive = () => {
@@ -71,18 +75,18 @@ export default function Document() {
 
 
     // 폴더 및 파일 데이터 가져오기
-    const { data, isLoading, isError } = useQuery({
+    const { data : drives = [], isLoading, isError } = useQuery({
         queryKey: ['folders', folderId],
         queryFn: async () => {
             const response = await axiosInstance.get(
                 `/api/drive/folders`
             );
-            setDrives(response.data);
-            console.log(response.data);
             return response.data;
         },
         staleTime: 300000, // 데이터가 5분 동안 신선하다고 간주
     });
+
+    
 
     // driveList 데이터 가져오기
     // const { data: driveListData, isLoading: isDriveListLoading, isError: isDriveListError } = useQuery({
@@ -241,7 +245,7 @@ export default function Document() {
         e.preventDefault(); // 기본 컨텍스트 메뉴 방지
         setContextMenu({
             visible: true,
-            position: { top: e.clientY, left: e.clientX },
+            position: { top: e.clientY, left: e.clientX -400 },
             folder,
             folderId : folder.id,
             folderName: folder.name,
@@ -280,30 +284,9 @@ export default function Document() {
     if (isLoading) return <div>Loading...</div>;
     if (isError) return <div>Error loading data.</div>;
 
-    const subFolders = (data?.subFolders || [])
-    .map((folder) => ({
-        ...folder,
-        type: 'folder',
-        order: folder.order || 0, // 기본값 설정
-    }))
-    .sort((a, b) => (a.order || 0) - (b.order || 0)); // order 기준 정렬
-
-    
-    const files = (data?.files || [])
-    .map((file) => ({
-        ...file,
-        type: 'file', // 파일 타입 추가
-    }));
-
-    const maxOrder = Math.max(...subFolders.map(folder => folder.order || 0));
-    const fileMaxOrder =
-        files.length > 0
-            ? Math.max(...files.map(file => file.order || 0))
-            : 0; // 기본값을 0으로 설정
-
-    console.log("fileMaxorder",fileMaxOrder);
+   
     return (
-        <DocumentLayout isDetailVisible={isDetailVisible} selectedFolder={selectedFolder}>
+        <DocumentLayout isDetailVisible={isDetailVisible} selectedFolder={selectedFolder} uid={drives.uid} closeDetailView={closeDetailView}>
                 <section className='flex gap-4 items-center'>
                     <span className=' text-[24px] ml-4 mt-4'>나의 드라이브 </span>
                 </section>
@@ -320,14 +303,26 @@ export default function Document() {
                         <p className='ml-4'>View :</p>
                         <button
                             className={`list ${viewType === 'list' ? 'active' : ''}`} // Add active class for styling
-                            onClick={() => viewHandler('list')}> 
-                            <img src='/images/document-note.png'></img>
+                            onClick={() => setViewType('list')}> 
+                            <img className={`list ${viewType === 'list' ? 'active' : ''}`} src='/images/document-note.png'
+                                  style={{
+                                    filter: viewType === 'list' 
+                                        ? 'invert(29%) sepia(96%) saturate(748%) hue-rotate(180deg) brightness(89%) contrast(101%)' 
+                                        : 'invert(0%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(0%) contrast(0%)', // 블랙 필터
+                                }}
+                            ></img>
 
                             </button>
                         <button
                             className={`box ${viewType === 'box' ? 'active' : ''}`} // Add active class for styling
-                            onClick={() => viewHandler('box')}>                       
-                            <img src='/images/document-menu.png'></img>
+                            onClick={() => setViewType('box')}>                       
+                            <img className={`list ${viewType === 'list' ? 'active' : ''}`} 
+                                 style={{
+                                    filter: viewType === 'box'
+                                        ? 'invert(29%) sepia(96%) saturate(748%) hue-rotate(180deg) brightness(89%) contrast(101%)'
+                                        : 'invert(0%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(0%) contrast(0%)', // 블랙 필터
+                                }}
+                                src='/images/document-menu.png' />
                             </button>
                     </div>
                     <div className='flex gap-2'>
@@ -337,18 +332,22 @@ export default function Document() {
                 
                 {viewType === 'box' ? ( <>
                  <section className='flex gap-6 ml-16 mt-12'>
-                    {drives.map((drive) => (
-                        <DocumentCard3
-                            key={drive.id}
-                            cnt={drive.fileCount || 0}
-                            fileName={drive.name}
-                            onContextMenu={handleContextMenu}
-                            onClick={() => setActiveCard(drive.name)}
-                            folderId={drive.id}
-                            folder={drive}
-                            path={drive.path}
-                        />
-                    ))}
+                 {drives?.folderDtoList?.length > 0 ? (
+                        drives.folderDtoList.map((drive) => (
+                            <DocumentCard3
+                                key={drive.id}
+                                cnt={drive.fileCount || 0}
+                                fileName={drive.name}
+                                onContextMenu={handleContextMenu}
+                                onClick={() => setActiveCard(drive.name)}
+                                folderId={drive.id}
+                                folder={drive}
+                                path={drive.path}
+                            />
+                        ))
+                    ) : (
+                        <p className="text-gray-500 ml-4">드라이브가 없습니다.</p>
+                    )}
                 </section>
                     </> ):( 
                         <section  className="h-[500px] overflow-scroll scrollbar-none">
@@ -364,7 +363,7 @@ export default function Document() {
                         </tr>
                     </thead>
                     <tbody>
-                        {[...subFolders, ...files].map((item) => (
+                        {[...drives].map((item) => (
                              <tr
                                 key={folder.id}
                                 draggable
@@ -401,7 +400,7 @@ export default function Document() {
                     />
                 </div>
 
-            <NewFolder isOpen={folder} onClose={() => setFolder(false)} parentId={folderId}     maxOrder={maxOrder} // 최대 order 값을 계산해서 전달
+            <NewFolder isOpen={folder} onClose={() => setFolder(false)} parentId={folderId}     maxOrder={0} // 최대 order 값을 계산해서 전달
             />
              {/* ContextMenu 컴포넌트 */}
              <ContextMenu

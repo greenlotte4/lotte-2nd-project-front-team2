@@ -100,12 +100,11 @@
     }
 
     .drive-modal {
-        .modal-custom-width {
-            width: 500px;
-        }
+    
         .fixed {
             background-color: rgba(0, 0, 0, 0.5) !important; // 우선순위 강제 적용
           }
+          
        
     }
     
@@ -187,11 +186,6 @@
             .modal-custom-width {
                 width: 250px;
             }
-        }
-    }
-    .drive-modal {
-        .modal-custom-width {
-            width: 500px;
         }
     }
 

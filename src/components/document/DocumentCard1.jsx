@@ -30,7 +30,26 @@ export const DocumentCard1 = ({
     const [isRenameModalOpen, setIsRenameModalOpen] = useState(false); // RenameModal 상태
     const [newName, setNewName] = useState(folderName); // 폴더 이름 상태
     const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 }); // 메뉴 위치
+    const [isFavorite, setIsFavorite] = useState(false); // 즐겨찾기 상태
 
+    const handleFavoriteToggle = async () => {
+        setIsFavorite((prev) => !prev); // 즐겨찾기 상태 변경
+    
+        try {
+            const response = await axiosInstance.put(`/api/drive/folder/${folderId}/favorite`, {
+                isFavorite: !isFavorite, // 새로운 상태를 백엔드에 전달
+            });
+    
+            if (response.status === 200) {
+                console.log('즐겨찾기 상태 업데이트 성공');
+            } else {
+                console.error('즐겨찾기 상태 업데이트 실패:', response.data);
+            }
+        } catch (error) {
+            console.error('즐겨찾기 상태 업데이트 중 오류 발생:', error);
+            setIsFavorite((prev) => !prev); // 실패 시 상태를 원복
+        }
+    };
 
     const toggleMenu = (e) => {
         e.preventDefault(); // 기본 컨텍스트 메뉴 방지
@@ -162,11 +181,13 @@ export const DocumentCard1 = ({
                 <p className="w-1/2 text-center text-blue-900 text-sm" onClick={(e)=> { e.preventDefault; navigateHandler()}}>{folderName}</p>
             </div>
             <img
-                    className="absolute cursor-pointer right-[20px] rotate-90 "
-                    src="/images/button-dot.png"
-                    alt="버튼"
-                    onClick={toggleMenu} // 메뉴 열기
-
+                    className="absolute cursor-pointer right-[20px] w-[25px] "
+                    src={isFavorite ? '/images/star_on.png' : '/images/star_off.png'} // 상태에 따라 이미지 변경                    
+                    alt="즐겨찾기"
+                    onClick={(e) => {
+                        e.stopPropagation(); // 클릭 이벤트 전파 방지
+                        handleFavoriteToggle();
+                    }}
                 />
             {isMenuOpen && (
                  <ContextMenu

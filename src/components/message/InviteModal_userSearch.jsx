@@ -50,9 +50,13 @@ export default function InviteModal_userSearch(props) {
     setKeyword(e.target.value);
   };
 
-  const setUsersHandler = (result) => {
+  const setUsersHandler = (result, group) => {
     if (!users.includes(result)) {
-      setUsers([...users, result]);
+      const newResult = {
+        ...result,
+        group: group,
+      };
+      setUsers([...users, newResult]);
     }
   };
 
@@ -90,7 +94,7 @@ export default function InviteModal_userSearch(props) {
                   }`}
                   onClick={(e) => {
                     selectHandler(e, result.uid);
-                    setUsersHandler(result);
+                    setUsersHandler(result, result.groupName);
                   }}
                   key={result.uid}
                 >
@@ -102,7 +106,7 @@ export default function InviteModal_userSearch(props) {
                   <div className="name_dept">
                     <div className="name">{result.name}</div>
                     <div className="dept">
-                      <span>개발팀</span>
+                      <span>{result.groupName}</span>
                     </div>
                   </div>
                 </div>

@@ -25,6 +25,7 @@ export default function Calendar() {
     const [openPostCalendar, setOpenPostCalendar] = useState(false);
     const [openDeleteAndModifyCalendar, setOpenDeleteAndModifyCalendar] = useState(false);
     const [selectedCalendarIds, setSelectedCalendarIds] = useState([]);
+    const [selectedColor, setSelectedColor] = useState({});
     const [selectedCalendar, setSelectedCalendar] = useState({
         id : 0,
         color : "",
@@ -33,138 +34,61 @@ export default function Calendar() {
         status : 0,
         userIds : []
     });
-    const accessToken = useAuthStore(state => state.accessToken);
-    const [accessToken1, setAccessToken1] = useState();
-    const [isQueryEnabled, setIsQueryEnabled] = useState(true);
-
-
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            setIsQueryEnabled(true);  // 일정 시간 뒤에 쿼리 활성화
-        }, 1000);  // 2초 지연
-
-        return () => clearTimeout(timer);  // 컴포넌트 언마운트 시 타이머 클리어
-    }, []);
-
-    useEffect(()=>{
-        if(accessToken){
-            setAccessToken1(accessToken)
+    const changeCalendar = (e, id, color) => {
+        const colorClass = `bg-${color}-200`;
+        const isSelected = e.target.classList.contains(colorClass);
+    
+        if (isSelected) {
+            e.target.classList.remove(colorClass); // 기존 색상 제거
+            setSelectedCalendarIds((prev) => prev.filter((item) => item !== id)); // 선택 해제
+        } else {
+            e.target.classList.add(colorClass); // 색상 추가
+            setSelectedCalendarIds((prev) => [...prev, id]); // 선택 추가
         }
-    },[accessToken])
+    
+        setCalendarId(id);
+    };
     const { stompClient, isConnected, receiveMessage , updateCalendarIds , updateUserId } = useWebSocket({
 
     });
 
+    useEffect(()=>{        
+        
+    },[receiveMessage.update])
+
     useEffect(()=>{
-
         if(Array.isArray(receiveMessage.update)&&receiveMessage.update.length>0){
-            queryClient.setQueryData(['calendar-name'],(prevData)=> {
-                console.log(prevData)
-                if(Array.isArray(prevData)&& prevData.length>0){
-                    return prevData.map((item) => {
-                        if (item.id == receiveMessage.name.id) {
-                            return {
-                                ...item,
-                                name : receiveMessage.name.name,
-                                status : receiveMessage.name.status,
-                                color : receiveMessage.name.color
-                            };
-                        }
-                        return item;
-                    });
-                }
-            })
-            queryClient.setQueryData(['calendar-date'], (prevData) => {
-                console.log(prevData)
-                if(Array.isArray(prevData)&& prevData.length>0){
-                    const updatedData = prevData
-                        ? prevData.map((item) => {
-                            const updatedItem = receiveMessage.update.find(data => String(data.id) === String(item.id));
-                            if (updatedItem) {
-                                return {
-                                    ...item,
-                                    title: updatedItem.title,  // putData에서 받은 새로운 title 값
-                                    start: updatedItem.start,  // putData에서 받은 새로운 startDate 값
-                                    end: updatedItem.end,  // putData에서 받은 새로운 endDate 값
-                                    color: updatedItem.color,  // 기존 color는 그대로 유지
-                                    sheve: updatedItem.sheve,
-                                    location: updatedItem.location,
-                                    importance: updatedItem.importance,
-                                    alert: updatedItem.alert,
-                                    memo: updatedItem.memo
-                                };
-                            }
-                            return item;
-                        })
-                        : [];
-
-                    return updatedData;
-                }
-            });
-
+            queryClient.invalidateQueries(['calendar-name'])
+            queryClient.invalidateQueries(['calendar-date'])
+            queryClient.refetchQueries(['calendar-name']);
+            queryClient.refetchQueries(['calendar-date']);
         }
 
         if(receiveMessage.delete && (receiveMessage.delete != 0)){
-            console.log(receiveMessage)
-            console.log(prevData)
-            queryClient.setQueryData(['calendar-date'], (prevData) => {
-                // prevData가 없으면 그대로 반환하고, 있다면 필터링 처리
-                if (!Array.isArray(prevData)) {
-                    return prevData;  // prevData가 없으면 그대로 반환
-                } else {
-                    // prevData가 있을 경우, 삭제 처리
-                    const updatedData = prevData.filter((item) => {
-                        return String(item.id) !== String(receiveMessage.delete);
-                    });
-                }
-                return updatedData;
-            });
-
-            queryClient.setQueryData(['calendar-name'], (prevData) => {
-                if(Array.isArray(prevData)&&prevData.length>0){
-                    return prevData.filter(item => item.id != receiveMessage.delete);
-                }
-            });
+            queryClient.invalidateQueries(['calendar-name'])
+            queryClient.invalidateQueries(['calendar-date'])
         }
         if (receiveMessage.post) {
-            queryClient.setQueryData(['calendar-name'], (prevData) => {
-                // prevData가 배열인 경우에만 새로운 항목을 추가
-                if (Array.isArray(prevData)) {
-                    return [
-                        ...prevData,  // 기존 데이터 유지
-                        {
-                            color: receiveMessage.post.color, // 객체의 color
-                            name: receiveMessage.post.name,   // 객체의 name
-                            status: receiveMessage.post.status // 객체의 status
-                        }
-                    ];
-                } else {
-                    // prevData가 배열이 아니면 그냥 기존 데이터 그대로 반환
-                    return [receiveMessage.post]; // 기존 데이터가 없다면 새로운 객체만 포함된 배열 반환
-                }
-            });
+            queryClient.invalidateQueries(['calendar-name'])
+            queryClient.invalidateQueries(['calendar-date'])
+            queryClient.invalidateQueries(['initial-ids'])
         }
-        // if(receiveMessage.contentsPut){
-        //     queryClient.setQueryData(['calendar-date'],(prevData) => {
-        //         if (Array.isArray(prevData)) {
-        //             const updatedData = prevData.map((item) => {
-        //                 if (item.id == receiveMessage.contentsPut.contentId) {
-        //                     return {
-        //                         ...item,
-        //                         title: receiveMessage.contentsPut.title,
-        //                         start: receiveMessage.contentsPut.startDate,
-        //                         end: receiveMessage.contentsPut.endDate,
-        //                     };
-        //                 }
-        //                 console.log(item)
-        //                 return item; // id가 일치하지 않으면 그대로 반환
-        //             }); // 수정된 배열 반환
-        //             console.log(updatedData)
-        //             return updatedData
-        //         }
-        //     })
-        // }
-
+        if(receiveMessage.contentsPut){
+            queryClient.invalidateQueries(['calendar-date'])
+            queryClient.invalidateQueries(['calendar-content-name'])
+        }
+        if(receiveMessage.put2=='put2'){
+            queryClient.invalidateQueries(['calendar-date'])
+            queryClient.invalidateQueries(['calendar-content-name'])
+        }
+        if(receiveMessage.contentDelete=='delete'){
+            queryClient.invalidateQueries(['calendar-date'])
+            queryClient.invalidateQueries(['calendar-content-name'])
+        }
+        if(receiveMessage.contentPost=='post'){
+            queryClient.invalidateQueries(['calendar-date'])
+            queryClient.invalidateQueries(['calendar-content-name'])
+        }
 
     },[receiveMessage])
 
@@ -186,10 +110,11 @@ export default function Calendar() {
                 return err
             }
         },
-        enabled : isQueryEnabled,
+        enabled : true,
         staleTime: 1000,
         retry: 1,
         refetchOnWindowFocus: false,
+        cacheTime : 5*1000*60
     })
 
     const {data : calendarContentName , isLoading : isLoadingCalendarContentName, isError : isErrorCalendarContentName} = useQuery({
@@ -203,7 +128,8 @@ export default function Calendar() {
             }
         },
         retry : 1,
-        enabled : isQueryEnabled
+        enabled : true,
+        cacheTime : 5*1000*60
     })
 
 
@@ -215,15 +141,7 @@ export default function Calendar() {
         }
     },[calendarName,refetchCalendarName])
 
-    const changeCalendar = (e,id,color) =>{
-        if(e.target.classList.contains(`bg-${color}-200`)){
-            setCalendarId(id);
-            setSelectedCalendarIds((prev)=>[...prev, id])
-        } else {
-            setCalendarId(id);
-            setSelectedCalendarIds((prev) => prev.filter((item) => item !== id));
-        }
-    }
+
 
     const {data : calendarDate, isLoading : isLoadingCalendarDate, isError : isErrorCalendarDate} = useQuery({
         queryKey : ['calendar-date'],
@@ -235,7 +153,7 @@ export default function Calendar() {
                 return err
             }
         },
-        enabled : isQueryEnabled,
+        enabled : true,
         refetchOnWindowFocus: false,
         staleTime: 0,
         retry: 1,
@@ -259,7 +177,8 @@ export default function Calendar() {
                     return err
                 }
             },
-            enabled : isQueryEnabled,
+            enabled : true,
+            cacheTime : 5*1000*60
 
         })
 
@@ -342,18 +261,25 @@ export default function Calendar() {
                                         :
                                         (
                                             calendarName.map((v,i) => {
+                                                const isSelected = selectedColor[v.id];
                                                 return (
                                                     <li key={i}  className=' flex justify-between mr-[20px]'>
-                                                        <div
+                                                         <div
                                                             onClick={(e) => {
-                                                                e.target.classList.toggle(`bg-${e.target.dataset.color}-200`);
+                                                                // 색상 토글을 직접 상태에서 관리
+                                                                const newSelectedColor = { ...selectedColor, [v.id]: !isSelected };
+                                                                setSelectedColor(newSelectedColor); // 상태 업데이트
+
                                                                 changeCalendar(e, v.id, v.color);
                                                                 setSelectedCalendar(v);
                                                             }}
                                                             data-status={v.status}
                                                             data-color={v.color}
-                                                            className={`mb-2 cursor-pointer w-[150px] pl-[10px] hover:text-purple-700 rounded-lg `}
-                                                        >• {v.name}</div>
+                                                            className={`mb-2 cursor-pointer w-[150px] pl-[10px] hover:text-purple-700 rounded-lg 
+                                                                ${isSelected ? `bg-${v.color}-200` : ''}`} // 선택된 상태에 따라 색상 추가
+                                                        >
+                                                            • {v.name}
+                                                        </div>
                                                         <img onClick={(e)=>{setOpenDeleteAndModifyCalendar(true);setSelectedCalendar(v);}} className='w-[16px] h-[16px] opacity-60 cursor-pointer hover:opacity-100' src='/images/calendar-setting.png'></img>
                                                     </li>
                                                 )

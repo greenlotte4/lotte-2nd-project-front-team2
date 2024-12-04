@@ -6,7 +6,8 @@ import ShowMoreModal from "../../components/message/ShowMoreModal";
 import AttachFileModal from "../../components/message/AttachFileModal";
 import ProfileModal from "../../components/message/ProfileModal";
 import axiosInstance from "../../services/axios";
-import { useAuthStore } from "../../store/useAuthStore";
+import { useQuery } from "@tanstack/react-query";
+import useUserStore from "./../../store/useUserStore";
 
 export default function Message() {
   const [isOpen, setIsOpen] = useState(false);
@@ -18,6 +19,8 @@ export default function Message() {
   const [fileInfos, setFileInfos] = useState([]);
   const [selectedRoomId, setSelectedRoomId] = useState("");
   const [roomData, setRoomData] = useState([]);
+  const [roomInfo, setRoomInfo] = useState({});
+  const [roomId, setRoomId] = useState();
 
   const fileRef = useRef();
   const profileRef = useRef();
@@ -128,7 +131,6 @@ export default function Message() {
       Promise.all(readFilePromises)
         .then((results) => {
           setFileInfos(results);
-          console.log("fileInfos updated:", results);
         })
         .catch((err) => {
           console.error(err);
@@ -138,37 +140,12 @@ export default function Message() {
     }
   };
 
-  const selectRoomHandler = (e, roomId) => {
-    e.preventDefault();
-    setSelectedRoomId(roomId);
-  };
-
-  const decodeAccessToken = useAuthStore((state) => state.decodeAccessToken);
-
-  const [uid, setUid] = useState(() => localStorage.getItem("uid")); // 초기값으로 localStorage에서 가져오기
-
-  useEffect(() => {
-    if (!uid) {
-      const payload = decodeAccessToken();
-      if (payload && payload.sub) {
-        setUid(payload.sub);
-        localStorage.setItem("uid", payload.sub); // localStorage에 저장
-      } else {
-        console.error("유효한 UID가 토큰에 없습니다.");
-        // 로그인 페이지로 리다이렉트 등
-      }
-    }
-  }, [decodeAccessToken, uid]);
+  const uid = useUserStore((state) => state.user.uid);
 
   const frequentHandler = useCallback(
     async (e, room) => {
       e.preventDefault();
       const newFavoriteStatus = room.chatRoomFavorite === 0 ? 1 : 0;
-      console.log("room", room);
-
-      console.log("roomId:", room.id);
-      console.log("chatRoomFavorite:", room.chatRoomFavorite);
-      console.log("newFavoriteStatus:", newFavoriteStatus);
 
       const jsonData = {
         id: room.id,
@@ -176,7 +153,7 @@ export default function Message() {
       };
       try {
         await axiosInstance
-          .patch("/api/message/frequent", jsonData)
+          .patch("/api/message/frequentRoom", jsonData)
           .then((resp) => console.log(resp.data));
 
         setRoomData((prevRooms) =>
@@ -203,9 +180,23 @@ export default function Message() {
       }
     };
     fetchChatRooms();
-  }, [uid, frequentHandler]);
+  }, [uid, isOpen]);
 
-  console.log("roomData : ", roomData);
+  const selectRoomHandler = (e, roomId) => {
+    e.preventDefault();
+    if (selectedRoomId === roomId) {
+      return;
+    }
+    setSelectedRoomId(roomId);
+    try {
+      axiosInstance.get(`/api/message/roomInfo/${roomId}`).then((resp) => {
+        console.log(resp.data);
+        setRoomInfo(resp.data);
+      });
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   return (
     <div id="message-container">
@@ -228,7 +219,7 @@ export default function Message() {
 
           <div className="search">
             <img className="searchImg" src="../images/image.png" alt="" />
-            <input type="text" placeholder="Search..." />
+            <input type="text" placeholder="Search..." onChange={null} />
           </div>
         </div>
         <div className="list frequent">
@@ -265,12 +256,10 @@ export default function Message() {
                         </div>
                       </div>
                       <div className="date_unRead">
-                        <span>2024.11.20</span>
-                        <img
-                          className="unReadImg"
-                          src="../images/unreadNum.png"
-                          alt=""
-                        />
+                        <span className="date">2024.11.20</span>
+                        <div className="unReadCnt">
+                          <span>{room.chatRoomReadCnt}</span>
+                        </div>
                       </div>
                     </div>
                   ))
@@ -313,11 +302,9 @@ export default function Message() {
                       </div>
                       <div className="date_unRead">
                         <span>2024.11.20</span>
-                        <img
-                          className="unReadImg"
-                          src="../images/unreadNum.png"
-                          alt=""
-                        />
+                        <div className="unReadCnt">
+                          <span>{room.chatRoomReadCnt}</span>
+                        </div>
                       </div>
                     </div>
                   ))
@@ -335,11 +322,8 @@ export default function Message() {
         <div className="others">
           <div className="profile_name_preview">
             <img className="profile" src="../images/sample_item1.jpg" alt="" />
-            <div className="name_preview">
-              <div className="name">전규찬</div>
-              <div className="preview">
-                <span>백엔드 개발자</span>
-              </div>
+            <div className="chatRoomName">
+              <span>{roomInfo.chatRoomName}</span>
             </div>
           </div>
           <div className="search_more">

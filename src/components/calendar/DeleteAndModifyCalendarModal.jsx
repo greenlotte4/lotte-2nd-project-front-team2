@@ -23,6 +23,7 @@ export default function DeleteAndModifyCalendarModal({isOpen, onClose,selectedCa
     const [openAddress,setOpenAddress] = useState(false);
     const [selectedUsers, setSelectedUsers] = useState([]);
     const { sendWebSocketMessage } = useWebSocket({});
+    const [selectedCalendarId, setSelectedCalendarId] = useState();
 
     useEffect(() => {
         if (Array.isArray(usedColors) && usedColors.length > 0) {
@@ -39,6 +40,7 @@ export default function DeleteAndModifyCalendarModal({isOpen, onClose,selectedCa
             setName(selectedCalendar.name)
             setStatus(selectedCalendar.status)
             setColor(selectedCalendar.color)
+            setSelectedCalendarId(selectedCalendar.id)
         }
     },[selectedCalendar])
     
@@ -89,8 +91,7 @@ export default function DeleteAndModifyCalendarModal({isOpen, onClose,selectedCa
             setCustomAlertMessage(data)
             setCustomAlertType("success")
 
-            const id = selectedCalendar.id
-            sendWebSocketMessage(id,'/app/calendar/update'); // "update" 메시지 전송
+            sendWebSocketMessage(selectedCalendarId,'/app/calendar/update'); // "update" 메시지 전송
             setTimeout(() => {
                 setCustomAlert(false)
                 onClose();
@@ -122,8 +123,7 @@ export default function DeleteAndModifyCalendarModal({isOpen, onClose,selectedCa
             setCustomAlertType("success")
 
             // queryClient.setQueryData(['calendar-date'])
-            const id = selectedCalendar.id
-            sendWebSocketMessage(id,'/app/calendar/delete'); 
+            sendWebSocketMessage(selectedCalendarId,'/app/calendar/delete'); 
             setTimeout(() => {
                 setCustomAlert(false)
                 onClose();

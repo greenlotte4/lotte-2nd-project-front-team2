@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import React, { useEffect, useState } from 'react'
 import axiosInstance from '@/services/axios.jsx'
 import CustomAlert from '../Alert';
+import useWebSocket from '../../util/useWebSocket';
 
 export default function PostScheduleModal({ isOpen, onClose, children , text,oldData ,today ,setToday }) {
 
@@ -18,7 +19,7 @@ export default function PostScheduleModal({ isOpen, onClose, children , text,old
     const [customAlertMessage, setCustomAlertMessage] = useState("");
     const queryClient = useQueryClient();
     const calendarName = queryClient.getQueryData(['calendar-name']);
-    
+    const { sendWebSocketMessage } = useWebSocket({});
     useEffect(() => {
       if (today) {
         // sdate는 today를 기준으로 설정
@@ -58,19 +59,11 @@ export default function PostScheduleModal({ isOpen, onClose, children , text,old
           setCustomAlert(true)
           setCustomAlertType("success")
           setCustomAlertMessage(data.message)
-          queryClient.invalidateQueries(['calendar-content-name'])
-          queryClient.setQueryData(['calendar-date'], (prevData) => [...prevData,{
-            title,
-            start : sdate,
-            end : edate,
-            color : data.color,
-            id : data.id,
-            location : location,
-            importance,
-            alert,
-            memo,
-            sheave : calendarId
-          }])
+          
+          const messagedata = {
+            calendarId,
+          }
+          sendWebSocketMessage(messagedata, '/app/calendar/contents/post');
           setTimeout(() => {
             setCustomAlert(false);
             onClose();  

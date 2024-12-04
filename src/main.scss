@@ -225,7 +225,11 @@ button{
     white-space: nowrap;  
   }
 }
-
+.BowpK {
+  font: var(--dt-label-medium-font, 500 .75rem / 1rem "Roboto"), "Google Sans", Roboto, Arial, sans-serif;
+  letter-spacing: var(--dt-label-medium-spacing, .0208333333em);
+  color: var(--dt-on-surface, rgb(60, 64, 67));
+}
 .modal-content {
   min-height: 200px;
 }

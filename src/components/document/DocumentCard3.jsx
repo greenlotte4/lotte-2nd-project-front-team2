@@ -169,7 +169,7 @@ export const DocumentCard3 = ({
             </div>
             <div className="flex mt-2 justify-between ">
                 <div></div>
-                <p className=" text-center ml-[25px]  text-blue-900 text-sm 	" onClick={(e)=> { e.preventDefault; navigateHandler()}}>폴더이름{folderName}</p>
+                <p className=" text-center ml-[25px]  text-blue-900 text-sm 	" onClick={(e)=> { e.preventDefault; navigateHandler()}}>{folder.name}</p>
                 <img className='w-[25px] h-[25px] opacity-80	 hover:opacity-100' src="/images/star_off.png" alt="" />
             </div>
          
@@ -178,9 +178,9 @@ export const DocumentCard3 = ({
                     visible={true}
                     position={menuPosition}
                     folder={folder}
-                    folderName={folderName}
-                    folderId={folderId}
-                    path={path}
+                    folderName={folder.name}
+                    folderId={folder.id}
+                    path={folder.path}
                 />
             )}
                        

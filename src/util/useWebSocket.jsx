@@ -23,10 +23,10 @@ const useWebSocket = ({ initialDestination, initialMessage, initialCalendarId, i
     };
 
     const initializeStompClient = useCallback(async () => {
-        // const headers = await getWebSocketHeaders();
+        const headers = await getWebSocketHeaders();
         const client = new Client({
             brokerURL: wsUrl,
-            // connectHeaders: headers,
+            connectHeaders: headers,
             debug: function (str) {
                 console.log(str);
             },
@@ -49,6 +49,7 @@ const useWebSocket = ({ initialDestination, initialMessage, initialCalendarId, i
                 client.subscribe(`/topic/calendar/${calendarId}`, (message) => {
                     try {
                         const response = JSON.parse(message.body);
+                        console.log(response)
                         setReceiveMessage(response);
                     } catch (error) {
                         console.error("Failed to parse message:", error);
@@ -61,6 +62,7 @@ const useWebSocket = ({ initialDestination, initialMessage, initialCalendarId, i
             client.subscribe(`/topic/calendar/user/${userId}`, (message) => {
                 try {
                     const response = JSON.parse(message.body);
+                    console.log(response)
                     setReceiveMessage(response);
                 } catch (error) {
                     console.error("Failed to parse user message:", error);

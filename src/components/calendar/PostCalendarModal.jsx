@@ -63,7 +63,7 @@ export default function PostCalendarModal({isOpen,onClose}) {
         "userIds" : selectedUsers.map(v=>v.id),
         "status" : status,
         "id" : data.calendarName.id,
-        "myid" : usedColors.id
+        "myid" : data.myid
       }
       sendWebSocketMessage(messageData,'/app/calendar/post'); 
       
