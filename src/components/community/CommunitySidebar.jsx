@@ -1,25 +1,43 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import "@/pages/community/Community.scss";
 import { Link, useParams } from "react-router-dom";
+import axiosInstance from "@/services/axios";
 
 export default function CommunitySidebar({
-  userRole = "user", // 기본값: 일반 사용자
+  userRole = "user",
   currentUser = null,
-  departmentBoards = [], // 부서별 게시판
-  userBoards = [], // 사용자 게시판
+  departmentBoards: initialDepartmentBoards = [],
+  userBoards: initialUserBoards = [],
   onDeleteBoard = () => {},
   onUpdateBoard = () => {},
   onNewPost = () => {},
   onNewUserBoard = () => {},
 }) {
   const { boardType } = useParams();
-  const [isModalOpen, setIsModalOpen] = useState(false); // 모달 열림 상태
-  const [boards, setBoards] = useState(userBoards); // 사용자 게시판 상태
-  const [newBoardName, setNewBoardName] = useState(""); // 새 게시판 이름
-  const [newBoardDescription, setNewBoardDescription] = useState(""); // 새 게시판 설명
 
-  // 열림/닫힘 상태 관리
+  // State 초기화
+  const [boards, setBoards] = useState(initialUserBoards);
+  const [departmentBoards, setDepartmentBoards] = useState([]);
+
+  const [favoriteIds, setFavoriteIds] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [newBoardName, setNewBoardName] = useState("");
+  const [newBoardDescription, setNewBoardDescription] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // 상태값과 슬러그 매핑
+  const statusToSlug = {
+    1: "notice", // 공지사항
+    2: "secret", // 익명게시판
+    3: "free", // 자유게시판
+    4: "archive", // 자료실
+    5: "menuToday", // 오늘의 식단
+    6: "department", // 부서별 게시판
+    default: "unknown", // 기본값 추가
+  };
+
   const [sections, setSections] = useState({
     favorites: true,
     allBoards: true,
@@ -27,19 +45,58 @@ export default function CommunitySidebar({
     myBoards: true,
   });
 
-  // 특정 섹션의 열림/닫힘 토글 함수
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const [
+          userBoardsResponse,
+          departmentBoardsResponse,
+          favoritesResponse,
+        ] = await Promise.all([
+          axiosInstance.get("/api/community/boards"),
+
+          axiosInstance.get("/api/community/boards/group/1"),
+          axiosInstance.get("/api/community/favorites"),
+        ]);
+
+        setBoards(userBoardsResponse?.data || []);
+
+        {
+          /*부서별*/
+        }
+        setDepartmentBoards(
+          Array.isArray(departmentBoardsResponse?.data)
+            ? departmentBoardsResponse.data
+            : departmentBoardsResponse
+            ? [departmentBoardsResponse.data]
+            : []
+        );
+
+        setFavoriteIds(
+          favoritesResponse?.data?.map((fav) => fav.boardId) || []
+        );
+      } catch (err) {
+        console.error("데이터 로드 실패:", err);
+        setError("데이터를 로드하는 데 실패했습니다.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
   const toggleSection = (section) => {
     setSections((prev) => ({
       ...prev,
-      [section]: !prev[section], // 상태 반전
+      [section]: !prev[section],
     }));
   };
 
-  // 모달 열기/닫기
   const handleOpenModal = () => setIsModalOpen(true);
   const handleCloseModal = () => setIsModalOpen(false);
 
-  // 새 게시판 생성 핸들러
   const handleCreateBoard = () => {
     if (!newBoardName.trim() || !newBoardDescription.trim()) {
       alert("게시판 이름과 설명을 입력해주세요.");
@@ -47,45 +104,33 @@ export default function CommunitySidebar({
     }
 
     const newBoard = {
-      key: new Date().getTime().toString(), // 임시 키
+      key: new Date().getTime().toString(),
       label: newBoardName,
       description: newBoardDescription,
     };
 
-    setBoards((prevBoards) => [...prevBoards, newBoard]); // 상태 업데이트
-    onNewUserBoard(newBoard); // 필요한 경우 서버와 연동
-    alert(`새 개인 게시판 "${newBoard.label}"이 생성되었습니다!`);
-    setNewBoardName(""); // 입력 초기화
+    setBoards((prevBoards) => [...prevBoards, newBoard]);
+    onNewUserBoard(newBoard);
+    alert(`새 게시판 "${newBoard.label}"이 생성되었습니다!`);
+    setNewBoardName("");
     setNewBoardDescription("");
     handleCloseModal();
   };
 
-  // 즐겨찾기 상태 관리
-  const [favorites, setFavorites] = useState({}); // 키: 게시판 ID, 값: 즐겨찾기 여부
-
-  // 즐겨찾기 토글 핸들러
-  const toggleFavorite = (key) => {
-    setFavorites((prevFavorites) => ({
-      ...prevFavorites,
-      [key]: !prevFavorites[key], // 현재 상태 반전
-    }));
+  const toggleFavorite = (boardId) => {
+    setFavoriteIds((prevFavorites) =>
+      prevFavorites.includes(boardId)
+        ? prevFavorites.filter((id) => id !== boardId)
+        : [...prevFavorites, boardId]
+    );
   };
 
-  // 게시판 데이터
-  const boardData = [
-    { key: "notice", label: "공지사항" },
-    { key: "archive", label: "자료실" },
-    { key: "free", label: "자유게시판" },
-    { key: "secret", label: "익명 게시판" },
-    { key: "menuToday", label: "오늘의 식단" },
-    ...departmentBoards.map((board) => ({
-      key: board.key,
-      label: board.label,
-    })),
-  ];
+  const favoriteBoards = boards.filter((board) =>
+    favoriteIds.includes(board.boardId)
+  );
 
-  // 즐겨찾기 항목 필터링
-  const favoriteBoards = boardData.filter((board) => favorites[board.key]);
+  if (loading) return <p>Loading...</p>;
+  if (error) return <p>Error: {error}</p>;
 
   return (
     <aside className="community-aside overflow-scroll flex flex-col scrollbar-none p-4">
@@ -133,7 +178,7 @@ export default function CommunitySidebar({
           ) : (
             favoriteBoards.map((board) => (
               <div
-                key={board.key}
+                key={board.boardId}
                 className="flex items-center justify-between px-8 py-1 group"
               >
                 <img
@@ -141,12 +186,20 @@ export default function CommunitySidebar({
                   alt="icon"
                   className="w-5 h-5 mr-2"
                 />
-                <p className="flex-grow">{board.label}</p>
+                {/* Link가 연결되도록 수정 */}
+                <Link
+                  to={`/community/${
+                    statusToSlug[board.status] || statusToSlug.default
+                  }/list`}
+                  className="flex-grow hover:underline"
+                >
+                  {board.boardName || "이름 없음"}
+                </Link>
                 <img
                   src="/images/star_on.png"
                   alt="star"
                   className="cursor-pointer"
-                  onClick={() => toggleFavorite(board.key)}
+                  onClick={() => toggleFavorite(board.boardId)}
                 />
               </div>
             ))
@@ -170,9 +223,9 @@ export default function CommunitySidebar({
           />
         </div>
         {sections.allBoards &&
-          boardData.map((board) => (
+          boards.map((board) => (
             <div
-              key={board.key}
+              key={board.boardId}
               className="flex items-center justify-between px-8 py-1 group"
             >
               <img
@@ -181,29 +234,30 @@ export default function CommunitySidebar({
                 className="w-5 h-5 mr-2"
               />
               <Link
-                to={`/community/${board.key}/list`}
+                to={`/community/${
+                  statusToSlug[board.status] || statusToSlug.default
+                }/list`}
                 className="flex-grow hover:underline"
               >
-                {board.label}
+                {board.boardName}
               </Link>
               <img
                 src={
-                  favorites[board.key]
+                  favoriteIds.includes(board.boardId)
                     ? "/images/star_on.png"
                     : "/images/star_off.png"
                 }
                 alt="star"
                 className={`cursor-pointer ${
-                  favorites[board.key]
+                  favoriteIds.includes(board.boardId)
                     ? "opacity-100"
                     : "opacity-0 group-hover:opacity-100"
                 } transition-opacity duration-300`}
-                onClick={() => toggleFavorite(board.key)}
+                onClick={() => toggleFavorite(board.boardId)}
               />
             </div>
           ))}
       </div>
-
       {/* 부서별 게시판 */}
       <div className="mb-6">
         <div
@@ -223,37 +277,49 @@ export default function CommunitySidebar({
           />
         </div>
         {sections.departmentBoards &&
-          departmentBoards.map((board) => (
-            <div
-              key={board.key}
-              className="flex items-center justify-between px-8 py-1 group"
-            >
-              <img
-                src="/images/document_text.png"
-                alt="icon"
-                className="w-5 h-5 mr-2"
-              />
-              <p className="flex-grow">{board.label}</p>
+          (departmentBoards.length > 0 ? (
+            departmentBoards.map((board) => (
+              <div
+                key={board.boardId || board.key || Math.random()} // 고유한 key 설정
+                className="flex items-center justify-between px-8 py-1 group"
+              >
+                <img
+                  src="/images/document_text.png"
+                  alt="icon"
+                  className="w-5 h-5 mr-2"
+                />
+                {board.boardName ? (
+                  <Link
+                    to={`/community/${board.boardId}/list`}
+                    className="flex-grow hover:underline"
+                  >
+                    {board.boardName}
+                  </Link>
+                ) : (
+                  <p className="flex-grow text-gray-500">이름 없음</p>
+                )}
+                <img
+                  src={
+                    favoriteIds.includes(board.boardId)
+                      ? "/images/star_on.png"
+                      : "/images/star_off.png"
+                  }
+                  alt="star"
+                  className={`cursor-pointer ${
+                    favoriteIds.includes(board.boardId)
+                      ? "opacity-100"
+                      : "opacity-0 group-hover:opacity-100"
+                  } transition-opacity duration-300`}
+                  onClick={() => toggleFavorite(board.boardId)}
+                />
+              </div>
+            ))
+          ) : (
+            <div className="px-4 py-2 text-gray-500">
+              부서별 게시판이 없습니다.
             </div>
           ))}
       </div>
-
- 
-        {sections.myBoards &&
-          boards.map((board) => (
-            <div
-              key={board.key}
-              className="flex items-center justify-between px-8 py-1 group"
-            >
-              <img
-                src="/images/document_text.png"
-                alt="icon"
-                className="w-5 h-5 mr-2"
-              />
-              <p className="flex-grow">{board.label}</p>
-            </div>
-          ))}
- 
 
       {/* 새 게시글 작성 버튼 */}
       <Link
@@ -268,9 +334,66 @@ export default function CommunitySidebar({
         새 게시글 작성
       </Link>
 
-      
- 
+      {/* 새 개인 게시판 생성 버튼 */}
+      <button
+        onClick={handleOpenModal}
+        className="new-user-board-button flex items-center justify-center px-4 py-2 mt-4 space-x-2 w-full min-w-[150px] rounded-md"
+      >
+        <img
+          src="/images/Vector.png"
+          alt="새 개인 게시판"
+          className="w-5 h-5 mr-2"
+        />
+        새 게시판 생성
+      </button>
 
+      {/* 모달 */}
+      {isModalOpen && (
+        <div
+          className="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-black bg-opacity-50 z-50"
+          onClick={handleCloseModal}
+        >
+          <div
+            className="bg-white rounded-lg p-6 w-96"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-lg font-semibold mb-4">새게시판 생성</h2>
+            <div className="mb-4">
+              <label className="block font-medium mb-1">게시판 이름</label>
+              <input
+                type="text"
+                value={newBoardName}
+                onChange={(e) => setNewBoardName(e.target.value)}
+                className="w-full px-3 py-2 border rounded-md"
+                placeholder="게시판 이름을 입력하세요"
+              />
+            </div>
+            <div className="mb-4">
+              <label className="block font-medium mb-1">게시판 설명</label>
+              <textarea
+                value={newBoardDescription}
+                onChange={(e) => setNewBoardDescription(e.target.value)}
+                className="w-full px-3 py-2 border rounded-md"
+                placeholder="게시판 설명을 입력하세요"
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={handleCloseModal}
+                className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md"
+              >
+                취소
+              </button>
+              <button
+                onClick={handleCreateBoard}
+                className="bg-blue-500 text-white px-4 py-2 rounded-md"
+              >
+                생성
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </aside>
   );
 }
@@ -285,4 +408,3 @@ CommunitySidebar.propTypes = {
   onNewPost: PropTypes.func,
   onNewUserBoard: PropTypes.func,
 };
- 
