@@ -2,26 +2,150 @@ import '@/pages/user/Login.scss';
 import CustomInput from '@/components/Input';
 import { CustomButton } from '@/components/Button';
 import { CustomGubun } from '@/components/Gubun';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { debounce } from 'lodash';
 const baseURL = import.meta.env.VITE_API_BASE_URL;
 
+const validateRules = {
+  email: (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email),
+  domain: (email) => email.endsWith('.com') || email.endsWith('.net') || email.endsWith('.co.kr'),
+  pwd: (pwd) => /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(pwd),
+  uid: (uid) => /^(?=.*[A-Za-z]{4,})(?=.*\d)[A-Za-z\d]+$/.test(uid),
+  hp: (hp) => /^(010|011)\d{7,8}$/.test(hp),
+  companyCode: (code) => /^[A-Za-z\d]+$/.test(code),
+  name: (name) => /^[^\d]+$/u.test(name),
+  domain: (email) => email.endsWith('.com') || email.endsWith('.net') || email.endsWith('.co.kr'),
+};
+
+
+const initState = {
+  uid:"",
+  pwd:"",
+  email:"",
+  name:"",
+  hp:"",
+  country:"",
+  addr1:"",
+  addr2:"",
+  grade:"",
+  company:"",
+  busnessCode:"",
+  cardNumber:"",
+  cardNick:"",
+  expiredDate:"",
+  cvc:"",
+  confirmPwd: "",
+}
+
 export default function Register() {
+
+  const navigate = useNavigate();
+  const [user, setUser] = useState({...initState});
+  const [page1success, setPage1success] = useState(false);
+
+    // 각 필드의 검증 상태를 관리
+    const [validation1, setValidation1] = useState({
+      email: false,
+      uid: false,
+      pwd: false,
+      confirmPwd: false,
+      emailVerified: false,
+    });
+  
+    useEffect(() => {
+      const isSuccess = validation1.email && validation1.uid && validation1.pwd && validation1.confirmPwd && validation1.emailVerified;
+      setPage1success(true);
+    }, [validation1]);
+  
+  const ChangeHandler = (e) => {
+    e.preventDefault();
+    const {name, value} = e.target;
+    setUser({...user, [e.target.name]: e.target.value});
+
+    if(name === 'uid' || name === 'hp'){
+      debouncedValidateField(name, value);
+      return;
+    }
+    if(name === 'confirmPwd'){
+      if (value !== user.pwd) {
+        setStatusMessage({ message: `비밀번호가 일치하지 않습니다.`, type: 'error' });
+        setValidation1((prev) => ({ ...prev, confirmPwd: false }));
+      } else {
+        setStatusMessage({ message: `비밀번호가 일치합니다.`, type: 'success' });
+        setValidation1((prev) => ({ ...prev, confirmPwd: true }));
+      }
+      return;
+    }
+    
+    if(!validateRules[name]?.(value)){
+      setStatusMessage({ message: `유효하지 않은 형식입니다.`, type: 'error' });
+      setValidation1((prev) => ({ ...prev, [name]: false }));
+    }else{
+      setStatusMessage({ message: ``, type: '' });
+      setValidation1((prev) => ({ ...prev, [name]: true}));
+    }
+  }
+
   const [count, setCount] = useState(0);
   const [selected, setSelected] = useState(''); // 선택된 플랜 이름 저장
-  const navigate = useNavigate();
   const [email, setEmail] = useState('');
+  const [sendMail, setSendMail] = useState(false);
   const [code, setCode] = useState(''); // 입력한 인증번호 상태
   const [statusMessage, setStatusMessage] = useState({ message: '', type: '' }); // 메시지와 유형 상태 통합
+  
+  function nameChange (field){
+    if(field=='uid'){
+      return '아이디';
+    }else if(field=='hp'){
+      return '전화번호';
+    }
+  }
 
-  const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  const validateDomain = (email) =>
-    email.endsWith('.com') || email.endsWith('.net') || email.endsWith('.co.kr');
+  const debouncedValidateField = debounce(async (field, value) => {
+    console.log('아 제발'+field+value)
+    const changedName = nameChange(field);
+    
+    if (validateRules[field]?.(value)) {
+      const data = {type : field, value: value }
+      try {
+        const response = await axios.post(
+          `${baseURL}/api/auth/validation`,
+          data,
+          { headers: { 'Content-Type': 'application/json' } }
+        );
+        console.log(response.data);
+        if(response.data == 'available' ){
+          setStatusMessage({ message: ` 사용할 수 있는 ${changedName} 입니다.`, type: 'success' });
+          setValidation1((prev) => ({ ...prev, [field]: true }));
+        }else{
+          setStatusMessage({ message: ` 이미 사용 중인 ${changedName} 입니다.`, type: 'error' });
+          setValidation1((prev) => ({ ...prev, [field]: false }));
+        }
+        
+      } catch {
+        setStatusMessage({ message: `확인 중 서버 오류가 발생했습니다.`, type: 'error' });
+        setValidation1((prev) => ({ ...prev, [field]: false }));
+      }
+    } else {
+      setStatusMessage({ message: `유효하지 않은 ${changedName}입니다.`, type: 'error' });
+      setValidation1((prev) => ({ ...prev, [field]: false }));
+    }
+  }, 200);
 
-  const sendEmail = async (value) => {
-    if (validateEmail(value) && validateDomain(value)) {
+  const debouncedSendEmail = debounce(sendEmail, 100);
+  const handleEmailChange = (e) => {
+    const value = e.target.value;
+    setEmail(value);
+    setValidation1((prev) => ({ ...prev, emailVerified: false }));
+    debouncedSendEmail(value);
+  };
+  const handleCodeChange = (e) => {
+    setCode(e.target.value); // 입력한 인증번호 상태 업데이트
+  };
+  async function sendEmail (value){
+    if (validateRules.email(value) && validateRules.domain(value)) {
       try {
         const response = await axios.post(`${baseURL}/api/auth/sendMail`,
           { email: value },
@@ -30,6 +154,8 @@ export default function Register() {
 
         if (response.status === 200) {
           setStatusMessage({ message: '이메일 인증 메일이 발송되었습니다.', type: 'success' });
+          setSendMail(true);
+          setValidation1((prev) => ({ ...prev, email: true }));
         } else {
           setStatusMessage({ message: '이메일 전송에 실패했습니다.', type: 'error' });
         }
@@ -38,24 +164,10 @@ export default function Register() {
       }
     } else {
       setStatusMessage({
-        message: '유효하지 않은 이메일 형식입니다.',
-        type: 'error',
+        message: '유효하지 않은 이메일 형식입니다.',type: 'error',
       });
     }
   };
-
-  const debouncedSendEmail = debounce(sendEmail, 300);
-
-  const handleEmailChange = (e) => {
-    const value = e.target.value;
-    setEmail(value);
-    debouncedSendEmail(value);
-  };
-
-  const handleCodeChange = (e) => {
-    setCode(e.target.value); // 입력한 인증번호 상태 업데이트
-  };
-
   const verifyCode = async () => {
     try {
       const response = await axios.post(
@@ -66,6 +178,7 @@ export default function Register() {
 
       if (response.data === 'success') {
         setStatusMessage({ message: '인증에 성공했습니다.', type: 'success' });
+        setUser({...user, email:email});
       } else if (response.data === 'notMatch') {
         setStatusMessage({ message: '인증번호가 일치하지 않습니다.', type: 'error' });
       } else {
@@ -75,10 +188,16 @@ export default function Register() {
       setStatusMessage({ message: '서버 요청 중 오류가 발생했습니다.', type: 'error' });
     }
   };
-
   const handlePlanSelection = (planName) => {
     setSelected(planName); // 선택된 플랜 이름 설정
   };
+
+  const page1Handler = (event) => {
+    event.preventDefault();
+    if(!!page1success){
+      setCount(count + 1);
+    }
+  }
 
     return (
       <form>
@@ -122,25 +241,23 @@ export default function Register() {
                   <h2 className='text-xl'>Account Infomation</h2>
                   <p className='text-sm'>이메일 계정 인증으로 Plantry를 시작하세요.</p>
                 </div>
-                <div className=' flex flex-col justify-end h-[80px]'>
-                  {statusMessage.message && (
+                {statusMessage.message && (
                     <p
-                      className={`text-xs guide-text mt-2 ${
-                        statusMessage.type === 'success' ? 'text-green-500' : 'text-red-500'
+                      className={`text-sm flex items-center indent-8 rounded-lg mt-2 mb-2 h-[40px] ${
+                        statusMessage.type === 'success' ? 'text-green-500 bg-green-100' : 'bg-red-100 text-red-500'
                       }`}
                     >
                       {statusMessage.message}
                     </p>
                   )}
-                  <input
+                <input
                   type='text'
                   placeholder='이메일을 입력해 주세요.'
                   className='signup-input-lg'
                   value={email}
                   onChange={handleEmailChange}
                 />
-                </div>
-                {statusMessage.type === 'success' && (
+                {!!sendMail && (
                   <div className='flex justify-between items-center'>
                     <input
                       type='text'
@@ -159,16 +276,20 @@ export default function Register() {
                   </div>
                 )}
                 <input type='text' placeholder='아이디를 입력해 주세요.'
+                value={user.uid} onChange={ChangeHandler} name='uid'
                 className="signup-input-lg mt-10" ></input>
                 <div className='flex justify-between '>
-                  <input type='text' placeholder='비밀번호를 입력해 주세요.'
+                  <input type='password' placeholder='비밀번호를 입력해 주세요.'
+                  value={user.pwd} onChange={ChangeHandler} name='pwd'
                   className="signup-input-md border rounded mr-1 mt-10" ></input>
-                  <input type='text' placeholder='비밀번호를 한 번 더 입력해 주세요.'
+                  <input type='password' placeholder='비밀번호를 한 번 더 입력해 주세요.'
+                  value={user.confirmPwd} onChange={ChangeHandler} name='confirmPwd'
                   className="signup-input-md mt-10" ></input>
                 </div>
+                <span className='text-xs ml-2 text-gray-600'>영문, 숫자, 특수기호를 조합하여 8자리 이상</span>
                 <div className='flex justify-between reg-btn'>
                   <button className='btn-prev' onClick={() => navigate("/user/terms")}>이전</button>
-                  <button className='btn-next' onClick={() => {setCount(count + 1);}}>다음</button>
+                  <button className={`btn-next ${page1success? '':'opacity-70'}`} onClick={page1Handler}>다음</button>
                 </div>
               </div>
               
@@ -185,7 +306,8 @@ export default function Register() {
               <input type='text' placeholder='이름'
               className="signup-input-md mt-10" ></input>
             </div>
-            <input type='text' placeholder='전화번호 -를 제외하고 입력해주세요. '
+            <input type='text' placeholder='전화번호 -를 제외하고 입력해주세요.'
+            name='hp' value={user.hp} onChange={ChangeHandler}
             className="signup-input-lg mt-10" ></input>
             <div className='flex justify-between '>
               <input type='text' placeholder='주소(선택)'
@@ -346,17 +468,21 @@ export default function Register() {
                   selected === 'Enterprise' && 
                   <>
                   <p className='text-sm custom-mt-30'>회사 정보를 입력해주세요.</p>
-                    <input type='text' placeholder='회사명을 입력해주세요.'
+                    <input type='text' placeholder='회사명'
                     className="signup-input-lg mt-10" ></input>
-                    <input type='text' placeholder='결제할 카드의 번호를 입력해주세요.'
-                    className="signup-input-lg mt-10" ></input>
+                    <div className='signup-input-lg mt-10 flex items-center text-gray-500'>
+                      <input type='text' placeholder='카드번호 입력' className="w-1/4 text-center ml-2" maxLength={4} />-
+                      <input type='password'  className=" w-1/4 text-center ml-2" maxLength={4} />-
+                      <input type='password'  className=" w-1/4 text-center ml-2" maxLength={4} />-
+                      <input type='text'  className=" w-1/4 text-center ml-2" maxLength={4}  />
+                    </div>
                     <div className='flex justify-between mt-10'>
                       <input type='text' placeholder='카드 별명'
-                      className="card-inp1 mr-1" ></input>
+                      className="card-inp1 mr-1 text-gray-600" ></input>
                       <input type='text' placeholder='만료일'
-                      className="card-inp2 mr-1" ></input>
+                      className="card-inp2 mr-1 text-gray-600" maxLength={4} ></input>
                       <input type='text' placeholder='CVC번호'
-                      className="card-inp2 mr-1" ></input>
+                      className="card-inp2 mr-1 text-gray-600" maxLength={3}  ></input>
                     </div>
                   </>
                 }
@@ -364,15 +490,19 @@ export default function Register() {
                   selected === 'Standard' && 
                   <>
                   <p className='text-sm custom-mt-30'>결제 정보를 입력해주세요.</p>
-                    <input type='text' placeholder='결제할 카드의 번호를 입력해주세요.'
-                    className="signup-input-lg mt-10" ></input>
+                  <div className='signup-input-lg mt-10 flex items-center text-gray-500'>
+                      <input type='text' placeholder='카드번호 입력' className="w-1/4 text-center ml-2" maxLength={4} />-
+                      <input type='password'  className=" w-1/4 text-center ml-2" maxLength={4} />-
+                      <input type='password'  className=" w-1/4 text-center ml-2" maxLength={4} />-
+                      <input type='text'  className=" w-1/4 text-center ml-2" maxLength={4}  />
+                    </div>
                     <div className='flex justify-between mt-10'>
                       <input type='text' placeholder='카드 별명'
-                      className="card-inp1 mr-1" ></input>
+                      className="card-inp1 mr-1 text-gray-600" ></input>
                       <input type='text' placeholder='만료일'
-                      className="card-inp2 mr-1" ></input>
+                      className="card-inp2 mr-1 text-gray-600" maxLength={4} ></input>
                       <input type='text' placeholder='CVC번호'
-                      className="card-inp2 mr-1" ></input>
+                      className="card-inp2 mr-1 text-gray-600" maxLength={3}  ></input>
                     </div>
                   </>
                 }
