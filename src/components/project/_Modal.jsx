@@ -182,8 +182,8 @@ const handleProjectChange = (e) => {
 
   const handleSubmit = async () => {
     try {
-      const res = await axiosInstance.post('/api/project', project);
-      if(res.data.id) onClose(false)
+      await axiosInstance.post('/api/project', project);
+      onClose();
     } catch (err) {
         return err;
     }
