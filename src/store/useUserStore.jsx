@@ -7,6 +7,11 @@ const useUserStore = create(
             user: null,
             setUser: (userData) => set({ user: userData }),
             clearUser: () => set({ user: null }),
-        })));
+        }),
+        {
+            name: 'user-storage',
+        }
+    ),
+);
 
 export default useUserStore;

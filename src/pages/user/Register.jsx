@@ -4,11 +4,77 @@ import { CustomButton } from '@/components/Button';
 import { CustomGubun } from '@/components/Gubun';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { debounce } from 'lodash';
+const baseURL = import.meta.env.VITE_API_BASE_URL;
 
 export default function Register() {
   const [count, setCount] = useState(0);
   const [selected, setSelected] = useState(''); // 선택된 플랜 이름 저장
   const navigate = useNavigate();
+  const [email, setEmail] = useState('');
+  const [code, setCode] = useState(''); // 입력한 인증번호 상태
+  const [statusMessage, setStatusMessage] = useState({ message: '', type: '' }); // 메시지와 유형 상태 통합
+
+  const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const validateDomain = (email) =>
+    email.endsWith('.com') || email.endsWith('.net') || email.endsWith('.co.kr');
+
+  const sendEmail = async (value) => {
+    if (validateEmail(value) && validateDomain(value)) {
+      try {
+        const response = await axios.post(`${baseURL}/api/auth/sendMail`,
+          { email: value },
+          { headers: { 'Content-Type': 'application/json' } }
+        );
+
+        if (response.status === 200) {
+          setStatusMessage({ message: '이메일 인증 메일이 발송되었습니다.', type: 'success' });
+        } else {
+          setStatusMessage({ message: '이메일 전송에 실패했습니다.', type: 'error' });
+        }
+      } catch (error) {
+        setStatusMessage({ message: '서버 요청 중 오류가 발생했습니다.', type: 'error' });
+      }
+    } else {
+      setStatusMessage({
+        message: '유효하지 않은 이메일 형식입니다.',
+        type: 'error',
+      });
+    }
+  };
+
+  const debouncedSendEmail = debounce(sendEmail, 300);
+
+  const handleEmailChange = (e) => {
+    const value = e.target.value;
+    setEmail(value);
+    debouncedSendEmail(value);
+  };
+
+  const handleCodeChange = (e) => {
+    setCode(e.target.value); // 입력한 인증번호 상태 업데이트
+  };
+
+  const verifyCode = async () => {
+    try {
+      const response = await axios.post(
+        `${baseURL}/api/auth/verifyMail`,
+        { email, code },
+        { headers: { 'Content-Type': 'application/json' } }
+      );
+
+      if (response.data === 'success') {
+        setStatusMessage({ message: '인증에 성공했습니다.', type: 'success' });
+      } else if (response.data === 'notMatch') {
+        setStatusMessage({ message: '인증번호가 일치하지 않습니다.', type: 'error' });
+      } else {
+        setStatusMessage({ message: '인증번호가 만료되었거나 잘못된 요청입니다.', type: 'error' });
+      }
+    } catch (error) {
+      setStatusMessage({ message: '서버 요청 중 오류가 발생했습니다.', type: 'error' });
+    }
+  };
 
   const handlePlanSelection = (planName) => {
     setSelected(planName); // 선택된 플랜 이름 설정
@@ -56,16 +122,42 @@ export default function Register() {
                   <h2 className='text-xl'>Account Infomation</h2>
                   <p className='text-sm'>이메일 계정 인증으로 Plantry를 시작하세요.</p>
                 </div>
-                <div className=' flex flex-col justify-end h-[70px]'>
-                  {/* <p className='text-xs guide-text'>이메일 인증 메일이 발송되었습니다.</p> */}
-                  <input type='text' placeholder='이메일을 입력해 주세요.'
-                  className="signup-input-lg" ></input>
+                <div className=' flex flex-col justify-end h-[80px]'>
+                  {statusMessage.message && (
+                    <p
+                      className={`text-xs guide-text mt-2 ${
+                        statusMessage.type === 'success' ? 'text-green-500' : 'text-red-500'
+                      }`}
+                    >
+                      {statusMessage.message}
+                    </p>
+                  )}
+                  <input
+                  type='text'
+                  placeholder='이메일을 입력해 주세요.'
+                  className='signup-input-lg'
+                  value={email}
+                  onChange={handleEmailChange}
+                />
                 </div>
-                {/* <div className='flex justify-between items-center'>
-                  <input type='text' placeholder='인증번호를 입력해 주세요.'
-                  className="signup-input-md mt-10" ></input>
-                  <button className='btn-confirm mt-10'>확인</button>
-                </div> */}
+                {statusMessage.type === 'success' && (
+                  <div className='flex justify-between items-center'>
+                    <input
+                      type='text'
+                      placeholder='인증번호를 입력해 주세요.'
+                      className="signup-input-md mt-10"
+                      value={code}
+                      onChange={handleCodeChange}
+                    />
+                    <button
+                      type="button"
+                      className='btn-confirm mt-10'
+                      onClick={verifyCode}
+                    >
+                      확인
+                    </button>
+                  </div>
+                )}
                 <input type='text' placeholder='아이디를 입력해 주세요.'
                 className="signup-input-lg mt-10" ></input>
                 <div className='flex justify-between '>
@@ -93,10 +185,10 @@ export default function Register() {
               <input type='text' placeholder='이름'
               className="signup-input-md mt-10" ></input>
             </div>
-            <input type='text' placeholder='전화번호'
+            <input type='text' placeholder='전화번호 -를 제외하고 입력해주세요. '
             className="signup-input-lg mt-10" ></input>
             <div className='flex justify-between '>
-              <input type='text' placeholder='도시명'
+              <input type='text' placeholder='주소(선택)'
               className="signup-input-md mr-1 mt-10" ></input>
               <select name="country" className="signup-input-md mt-10">
                 <option value="">대한민국</option>
@@ -111,7 +203,7 @@ export default function Register() {
                 <option value="">캐나다</option>
               </select>
             </div>
-            <input type='text' placeholder='주소(선택)'
+            <input type='text' placeholder='상세주소'
             className="signup-input-lg mt-10" ></input>
             <div className='flex justify-between reg-btn'>
               <button className='btn-prev' onClick={() => {setCount(count-1);}}>이전</button>

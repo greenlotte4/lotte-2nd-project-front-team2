@@ -97,6 +97,7 @@ export const useAuthStore = create((set) => ({
 
     // 로그아웃 처리
     logout: () => {
+        localStorage.clear()
         axiosInstance
             .post("/api/auth/logout",null)
             .then((resp)=>{
