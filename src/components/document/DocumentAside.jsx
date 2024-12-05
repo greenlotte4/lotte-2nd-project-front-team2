@@ -21,6 +21,10 @@ export default function DocumentAside(){
 
     const [isPinnedOpen, setIsPinnedOpen] = useState(true); // State to track "My Page" section visibility    
     const [isSharedOpen, setIsSharedOpen] = useState(true);
+
+    const [usedSize, setUsedSize] = useState(0);
+    const [remainingSize, setRemainingSize] = useState(0);
+    const [usedPercentage, setUsedPercentage] = useState(0);
     
     const [folders, setFolders] = useState([]); // 폴더 목록 상태
     const [pinnedFolders, setPinnedFolders] = useState([]); // Pinned 폴더
@@ -44,21 +48,32 @@ export default function DocumentAside(){
     const sharedFolders = folderResponse?.folderDtoList?.filter((folder) => folder.isShared === 1) || [];
     const personalFolders = folderResponse?.folderDtoList?.filter((folder) => folder.isShared === 0) || [];
    
-    const size = folderResponse.size;
+    const size = folderResponse?.size || 0; // 기본값 0
+    const userGrade = user?.grade || 1;    // 기본값 1
     console.log("사이즈!!!",size);
+    let maxSize = 0;
+        if (userGrade === 1 || userGrade  === null) {
+            maxSize = 524288000; // 500 MB
+        } else if (userGrade  === 2) {
+            maxSize = 1048576000; // 1 GB
+        } else {
+            maxSize = 10485760000; // 10 GB
+        }
 
+    useEffect(() => {
+        
+          // KB 단위의 size를 Byte로 변환
+         const sizeInBytes = size * 1024;
     
-    let maxSize;
-    if (user.grade === 1 || user.grade ===null) {
-        maxSize = 524288000; // 500 MB
-    } else if (user.grade === 2) {
-        maxSize = 1048576000; // 1 GB
-    } else {
-        maxSize = 10485760000; // 10 GB
-    }
-    const usedSize = size;
-    const remainingSize = maxSize - usedSize;
-    const usedPercentage = (usedSize / maxSize) * 100;
+        const currentUsedSize = sizeInBytes;
+        const currentRemainingSize = maxSize - currentUsedSize;
+        const currentUsedPercentage = (currentUsedSize / maxSize) * 100;
+    
+        setUsedSize(currentUsedSize);
+        setRemainingSize(currentRemainingSize);
+        setUsedPercentage(currentUsedPercentage);
+    }, [size, user]); // `size`와 `userGrade`가 변경될 때 계산
+   
 
     const togglePinnedSection = () => {
       setIsPinnedOpen((prev) => !prev); // Toggle the section

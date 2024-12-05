@@ -19,7 +19,7 @@ export const DocumentCard1 = ({
     onDrop,
     updatedAt,
     onContextMenu,
-
+    downloadHandler,
 }) => {
     const [isMenuOpen, setIsMenuOpen] = useState(false); // 토글 상태 관리
     const [isAlertOpen, setIsAlertOpen] = useState(false);
@@ -197,6 +197,7 @@ export const DocumentCard1 = ({
                     folderName={folderName}
                     folderId={folderId}
                     path={path}
+                    downloadHandler={downloadHandler}
                 />
             )}
                        

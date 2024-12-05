@@ -6,6 +6,7 @@ export const DocumentCard2 = ({
   fileName,
   path,
   savedName,
+  downloadHandler
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false); // 토글 상태 관리
 
@@ -29,7 +30,7 @@ export const DocumentCard2 = ({
       console.log('Share folder:', folderId);
       // 폴더 공유 로직
   };
-  const fileServerBaseUrl = "http://43.202.45.49:90/thumbnails/"; // File server base URL
+  const fileServerBaseUrl = "http://3.35.170.26:90/thumbnails/"; // File server base URL
   const thumbnails = savedName + ".jpg";
   const thumbnailUrl = `${fileServerBaseUrl}${thumbnails}`;
   console.log(thumbnailUrl);
@@ -50,7 +51,7 @@ export const DocumentCard2 = ({
                     <ul className="py-2">
                         <li
                             className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                            onClick={handleRename}
+                            onClick={downloadHandler}
                         >
                             다운로드
                         </li>

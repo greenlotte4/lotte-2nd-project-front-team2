@@ -86,9 +86,9 @@ export default function NewDrive({ isOpen, onClose }) {
       },
       onSuccess: (data) => {
         console.log("Drive created successfully:", data);
-        queryClient.invalidateQueries({ queryKey: ['driveList',user.uid] })
+        queryClient.invalidateQueries({ queryKey: ['driveList'] })
         onClose();
-      },
+      }, 
       onError: (error) => {
         console.error("Error creating drive:", error);
       },

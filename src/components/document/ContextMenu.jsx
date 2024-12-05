@@ -14,6 +14,7 @@ export default function ContextMenu({
     folderName,
     path,
     onDetailToggle,
+    downloadHandler,
 }) {
     const contextMenuRef = useRef(null);
     const renameModalRef = useRef(null); // RenameModal의 레퍼런스
@@ -37,7 +38,7 @@ export default function ContextMenu({
             label: '다운로드',
             icon: FaDownload,
             color: 'text-blue-500',
-            onClick: (folder) => console.log(`다운로드: ${folder.name}`),
+            onClick: () => downloadHandler(folder),
         },
         {
             id: 'rename',

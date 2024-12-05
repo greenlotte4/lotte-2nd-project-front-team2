@@ -5,6 +5,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import axiosInstance from "../../services/axios";
 import { useLinkClickHandler, useLocation, useNavigate } from "react-router-dom";
 import { CustomSVG } from "@/components/project/_CustomSVG";
+import ErrorBoundary from "@/services/ErrorBoundary";
 
 export default function DocumentLayout({children, isDetailVisible , selectedFolder, uid ,closeDetailView}){
     console.log("유아이디!!!",uid);
@@ -59,7 +60,10 @@ export default function DocumentLayout({children, isDetailVisible , selectedFold
 
     return (<>
         <div id='document-container1'>
+            <ErrorBoundary>
             <DocumentAside />
+
+            </ErrorBoundary>
             <section className={`document-main1 ${isDetailVisible ? 'reduced' : ''}`}>
                 {children}
             </section>
@@ -68,7 +72,7 @@ export default function DocumentLayout({children, isDetailVisible , selectedFold
                     <section className="flex justify-between w-[98%]">
                         <span className=" flex flex-row items-center  text-[23px] ">
                             <img 
-                            className="mr-[10px]"
+                            className="mr-[10px] color-[#121212]"
                             src={selectedFolder.isShared === 0 ? '/images/folder.svg' : '/images/shared_folder.svg'} 
                             alt="" />
                         {selectedFolder.name}
@@ -165,7 +169,6 @@ export default function DocumentLayout({children, isDetailVisible , selectedFold
                     </section>
                 </section>
                
-            
             </>
                
             )}

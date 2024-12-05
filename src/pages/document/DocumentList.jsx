@@ -14,7 +14,6 @@ import FileUploads from '../../components/document/FileUploads';
 import RenameModal from '../../components/document/ChangeName';
 import ContextMenu from '../../components/document/ContextMenu';
 
-
 export default function DocumentList() {
     const [viewType, setViewType] = useState('box'); // Default to 'box'
     const [isOpen, setIsOpen] = useState(false);
@@ -28,6 +27,7 @@ export default function DocumentList() {
     const folderId = decodeURIComponent(location.pathname.split('/').pop());
     const queryClient = useQueryClient();
     const [draggedFolder, setDraggedFolder] = useState(null); // 드래그된 폴더
+    const fileServerBaseUrl = `http://3.35.170.26:90/download/`;
 
     const [isDetailVisible, setIsDetailVisible] = useState(false); // 상세 정보 표시 상태 추가
     const [selectedFolder, setSelectedFolder] = useState(null); // 선택된 폴더 정보 상태 추가
@@ -260,6 +260,45 @@ export default function DocumentList() {
         }
     };
 
+    //파일 다운로드 핸들러
+    const downloadHandler = (file) => {
+        const downloadUrl = `${fileServerBaseUrl}${file.path}`;
+    
+        // 다운로드 요청
+       /*  window.open(downloadUrl, file.savedName); */
+        // 가상의 링크 생성
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.setAttribute('download', file.originalName); // 원본 파일명으로 다운로드
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+    };
+
+    //폴더 zip 다운로드 핸들러
+    const zipDownloadHandler = async (folder) => {
+        try {
+            const response = await axiosInstance.get(`/api/drive/generateZip/${folderId}`);
+    
+            if (response.status === 200) {
+                console.log('zip 파일 생성 성공');
+                const zipName = response.data.zipName;
+                const downloadUrl = `${fileServerBaseUrl}uploads/zip/${zipName}`;
+                const link = document.createElement('a');
+                link.href = downloadUrl;
+                link.setAttribute('download', folder.name); // 원본 파일명으로 다운로드
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            } else {
+                console.error('zip 파일 생성 실패:', response.data);
+            }
+        } catch (error) {
+            console.error('zip 파일 생성 업데이트 중 오류 발생:', error);
+        }
+    }
+
   
 
 
@@ -377,6 +416,7 @@ export default function DocumentList() {
                                 onDrop={(e) => handleDrop(folder, "before")}
                                 onDragOver={handleDragOver}
                                 onContextMenu={handleContextMenu}
+                                downloadHandler={() => zipDownloadHandler(folder)}
                             />
                         ))}
                     </section>
@@ -389,7 +429,9 @@ export default function DocumentList() {
                                 file={file} 
                                 fileName={file.originalName} 
                                 path={file.path} 
-                                savedName={file.savedName}/>
+                                savedName={file.savedName}
+                                downloadHandler={() => downloadHandler(file)}
+                                />
                         ))}
                     </section>
                 </div>
@@ -448,6 +490,7 @@ export default function DocumentList() {
                     folderId={contextMenu.folderId}
                     path={contextMenu.path}
                     onDetailToggle={() => handleDetailToggle(contextMenu.folder)} // 상세 정보 토글 함수 전달
+                    downloadHandler={() => zipDownloadHandler(folder)}
 
                 />
             
