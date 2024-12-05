@@ -55,8 +55,14 @@ export default function Register() {
     });
   
     useEffect(() => {
-      const isSuccess = validation1.email && validation1.uid && validation1.pwd && validation1.confirmPwd && validation1.emailVerified;
-      setPage1success(true);
+      console.log(validation1.email)
+      console.log(validation1.uid)
+      console.log(validation1.pwd)
+      console.log(validation1.confirmPwd)
+      console.log(validation1.emailVerified)
+      if(validation1.email && validation1.uid && validation1.pwd && validation1.confirmPwd && validation1.emailVerified){
+        setPage1success(true);
+      }
     }, [validation1]);
   
   const ChangeHandler = (e) => {
