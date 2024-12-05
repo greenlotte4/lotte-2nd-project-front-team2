@@ -1,11 +1,49 @@
 /* eslint-disable react/prop-types */
-import { useState, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { CustomSVG } from "./_CustomSVG";
 import { DynamicTaskEditor } from "@/components/project/TaskEdit";
 import { v4 as uuidv4 } from "uuid";
 import clsx from "clsx";
 
-export const DynamicTask = ({
+const getFormattedDueDate = (duedate) => {
+
+  if (!duedate || isNaN(new Date(duedate))) {
+    return null; // 기본값 출력 (필요에 따라 수정 가능)
+  }
+  const today = new Date();
+  const dueDate = new Date(duedate);
+
+  // 날짜 차이를 계산 (단위: 밀리초 → 일)
+  const differenceInTime = dueDate - today;
+  const differenceInDays = Math.ceil(differenceInTime / (1000 * 60 * 60 * 24));
+
+  // D-day 출력 조건
+  if (differenceInDays === 0) {
+    return 'D-day';
+  } else if (differenceInDays > 0) {
+    return `D-${differenceInDays}`;
+  } else {
+    return `D+${Math.abs(differenceInDays)}`;
+  }
+};
+
+const getDateColor = (date) => {
+  if (typeof date !== "string") return "";
+
+  if (date === "D-day") {
+    return "text-red-600 font-semibold";
+  } else if (date.includes("-")) {
+    return date.length === 3
+      ? "text-yellow-600 font-semibold"
+      : "text-green-600 font-semibold";
+  } else {
+    return "";
+  }
+};
+
+const DynamicTask = React.memo(
+  ({
+  id,
   title,
   content,
   priority,
@@ -14,6 +52,7 @@ export const DynamicTask = ({
   subTasks = [],
   tags = [],
   commentsList = [],
+  columnIndex,
   onAddSubTask,
   onDelete,
   onSave,
@@ -36,21 +75,25 @@ export const DynamicTask = ({
 
   const getPriorityColor = () => {
     if (priority < 2) return "#EC6240";
-    if (priority > 2) return "#2A63F6";
-    return "#F3AF3D"; // priority === 2
+    if (priority === 2) return "#F3AF3D";
+    if (priority > 4) return "#00000050";
+    return "#2A63F6";
+    
   };
   const statusStyles = {
-    active: "circle-unchecked",
-    completed: "circle-checked-filled",
-    default: "circle-checked",
+    1: "circle-unchecked",
+    2: "circle-checked-filled",
+    3: "circle-checked",
   };
 
   const color = getPriorityColor();
 
   // useMemo로 하위 목표 체크된 항목 수 계산 최적화
   const checkedCount = useMemo(() => {
-    return nowSubTasks.filter((task) => task.isChecked).length;
+    return (nowSubTasks||[]).filter((task) => task.isChecked).length;
   }, [nowSubTasks]);
+  const formattedDueDate = useMemo(() => getFormattedDueDate(duedate), [duedate]);
+  const dateColor = useMemo(() => getDateColor(formattedDueDate), [formattedDueDate]);
 
   const handleChangeSubTask = (e) => {
     setNewSubTask(e.target.value);
@@ -63,7 +106,7 @@ export const DynamicTask = ({
 
       // 새로운 하위 목표 추가
       setNowSubTasks([
-        ...nowSubTasks,
+        ...(nowSubTasks||[]),
         { id: newId, name: newSubTask, isChecked: false },
       ]);
       setNewSubTask(""); // 입력 초기화
@@ -84,7 +127,7 @@ export const DynamicTask = ({
   const stopPropagation = (e) => e.stopPropagation();
 
   const renderedSubTasks = useMemo(() => {
-    return nowSubTasks.map((subTask, index) => (
+    return (nowSubTasks||[]).map((subTask, index) => (
       <div key={subTask.id} className="flex items-center gap-1.5 h-[22px]">
         <input
           id={`check${index}`}
@@ -117,6 +160,7 @@ export const DynamicTask = ({
         <DynamicTaskEditor
           mode="edit"
           taskToEdit={{
+            id,
             title,
             content,
             priority,
@@ -126,8 +170,9 @@ export const DynamicTask = ({
             tags,
             commentsList,
           }}
+          columnIndex={columnIndex}
           onSave={(updatedTask) => {
-            onSave(updatedTask);
+            onSave(updatedTask,columnIndex);
             setIsEditing(false);
           }}
           onClose={handleEditToggle}
@@ -139,6 +184,7 @@ export const DynamicTask = ({
             onClick={handleDetailToggle}
             aria-expanded={isDetailOpen}
             aria-label={`작업 카드: ${title}`}
+            data-task-id={id}
           >
             {/* Conditionally Render Content */}
             {isDetailOpen ? (
@@ -232,14 +278,14 @@ export const DynamicTask = ({
                     >
                       <CustomSVG id="add-checkbox" />
                       <span className="text-sm">
-                        {checkedCount}/{subTasks.length} 새 하위 목표 생성
+                        {checkedCount}/{(subTasks||[]).length} 새 하위 목표 생성
                       </span>
                     </button>
                   )}
                 </section>
 
                 {/* Tags Section */}
-                {tags.length > 0 && (
+                {(tags||[]).length > 0 && (
                   <section
                     className="flex flex-wrap gap-2 mt-1.5 text-xs text-black/50"
                     aria-labelledby="tags"
@@ -248,7 +294,7 @@ export const DynamicTask = ({
                       태그
                     </h2>
                     <CustomSVG id="tag" />
-                    {tags.map((tag, index) => (
+                    {(tags||[]).map((tag, index) => (
                       <div
                         key={index}
                         className="px-2 py-1 rounded-2xl bg-zinc-700/10 text-xs"
@@ -270,11 +316,11 @@ export const DynamicTask = ({
                   </h2>
                   {duedate && (
                     <div
-                      className="flex items-center gap-1.5 w-[232px]"
-                      aria-label={`마감일: ${duedate}`}
+                      className={`flex items-center gap-1.5 w-[232px] ${dateColor}`}
+                      aria-label={`마감일: ${duedate} (${formattedDueDate})`}
                     >
-                      <CustomSVG id="calendar" />
-                      <time>{duedate}</time>
+                      <CustomSVG id="calendar" color="currentColor"/>
+                      <time>{duedate}</time> ({formattedDueDate})
                     </div>
                   )}
                   <div
@@ -355,9 +401,9 @@ export const DynamicTask = ({
                       {
                         // Add aria-label for better accessibility
                         "aria-label":
-                          status === "active"
+                          status === 1
                             ? "Active Task"
-                            : status === "completed"
+                            : status === 2
                             ? "Completed Task"
                             : "Task",
                       }
@@ -370,7 +416,7 @@ export const DynamicTask = ({
                 <div className="flex flex-col flex-1 shrink basis-0 text-black text-opacity-50">
                   <div
                     className={clsx("text-sm leading-4 min-h-[24px]", {
-                      "line-through": status !== "active",
+                      "line-through": status !== 1,
                     })}
                   >
                     {title}
@@ -381,7 +427,7 @@ export const DynamicTask = ({
                       className={clsx(
                         "max-w-[200px] leading-4 truncate text-xs",
                         {
-                          "line-through": status !== "active",
+                          "line-through": status !== 1,
                         }
                       )}
                     >
@@ -389,39 +435,39 @@ export const DynamicTask = ({
                     </div>
                   )}
 
-                  {subTasks && duedate && commentsList && (
+                  {subTasks || duedate || commentsList ? (
                     <div className="flex flex-wrap gap-2 items-start pt-3 w-full text-xs leading-none">
-                      {subTasks && (
+                      {(subTasks||[]).length>0 && (
                         <div className="flex gap-1 items-center whitespace-nowrap">
                           <CustomSVG id="add-checkbox" size="18" />
                           <div className="self-stretch my-auto text-ellipsis">
-                            {checkedCount}/{subTasks.length}
+                            {checkedCount}/{(subTasks||[]).length}
                           </div>
                         </div>
                       )}
 
                       {duedate && (
-                        <div className="flex gap-1 items-center whitespace-nowrap">
-                          <CustomSVG id="calendar" size="18" />
-                          <div className="self-stretch my-auto text-ellipsis">
-                            {duedate}
+                        <div className={`flex gap-1 items-center whitespace-nowrap ${dateColor}`}>
+                          <CustomSVG id="calendar" size="18" color="currentColor"/>
+                          <div className="text-ellipsis pt-1">
+                            {formattedDueDate}
                           </div>
                         </div>
                       )}
 
-                      {commentsList && (
+                      {(commentsList||[]).length>0 && (
                         <div className="flex gap-1 items-center whitespace-nowrap">
                           <CustomSVG id="comment" size="18" />
                           <div className="self-stretch my-auto text-ellipsis">
-                            {commentsList.length}
+                            {(commentsList||[]).length}
                           </div>
                         </div>
                       )}
                     </div>
-                  )}
+                  ):null}
 
                   {/* Tags */}
-                  {tags.length > 0 && (
+                  {(tags||[]).length > 0 && (
                     <div className="flex items-center gap-1 pt-2 text-sm">
                       <CustomSVG id="tag" size="18" />
                       <div>
@@ -438,4 +484,23 @@ export const DynamicTask = ({
       )}
     </>
   );
-};
+},
+(prevProps, nextProps) => {
+  // props 변경을 비교하여 리렌더링 여부 결정
+  // true를 반환하면 리렌더링을 건너뜀, false를 반환하면 리렌더링됨
+  return (
+    prevProps.title === nextProps.title &&
+    prevProps.content === nextProps.content &&
+    prevProps.priority === nextProps.priority &&
+    prevProps.status === nextProps.status &&
+    prevProps.duedate === nextProps.duedate &&
+    JSON.stringify(prevProps.subTasks) === JSON.stringify(nextProps.subTasks) &&
+    JSON.stringify(prevProps.tags) === JSON.stringify(nextProps.tags) &&
+    JSON.stringify(prevProps.commentsList) === JSON.stringify(nextProps.commentsList)
+  );
+}
+);
+
+DynamicTask.displayName = "DynamicTask"; // displayName 추가
+
+export default DynamicTask;

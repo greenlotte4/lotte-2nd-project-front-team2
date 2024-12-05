@@ -4,10 +4,11 @@ import ProjectAside from "@/components/project/ProjectAside";
 import { CustomSVG } from "@/components/project/_CustomSVG";
 import { AddProjectModal } from "@/components/project/_Modal";
 import { ProjectColumn } from "@/components/project/Column";
-import { DynamicTask } from "@/components/project/Task";
-import { useEffect, useState } from "react";
+import  DynamicTask  from "@/components/project/Task";
+import { useEffect, useRef, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import Sortable from "sortablejs";
+import axiosInstance from "@/services/axios.jsx";
 
 const initialData = {
   id: 0,
@@ -58,8 +59,8 @@ const initialData = {
   ],
   columns: [
     {
-      id: 1,
-      title: "Get Started",
+      id: 3243465,
+      title: "시작하기",
       color: "#F5234B",
       tasks: [
         {
@@ -75,7 +76,7 @@ const initialData = {
       ],
     },
     {
-      id: 2,
+      id: 7245234436,
       title: "🛠️ In Progress",
       color: "#0070F5",
       tasks: [
@@ -120,7 +121,7 @@ const initialData = {
       ],
     },
     {
-      id: 3,
+      id: 525683921,
       title: "✅ Approved",
       color: "#1EC337",
       tasks: [
@@ -146,6 +147,7 @@ export default function Project() {
   const [isModalOpen, setIsModalOpen] = useState(false); // 모달 열림 상태 관리
   const [isNewColumnAdded, setIsNewColumnAdded] = useState(false);
 
+  const columnsRef = useRef(null); // 컬럼을 감싸는 DOM 요소 참조
   const handleAddColumn = () => {
     if (!isNewColumnAdded) {
       setIsNewColumnAdded(true);
@@ -156,6 +158,12 @@ export default function Project() {
   const handleEditTitle = () => {
     setIsEditTitle(!isEditTitle);
   };
+  const onCoworkerSelect = value => {
+    setData((prev) => ({
+      ...prev,
+      coworkers: value,
+    }));
+  }
   const handleChange = (e) => {
     const { name, value } = e.target;
     setData((prev) => ({
@@ -163,69 +171,52 @@ export default function Project() {
       [name]: value,
     }));
   };
-  const handleSaveProject = (updatedTask, columnIndex) => {
-    setData((prevData) => {
-      const updatedColumns = prevData.columns.map((col, idx) => {
-        if (idx !== columnIndex) return col;
-
-        return {
-          ...col,
-          tasks: col.tasks.map((task) =>
-            task.id === updatedTask.id ? updatedTask : task
-          ),
-        };
-      });
-
-      return { ...prevData, columns: updatedColumns };
-    });
+  const updateColumnTasks = (columns, columnIndex, taskId, updatedTask) => {
+    const updatedColumns = [...columns];
+    const column = updatedColumns[columnIndex];
+    column.tasks = column.tasks.map((task) =>
+      task.id === taskId ? updatedTask : task
+    );
+    return updatedColumns;
   };
-  useEffect(() => {
-    const sortableContainers = document.querySelectorAll(".sortable-container");
   
-    sortableContainers.forEach((container) => {
-      Sortable.create(container, {
-        group: "shared-tasks",
-        animation: 150,
-        onEnd: (event) => {
-          const { oldIndex, newIndex } = event;
-          const sourceIndex = parseInt(container.dataset.columnIndex);
-          const destinationIndex = parseInt(event.to.dataset.columnIndex);
+  const handleSaveProject = (updatedTask, columnIndex) => {
+    setData((prevData) => ({
+      ...prevData,
+      columns: updateColumnTasks(prevData.columns, columnIndex, updatedTask.id, updatedTask),
+    }));
+  };
   
-          handleTaskMove(sourceIndex, destinationIndex, event.item.dataset.taskId);
-        },
-      });
-    });
-  
-    return () => {
-      sortableContainers.forEach((container) => {
-        if (container._sortable) {
-          container._sortable.destroy();
-        }
-      });
-    };
-  }, [data]);
-
   const handleTaskMove = (sourceIndex, destinationIndex, taskId) => {
     setData((prevData) => {
       const sourceColumn = { ...prevData.columns[sourceIndex] };
       const destinationColumn = { ...prevData.columns[destinationIndex] };
   
-      // 이동 대상 태스크 제거 및 추가
       const movingTask = sourceColumn.tasks.find((task) => task.id === taskId);
       sourceColumn.tasks = sourceColumn.tasks.filter((task) => task.id !== taskId);
       destinationColumn.tasks = [...destinationColumn.tasks, movingTask];
-  
-      // 상태 업데이트
-      const updatedColumns = prevData.columns.map((col, idx) => {
-        if (idx === sourceIndex) return sourceColumn;
-        if (idx === destinationIndex) return destinationColumn;
-        return col;
-      });
-  
-      return { ...prevData, columns: updatedColumns };
+    
+      return {
+        ...prevData,
+        columns: updateColumnTasks(prevData.columns, sourceIndex, taskId, movingTask),
+      };
     });
   };
-  
+  useEffect(() => {
+    if (columnsRef.current) {
+      new Sortable(columnsRef.current, {
+        group: "columns", // 같은 그룹에 속하는 요소들끼리 드래그 가능
+        animation: 300,
+        handle: ".handle", // .handle 클래스를 가진 요소만 드래그 가능
+        onStart(evt) {
+          console.log("Drag started");
+        },
+        onEnd(evt) {
+          console.log("Drag ended");
+        },
+      });
+    }
+  }, []);
   const clearTasks = (columnId) => {
     setData((prevData) => ({
       ...prevData,
@@ -233,6 +224,38 @@ export default function Project() {
         col.id === columnId ? { ...col, tasks: [] } : col
       ),
     }));
+  };
+  const handleTaskUpsert = async (task, columnIndex) => {
+    try { // task.id가 존재하면 PUT 요청, 그렇지 않으면 POST 요청
+      const method = task.id ? 'put' : 'post';
+      
+      const res = await axiosInstance({ method, url:'/api/project/task', data: task });
+      
+      setData((prevData) => {
+        console.log(res.data);
+        const updatedColumns = prevData.columns.map((col, idx) => {
+          if (idx !== columnIndex) return col;
+  
+          if (task.id) {
+            // 수정된 태스크 업데이트 (PUT)
+            const updatedTasks = col.tasks.map((existingTask) => {
+              if (existingTask.id === task.id) {
+                return { ...existingTask, ...res.data }; // 서버에서 받은 수정된 데이터로 교체
+              }
+              return existingTask;
+            });
+            return { ...col, tasks: updatedTasks };
+          } else {
+            // 새로운 태스크 추가 (POST)
+            return { ...col, tasks: [...col.tasks, res.data] };
+          }
+        });
+  
+        return { ...prevData, columns: updatedColumns };
+      });
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const handleDeleteCol = (colId) => {
@@ -272,7 +295,7 @@ export default function Project() {
             return {
               ...task,
               subTasks: [
-                ...task.subTasks,
+                ...(task.subTasks||[]),
                 { id: uuidv4(), isChecked: false, name: newSubTask },
               ],
             };
@@ -293,9 +316,9 @@ export default function Project() {
       </div>
 
       {/* 메인 섹션 */}
-      <section className="flex-grow py-6 pl-6 min-w-max bg-white rounded-3xl">
+      <section className="flex-grow py-6 pl-6 pr-4 bg-white rounded-3xl overflow-hidden">
         {/* 헤더 */}
-        <div className="flex pb-2.5 w-full mb-4">
+        <div className="flex pb-2.5 w-full mb-4 h-[7%]">
           <div className="w-[30%]"></div>
 
           <header className="flex w-[40%] overflow-hidden relative justify-between items-center px-5 py-1 rounded-xl bg-zinc-100">
@@ -338,13 +361,15 @@ export default function Project() {
                 onClose={setIsModalOpen}
                 text="작업자 추가"
                 selectedUsers={data.coworkers}
+                setSelectedUsers={onCoworkerSelect}
+                projectId={data.id}
               />
             </ShareMember>
           </div>
         </div>
 
         {/* 프로젝트 컬럼 */}
-        <div className="flex gap-5 max-md:flex-col">
+        <div className="flex gap-5 overflow-x-auto scrollbar-thin h-[93%]" ref={columnsRef} id="sortable">
           {data.columns.map((column, index) => (
             <ProjectColumn
               key={column.id}
@@ -353,14 +378,17 @@ export default function Project() {
               clearTasks={() => clearTasks(column.id)}
               setData={setData}
               onDelete={() => handleDeleteCol(column.id)}
+              handleTaskUpsert={handleTaskUpsert}
             >
               {column.tasks.map((task) =>
                   <DynamicTask
                     key={task.id}
                     {...task}
                     columnIndex={index}
+                    columnId={column.id}
                     onDelete={() => handleDeleteTask(task.id,index)}
                     onAddSubTask={(newSubTask) =>handleAddSubTask(index, task.id, newSubTask)}
+                    onSave={handleTaskUpsert}
                   />
                 
               )}
@@ -369,6 +397,7 @@ export default function Project() {
           {/* 새 보드 추가 */}
           {isNewColumnAdded ? (
             <ProjectColumn
+              projectId={data.id}
               index={data.columns.length}
               setData={setIsNewColumnAdded}
               status="new"

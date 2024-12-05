@@ -1,7 +1,8 @@
+/* eslint-disable react/prop-types */
 import ProjectAsideSection from "./ProjectAsideSection";
 import { CustomSearch } from "../Search";
 import { useEffect, useState } from "react";
-import { AddProjectModal } from "./_Modal";
+import { AddProjectModal, TemplateSelection } from "./_Modal";
 import { useQuery } from "@tanstack/react-query";
 import axiosInstance from "@/services/axios.jsx";
 
@@ -13,16 +14,24 @@ function ProjectAside({ setData }) {
     completed: false,
   });
   const [activeItemId, setActiveItemId] = useState(null); // 활성화된 항목의 ID를 상태로 관리
-  const [isModalOpen, setIsModalOpen] = useState(false); // 모달 열림 상태 관리
+  const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const handleOpenModal = () => setIsModalOpen(true);
-  const handleCloseModal = () => setIsModalOpen(false);
+  const handleOpenTemplateModal = () => setIsTemplateModalOpen(true);
+  const handleTemplateSelect = (template) => {
+    setSelectedTemplate(template);
+    setIsTemplateModalOpen(false); // 템플릿 선택 창 닫기
+    setIsModalOpen(true); // AddProjectModal 열기
+  };
+  const handleCloseAddModal = () => setIsModalOpen(false);
+
 
   // 프로젝트 데이터를 가져오는 함수
   const fetchProjectsList = async () => {
     try {
-      const response = await axiosInstance.get("/api/projects");
-      return response.data;
+      const res = await axiosInstance.get("/api/projects");
+      return res.data;
     } catch (err) {
       return err;
     }
@@ -94,12 +103,22 @@ function ProjectAside({ setData }) {
       <section className="flex flex-col w-full">
         <div className="flex flex-col justify-center items-center self-center mt-2.5 w-full text-base text-center text-black">
           <hr className="w-full border border-solid border-neutral-500" />
-          <button className="pt-3 pb-2" onClick={handleOpenModal}>
+          <button className="pt-3 pb-2" onClick={handleOpenTemplateModal}>
             새 프로젝트 생성
           </button>
         </div>
       </section>
-      <AddProjectModal isOpen={isModalOpen} onClose={() => { handleCloseModal(); refetch(); }} text="새 프로젝트" />
+      <TemplateSelection
+        isOpen={isTemplateModalOpen}
+        onClose={() => setIsTemplateModalOpen(false)}
+        onSelectTemplate={handleTemplateSelect}
+      />
+      <AddProjectModal
+        isOpen={isModalOpen}
+        onClose={()=>{handleCloseAddModal(); refetch()}}
+        text="새 프로젝트"
+        selectedTemplate={selectedTemplate} // 선택된 템플릿 전달
+      />
     </div>
   );
 }

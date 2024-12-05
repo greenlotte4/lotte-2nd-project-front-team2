@@ -5,6 +5,8 @@ import { ColumnHeader, ColumnHeaderEdit } from "./ColumnHeader";
 import { DynamicTaskEditor } from "./TaskEdit";
 
 export const ProjectColumn = ({
+  projectId,
+  id,
   title,
   color = "#000000",
   count = 0,
@@ -14,6 +16,7 @@ export const ProjectColumn = ({
   status = "basic",
   setData,
   onDelete,
+  handleTaskUpsert,
 }) => {
   const initialData =
     status == "new"
@@ -22,16 +25,10 @@ export const ProjectColumn = ({
   const [column, setColumn] = useState(initialData);
   const [isNewTaskAdded, setIsNewTaskAdded] = useState(false);
   const [mode, setMode] = useState(status);
-
-  const handleAddTask = (newTask) => {
-    setData((prevData) => {
-      const updatedColumns = prevData.columns.map((col) =>
-        col.index === index
-          ? { ...col, projects: [...col.projects, newTask] }
-          : col
-      );
-      return { ...prevData, columns: updatedColumns };
-    });
+   // 모달 닫기 핸들러
+   const handleCloseColumnEdit = () => {
+    setMode("basic");
+    setIsNewTaskAdded(false);
   };
 
   const handleIsAddTask = () => {
@@ -43,19 +40,21 @@ export const ProjectColumn = ({
   return (
     <section className="flex flex-col w-64 min-w-[240px]">
       {/* Column Header */}
-      {(mode === "basic" && (
+      {mode === "basic" ? (
         <ColumnHeader
           column={column}
           setMode={setMode}
           clearTasks={clearTasks}
           onDelete={onDelete}
         />
-      )) || (
+      ) : (
         <ColumnHeaderEdit
+          columnIndex={index}
+          projectId={projectId}
           column={column}
           setColumn={setColumn}
           setMode={setMode}
-          setData={setData}
+          onSave={handleCloseColumnEdit}
           mode={mode}
         />
       )}
@@ -69,14 +68,16 @@ export const ProjectColumn = ({
       </div>
 
       {/* Add New Task */}
-      {isNewTaskAdded && (
+      {isNewTaskAdded ? (
         <DynamicTaskEditor
+          projectId={projectId}
           setIsAdded={setIsNewTaskAdded}
-          onSave={handleAddTask}
+          columnIndex={index}
+          columnId={id}
+          onSave={handleTaskUpsert}
           mode="create"
         />
-      )}
-      {mode === "new" || (
+      ) : (
         <button
           onClick={handleIsAddTask}
           className="flex gap-2 items-center px-3 py-2 mt-3 w-full text-center text-black text-opacity-50"

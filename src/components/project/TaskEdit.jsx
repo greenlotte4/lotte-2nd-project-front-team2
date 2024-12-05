@@ -5,28 +5,28 @@ import { CustomSVG } from "./_CustomSVG";
 export function DynamicTaskEditor({
   mode,
   taskToEdit,
+  columnIndex,
+  columnId,
   setIsAdded,
   onSave,
   onClose,
 }) {
   const [task, setTask] = useState({
-    title: "",
-    content: "",
-    duedate: Date.now(),
-    tags: [],
-    subTasks:[],
-    priority: 5,
+    columnId: columnId,
+    id:taskToEdit?.id||"",
+    title: taskToEdit?.title||"",
+    content: taskToEdit?.content||"",
+    priority: taskToEdit?.priority||5,
+    duedate: taskToEdit?.duedate||"",
+    tags: taskToEdit?.tags||[],
+    subTasks:taskToEdit?.subTasks||[],
+    status: taskToEdit?.status||1,
   });
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [newTag, setNewTag] = useState("");
   const [isNewTagAdded, setIsNewTagAdded] = useState(false);
   const textareaRef = useRef(null); // textarea에 대한 ref
 
-  useEffect(() => {
-    if (mode === "edit" && taskToEdit) {
-      setTask(taskToEdit); // 기존 task로 초기화
-    }
-  }, [mode, taskToEdit]);
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto'; // 높이를 초기화
@@ -49,14 +49,9 @@ export function DynamicTaskEditor({
   const handleSubmit = (e) => {
     e.preventDefault();
     if (task.title.trim() === "") return;
-
-    const newTask = {
-      ...task,
-      id: Date.now(), // 고유 ID
-      status: "active",
-    };
-
-    onSave(newTask); // 상위 컴포넌트로 태스크 전달
+    console.log("TaskEdit - columnIndex : "+columnIndex);
+    
+    onSave(task, columnIndex);
     setIsAdded(false); // 태스크 추가 후 창 닫기
   };
 

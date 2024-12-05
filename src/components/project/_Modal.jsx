@@ -5,19 +5,61 @@ import { CustomSVG } from "./_CustomSVG";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import axiosInstance from "@/services/axios.jsx";
 
+export const TemplateSelection = ({isOpen,onClose,onSelectTemplate}) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+      <div className="bg-white rounded-lg shadow-lg p-6 w-96">
+        <h2 className="text-lg font-bold mb-4">프로젝트 템플릿 선택</h2>
+        <p className="text-sm text-gray-600 mb-6">
+          시작할 템플릿을 선택하세요. 언제든지 변경할 수 있습니다.
+        </p>
+        <div className="flex flex-col gap-4">
+          <button
+            onClick={() => onSelectTemplate("empty")}
+            className="p-4 bg-gray-100 hover:bg-gray-200 rounded-md shadow-sm text-left"
+          >
+            <span className="font-bold text-gray-800">빈 프로젝트</span>
+            <p className="text-sm text-gray-600">템플릿 없이 프로젝트를 시작합니다.</p>
+          </button>
+          <button
+            onClick={() => onSelectTemplate("kanban")}
+            className="p-4 bg-gray-100 hover:bg-gray-200 rounded-md shadow-sm text-left"
+          >
+            <span className="font-bold text-gray-800">기본 칸반 보드</span>
+            <p className="text-sm text-gray-600">칸반 보드를 포함한 기본 템플릿.</p>
+          </button>
+        </div>
+        <div className="mt-6 flex justify-end">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800"
+          >
+            닫기
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+
 export const AddProjectModal = ({
   isOpen,
   onClose,
   text,
   selectedUsers = [],
+  selectedTemplate,
   setSelectedUsers,
+  projectId,
 }) => {
   if (!isOpen) return null;
 
   const [searchKeyword, setSearchKeyword] = useState("");
   const [selectedGroupId, setSelectedGroupId] = useState(0);
   const [listType, setListType] = useState("");
-  const [project,setProject] = useState({title: "새 프로젝트", type:1, coworkers:selectedUsers})
+  const [project,setProject] = useState({title: "새 프로젝트", type: 1, template: selectedTemplate, coworkers: selectedUsers})
 
   const fetchAllUsers = async ({ pageParam }) => {
     try {
@@ -148,7 +190,9 @@ const handleProjectChange = (e) => {
     setProject((prev) => ({
       ...prev,
       [name]: value,
+      coworkers: [],
     }));
+
   };
   
   // 멤버 클릭 핸들러 (토글 방식)
@@ -181,11 +225,22 @@ const handleProjectChange = (e) => {
   };
 
   const handleSubmit = async () => {
-    try {
-      await axiosInstance.post('/api/project', project);
-      onClose();
-    } catch (err) {
-        return err;
+    if(text === "작업자 추가") {
+      try {
+        await axiosInstance.patch(`/api/project/${projectId}`, project);
+        setSelectedUsers(project.coworkers);
+        onClose();
+      } catch (err) {
+          return err;
+      }
+    }
+    else{
+      try {
+        await axiosInstance.post('/api/project', project);
+        onClose();
+      } catch (err) {
+          return err;
+      }
     }
   };
 
@@ -223,7 +278,7 @@ const handleProjectChange = (e) => {
               <div className="flex w-full">
                 <div className="w-2/5 flex flex-col">
                   <span className="bg-white text-gray-500 text-xs relative top-2 w-fit ml-10 px-1">
-                    보기 방식
+                    프로젝트 형태
                   </span>
                   <select
                     value={project.type}

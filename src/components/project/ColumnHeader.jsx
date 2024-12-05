@@ -2,8 +2,10 @@
 import { useState } from "react";
 import { MenuItem } from "./_CustomDropdown";
 import { CustomSVG } from "./_CustomSVG";
+import axiosInstance from "@/services/axios.jsx";
 
 export const ColumnHeader = ({
+  projectId,
   column = [],
   clearTasks,
   setMode,
@@ -14,7 +16,7 @@ export const ColumnHeader = ({
   return (
     <header className="flex flex-col w-full text-base leading-none">
       <div className="flex gap-3 items-center w-full min-h-[32px]">
-        <div className="relative flex flex-1 shrink gap-2 items-start justify-between self-stretch my-auto basis-0 w-full">
+        <div className="relative flex flex-1 shrink gap-2 items-start justify-between self-stretch my-auto basis-0 w-full handle">
           <div>
             <span className="text-black text-opacity-80 text-sm font-[550]">
               {column.title}{" "}
@@ -70,11 +72,12 @@ export const ColumnHeader = ({
   );
 };
 export const ColumnHeaderEdit = ({
+  projectId,
   column = [],
   setColumn,
   setMode,
   mode,
-  setData,
+  onSave,
 }) => {
   const [formData, setFormData] = useState(column);
 
@@ -88,18 +91,20 @@ export const ColumnHeaderEdit = ({
   };
 
   // 버튼 클릭 시 처리 함수
-  const handleSubmit = () => {
+  const handleSubmit = async() => {
+    const res = await axiosInstance.post(`/api/project/${projectId}`, formData);
+    console.log(res.data)
     setColumn((prev) => ({
       ...prev,
-      ...formData,
+      ...res.data,
     }));
-    setMode("basic");
+    onSave();
   };
   const handleClose = () => {
     if (mode == "new") {
-      setData(false);
+      onSave();
     } else {
-      setMode("basic");
+      ()=>{setMode("basic");}
     }
   };
 
