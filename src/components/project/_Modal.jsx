@@ -185,14 +185,13 @@ export const AddProjectModal = ({
   };
 
   // 프로젝트 상태 변경 핸들러
-const handleProjectChange = (e) => {
+  const handleProjectChange = (e) => {
     const { name, value } = e.target;
     setProject((prev) => ({
       ...prev,
       [name]: value,
-      coworkers: [],
+      ...(name === 'type' ? { coworkers: [] } : {}),
     }));
-
   };
   
   // 멤버 클릭 핸들러 (토글 방식)
@@ -226,12 +225,35 @@ const handleProjectChange = (e) => {
 
   const handleSubmit = async () => {
     if(text === "작업자 추가") {
+      const prevCoworkers = selectedUsers; // 기존 작업자 목록
+      const newCoworkers = project.coworkers; // 수정 후 작업자 목록
+
+      const coworkerIds = new Set(prevCoworkers.map((coworker) => coworker.id)); // 기존 작업자 ID 집합
+      const newCoworkerIds = new Set(newCoworkers.map((user) => user.id)); // 수정 후 작업자 ID 집합
+
+      const addedCoworkers = newCoworkers.filter((user) => !coworkerIds.has(user.id));
+      const removedCoworkers = prevCoworkers.filter((coworker) => !newCoworkerIds.has(coworker.id));
+
+      const payload = {
+        projectId: projectId,
+        addedCoworkers: addedCoworkers.map((user) => user.id ),
+        removedCoworkers: removedCoworkers.map((coworker) => coworker.id),
+      };
+      console.log(payload)
       try {
-        await axiosInstance.patch(`/api/project/${projectId}`, project);
-        setSelectedUsers(project.coworkers);
+        await axiosInstance.patch(`/api/project/coworkers`, payload);
+      
+        setProject((prev) => ({
+          ...prev,
+          coworkers: newCoworkers,
+        }));
+      
+        alert("작업자 목록이 성공적으로 수정되었습니다.");
+        setSelectedUsers(newCoworkers);
         onClose();
-      } catch (err) {
-          return err;
+      } catch (error) {
+        console.error("작업자 수정 중 오류 발생:", error);
+        alert("작업자 목록 수정 중 오류가 발생했습니다.");
       }
     }
     else{
