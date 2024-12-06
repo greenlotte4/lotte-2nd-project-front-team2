@@ -50,7 +50,7 @@ export default function MainHeader() {
 
           <div className="flex items-center space-x-4">
             <Link
-              to="/login"
+              to="/user/login"  // 로그인 페이지 경로 수정
               className="px-4 py-2 border border-gray-400 rounded text-gray-700 hover:bg-[#666bff] hover:text-white"
             >
               로그인
