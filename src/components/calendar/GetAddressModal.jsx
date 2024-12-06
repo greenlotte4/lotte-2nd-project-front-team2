@@ -57,7 +57,7 @@ export default function GetAddressModal({isOpen, onClose, selectedUsers, setSele
             return { ...data, pages: [{ ...data.pages[0], users: allUsers }] };
         },
         cacheTime : 6 * 1000 * 60 ,
-        retry: false
+        retry: false,
     })
     
     const observer = useRef();
@@ -162,15 +162,16 @@ export default function GetAddressModal({isOpen, onClose, selectedUsers, setSele
 
         setTimeout(() => {
             onClose();
+            setCustomAlert(false)
         }, 1000);
     }
     if(!isOpen) return null;
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 modal-custom-fixed">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
       <CustomAlert 
         type={customAlertType} message={customAlertMessage} isOpen={customAlert}
       />
-        <div className="bg-white rounded-2xl shadow-lg max-w-2xl w-[800px] modal-custom-width min-h-[800px] max-h-[800px] overflow-scroll scrollbar-none">
+        <div className="bg-white rounded-2xl shadow-lg w-[800px] min-h-[800px] max-h-[800px] overflow-scroll scrollbar-none">
         
             <div className="display-flex mb-8 py-3.5 px-12 bg-white border-b rounded-t-2xl z-10 sticky top-0">
                 <span className="text-xl font-bold">주소록</span>
@@ -190,8 +191,8 @@ export default function GetAddressModal({isOpen, onClose, selectedUsers, setSele
                     <ul className='max-h-[150px] overflow-scroll scrollbar-none'>
                         <li onClick={resetGroup} style={{backgroundColor: 'white'}} className='sticky top-0 px-[10px] mb-[10px] hover:text-purple-500 cursor-pointer'>전체</li>
                         {allGroups && allGroups.pages[0] && allGroups.pages[0].groups && allGroups.pages[0].groups.length > 0 ? (
-                        allGroups.pages[0].groups.map((group) => (
-                            <li className='' key={group.id}>
+                        allGroups.pages[0].groups.map((group,index) => (
+                            <li className='' key={index}>
                                 <div className='flex justify-between px-[10px]'>
                                     <div className='flex'>
                                         <div className='flex flex-col'>
@@ -241,8 +242,8 @@ export default function GetAddressModal({isOpen, onClose, selectedUsers, setSele
                     </div>
                     <ul className='max-h-[200px] min-h-[200px] overflow-scroll scrollbar-none'>
                         {allUsers && allUsers.pages[0] && allUsers.pages[0].users && allUsers.pages[0].users.length > 0 ? (
-                        allUsers.pages[0].users.map((user) => (
-                            <li onClick={(e)=>selectedUsersHandler(e,user)} className='cursor-pointer hover:bg-purple-200' key={user.id}>
+                        allUsers.pages[0].users.map((user,index) => (
+                            <li onClick={(e)=>selectedUsersHandler(e,user)} className='cursor-pointer hover:bg-purple-200' key={index}>
                                 <div className='flex justify-between px-[10px]'>
                                     <div className='flex'>
                                         <img src='/images/admin-profile.png' className='w-[50px] h-[50px] mr-[10px]'></img>
@@ -260,7 +261,8 @@ export default function GetAddressModal({isOpen, onClose, selectedUsers, setSele
                                 </div>
                             </li>  
                         ))
-                        ) : (
+                        ) : 
+                        (
                             <li>로딩중입니다...</li> 
                         )}
                         {hasNextPageAllUsers && (

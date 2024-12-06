@@ -4,13 +4,12 @@ import SharingMenu from "./SharingMenu";
 import FileManager from "./FileManager";
 import Editor from "./Editor";
 import PageLayout from "../../layout/page/PageLayout";
+import axiosInstance from "../../services/axios";
 
-export default function PageView(){
+export default function PageView({pageId, userId}){
     const [isEmojiPickerVisible, setIsEmojiPickerVisible] = useState(false);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-    const [title, setTitle] = useState(""); // 제목 상태
     const [sharingUsers, setSharingUsers] = useState([]); // 공유 사용자 상태
-    const [content, setContent] = useState(""); // 텍스트 에디터 내용
     const [pageData, setPageData] = useState(null); // 페이지 정보 상태
     const [loading, setLoading] = useState(true); // 로딩 상태
     const [error, setError] = useState(null); // 에러 상태
@@ -18,37 +17,26 @@ export default function PageView(){
     const scrollContainerRef = useRef(null); // 스크롤 컨테이너 참조
 
    
+    const [role, setRole] = useState(null); // 퍼미션 
+    const [content, setContent] = useState(null);
+    const [title, setTitle] = useState("");
 
-    const toggleEmojiPicker = () => {
-      setIsEmojiPickerVisible((prev) => !prev);
-    };
-
+    useEffect(() => {
+      // 권한 정보 가져오기
+      const fetchPermission = async () => {
+        try {
+          const response = await axiosInstance.get(`/api/page/${pageId}/permission/${userId}`);
+          // setRole(response.data.role);
+          setRole("WRITE");
+        } catch (error) {
+          console.error("Failed to fetch permission:", error);
+        }
+      };
   
-    const handleEmojiSelect = (emoji) => {
-      console.log(`Selected Emoji: ${emoji}`);
-      setIsEmojiPickerVisible(false); // Close picker after selection
-    };
+      fetchPermission();
+    }, [pageId, userId]);
 
-    const emojiList = [
-        "😀",
-        "😁",
-        "😂",
-        "🤣",
-        "😃",
-        "😄",
-        "😅",
-        "😆",
-        "😉",
-        "😊",
-        "😎",
-        "😍",
-        "😘",
-        "🥰",
-        "😗",
-        "😙",
-        "😚",
-        "🤗",
-      ]; // Example emojis
+   
 
       const toggleDropdown = () => {
         setIsDropdownOpen((prev) => !prev); // 현재 상태 반전
@@ -170,7 +158,11 @@ export default function PageView(){
                 공유하기
                 </button>
             </div>
-           
+            <div>
+              {role === "READ" || role ==="FULL" && <Editor title={title} content={content} setContent={setContent} readOnly />}
+              {role === "WRITE" && <Editor title={title} content={content} setContent={setContent} />}
+              {role === null && <p>Loading permissions...</p>}
+            </div>
           </div>
 
           {/* 공유 메뉴 */}

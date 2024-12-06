@@ -110,6 +110,14 @@
         background-color: rgba($color: orange, $alpha: 0.2);
     }
 
+    .bg-brown-200 {
+        background-color: rgba($color: brown, $alpha: 0.2);
+    }
+
+    .bg-pink-200 {
+        background-color: rgba($color: pink, $alpha: 0.2);
+    }
+
 
     .text-blue-200 {
         color: rgba($color: blue, $alpha: 0.5);
@@ -133,5 +141,13 @@
 
     .text-yellow-200 {
         color: rgba($color: yellow, $alpha: 0.5);
+    }
+
+    .text-brown-200 {
+        color: rgba($color: brown, $alpha: 0.5);
+    }
+
+    .text-pink-200 {
+        color: rgba($color: pink, $alpha: 0.5);
     }
 }

@@ -85,39 +85,6 @@
         background-color: #e0e0e0;
       }
       
-      .emoji-picker {
-        position: absolute;
-        top: 30px; /* Position above the card header */
-        left: 100px; /* Adjust horizontally */
-        background: white;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
-        padding: 10px;
-        z-index: 10;
-        width: 250px;
-        max-height: 200px;
-        overflow-y: auto;
-      }
-      
-      .emoji-grid {
-        display: grid;
-        grid-template-columns: repeat(6, 1fr); /* 6 emojis per row */
-        gap: 8px;
-      }
-      
-      .emoji-item {
-        font-size: 20px;
-        cursor: pointer;
-        text-align: center;
-        padding: 5px;
-        border-radius: 50%;
-        transition: background-color 0.2s;
-      }
-      
-      .emoji-item:hover {
-        background-color: #f0f0f0;
-      }
 
 
       .shareUsers {
@@ -266,7 +233,11 @@
       max-height: 750px;
       position: relative; /* Ensure relative positioning for absolute children */
 
-      button {
+      .emoji-picker-container{
+        
+      }
+
+      .shareBtn {
           background: #7e7edf;
           height: 40px;
           color: white;
@@ -276,7 +247,7 @@
           cursor: pointer;
         }
         
-        button:hover {
+        .shareBtn:hover {
           background-color: #5d5ddd;
         }
         

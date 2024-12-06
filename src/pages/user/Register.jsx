@@ -16,8 +16,8 @@ const validateRules = {
   domain: (email) => email.endsWith('.com') || email.endsWith('.net') || email.endsWith('.co.kr'),
   pwd: (pwd) => /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(pwd),
   uid: (uid) => /^(?=.*[A-Za-z]{4,})(?=.*\d)[A-Za-z\d]+$/.test(uid),
-  hp: (hp) => /^(010|011)\d{7,8}$/.test(hp),
-  companyCode: (code) => /^[A-Za-z\d]+$/.test(code),
+  hp: (hp) => /^(010-\d{4}-\d{4}|011-\d{3}-\d{4})$/.test(hp),
+  company: (code) => /^[A-Za-z\d]+$/.test(code),
   firstName: (firstName) => /^[^\d!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]+$/u.test(firstName),
   lastName: (lastName) => /^[^\d!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]+$/u.test(lastName),
   card: (value) => value !== undefined && /^\d{4}$/.test(value),
@@ -48,7 +48,7 @@ const initState = {
   addr2:"",
   grade:"",
   company:"",
-  companyCode:"",
+  companyName:"",
   cardNumber:"",
   cardNick:"",
   expiredDate:"",
@@ -75,7 +75,7 @@ export default function Register() {
  
   // 각 페이지의 검증 상태를 관리
   const [validation1, setValidation1] = useState({
-    email: true,
+    email: false,
     uid: false,
     pwd: false,
   });
@@ -84,14 +84,16 @@ export default function Register() {
     lastName: false,
     hp: false,
   });
-  const [validation3, setValidation3] = useState({
-    company: false,
+  const [validationEnterprise, setValidationEnterprise] = useState({
+    companyName: false,
     cardNumber: false,
     expiredDate: false,
     cvc: false,
   });
   const [validationStandard, setValidationStandard] = 
   useState({cardNumber: false, expiredDate: false, cvc: false})
+  const [validationCompany, setValidationCompany] = 
+  useState({company: false})
   
   useEffect(() => {
     if(validation1.email && validation1.uid && validation1.pwd){
@@ -100,10 +102,39 @@ export default function Register() {
     if(validation2.firstName && validation2.lastName && validation2.hp){
       setPage2success(true);
     }
-    if(validation3.cardNumber&& validation3.company && validation3.cvc && validation3.expiredDate){
+    if(validationEnterprise.cardNumber&& validationEnterprise.companyName && validationEnterprise.cvc && validationEnterprise.expiredDate){
       setPage3success(true);
     }
-  }, [validation1, validation2,validation3]);
+  }, [validation1, validation2,validationEnterprise]);
+
+  useEffect(() => {
+    // 선택된 플랜에 따라 page3success 업데이트
+    if (selected === 'Company') {
+      setPage3success(validationCompany.company);
+    } else if (selected === 'Standard') {
+      setPage3success(
+        validationStandard.cardNumber &&
+        validationStandard.expiredDate &&
+        validationStandard.cvc
+      );
+    } else if (selected === 'Enterprise') {
+      setPage3success(
+        validationEnterprise.cardNumber &&
+        validationEnterprise.companyName &&
+        validationEnterprise.expiredDate &&
+        validationEnterprise.cvc
+      );
+    }else if(selected ==='Basic'){
+      setPage3success(true); // 아무 플랜도 선택하지 않은 경우 비활성화
+    }else {
+      setPage3success(false); // 아무 플랜도 선택하지 않은 경우 비활성화
+    }
+  }, [
+    selected,
+    validationCompany,
+    validationStandard,
+    validationEnterprise,
+  ]);
   
   const CardHandler = (e) => {
     const { name, value } = e.target;
@@ -135,11 +166,12 @@ export default function Register() {
         // 카드 번호를 하나의 문자열로 결합
         const fullCardNumber = `${cardNum1}-${cardNum2}-${cardNum3}-${cardNum4}`;
         setUser((prev) => ({ ...prev, cardNumber: fullCardNumber })); // 카드 번호 업데이트
-        setValidation3((prev) => ({ ...prev, cardNumber: true })); // 유효성 상태 업데이트
+        setValidationEnterprise((prev) => ({ ...prev, cardNumber: true })); // 유효성 상태 업데이트
+        setValidationStandard((prev) => ({ ...prev, cardNumber: true })); // 유효성 상태 업데이트
         setStatusMessage({ message: ``, type: '' }); // 메시지 초기화
       } else {
         setStatusMessage({ message: `유효하지 않은 카드 번호입니다.`, type: 'error' });
-        setValidation3((prev) => ({ ...prev, cardNumber: false })); // 유효성 상태 업데이트
+        setValidationEnterprise((prev) => ({ ...prev, cardNumber: false })); // 유효성 상태 업데이트
       }
     } else {
       setStatusMessage({ message: ``, type: '' }); // 카드 번호가 모두 입력되지 않은 상태
@@ -201,11 +233,43 @@ export default function Register() {
   }
   
   const ChangeHandler = (e) => {
-    e.preventDefault();
     const {name, value} = e.target;
     setUser({...user, [e.target.name]: e.target.value});
-    console.log("체인지 핸들러 "+name, value);
+
+    if (name === 'hp') {
+      let formattedValue = value.replace(/[^0-9]/g, ''); // 숫자만 남김
+  
+      // 010으로 시작하는 경우: 3자리-4자리-4자리
+      if (formattedValue.startsWith('010') && formattedValue.length > 3) {
+        formattedValue = `${formattedValue.slice(0, 3)}-${formattedValue.slice(3, 7)}${formattedValue.length > 7 ? '-' + formattedValue.slice(7, 11) : ''}`;
+      }else if (formattedValue.startsWith('011') && formattedValue.length > 3) {
+        formattedValue = `${formattedValue.slice(0, 3)}-${formattedValue.slice(3, 6)}${formattedValue.length > 6 ? '-' + formattedValue.slice(6, 10) : ''}`;
+      }
+      setUser((prevUser) => ({ ...prevUser, hp: formattedValue }));
+      setValidation2((prev) => ({ ...prev, hp: true }));
+      return;
+    }
+  
     
+    // 만료일 필드일 경우 MM/YY 형식으로 자동 변환
+  if (name === 'expiredDate') {
+    let formattedValue = value.replace(/[^0-9]/g, ''); // 숫자만 남김
+    if (formattedValue.length > 2) {
+      formattedValue = `${formattedValue.slice(0, 2)}/${formattedValue.slice(2, 4)}`;
+    }
+    setUser((prevUser) => ({ ...prevUser, expiredDate: formattedValue }));
+
+    // 유효성 검사
+    if (validateRules.expiredDate(formattedValue)) {
+      setValidationEnterprise((prev) => ({ ...prev, expiredDate: true }));
+      setStatusMessage({ message: ``, type: '' });
+    } else {
+      setValidationEnterprise((prev) => ({ ...prev, expiredDate: false }));
+      setStatusMessage({ message: `만료일이 유효하지 않습니다.`, type: 'error' });
+    }
+    return;
+  }
+
     if(name === 'confirmPwd'){
       if (value !== user.pwd) {
         setStatusMessage({ message: `비밀번호가 일치하지 않습니다.`, type: 'error' });
@@ -220,9 +284,18 @@ export default function Register() {
     // 유효성 검사 규칙이 없는 필드면 메시지 없이 바로 통과
     if (!validateRules[name]) {
       setStatusMessage({ message: ``, type: '' });
-      setValidation3((prev) => ({ ...prev, [name]: true}));
-      console.log("유효성 검사 없는 필드 "+JSON.stringify(validation3));
+      setValidationEnterprise((prev) => ({ ...prev, [name]: true}));
+      setValidationStandard((prev) => ({ ...prev, [name]: true}));
       return;
+    }
+    if(name==='cvc'){
+      if( !validateRules[name]?.(value)&&value.length >= 3){
+        setStatusMessage({ message: `유효하지 않은 형식입니다.`, type: 'error' });
+        return;
+      }else{
+        setStatusMessage({ message: ``, type: '' });
+        return;
+      }
     }
 
     if(!validateRules[name]?.(value)){
@@ -232,8 +305,9 @@ export default function Register() {
       setStatusMessage({ message: ``, type: '' });
       setValidation2((prev) => ({ ...prev, firstName: true }));
       setValidation2((prev) => ({ ...prev, lastName: true }));
-      setValidation3((prev) => ({ ...prev, [name]: true}));
-      console.log(validation3);
+      setValidationEnterprise((prev) => ({ ...prev, [name]: true}));
+      setValidationStandard((prev) => ({ ...prev, [name]: true}));
+      setValidationCompany((prev) => ({ ...prev, [name]: true}));
     }
 
     if(name === 'uid' || name === 'hp'){
@@ -292,6 +366,7 @@ export default function Register() {
   };
   async function sendEmail (value){
     if (validateRules.email(value) && validateRules.domain(value)) {
+      setStatusMessage({ message: '', type: '' });
       try {
         const response = await axios.post(`${baseURL}/api/auth/sendMail`,
           { email: value },
@@ -336,7 +411,7 @@ export default function Register() {
   };
   const handlePlanSelection = (planName,value) => {
     setSelected(planName); // 선택된 플랜 이름 설정
-    setUser((prevUser) => ({ ...prevUser, grade: value, companyCode: '', cardNick: '', cardNumber: '', expiredDate: '', company: '', cvc:'' }));
+    setUser((prevUser) => ({ ...prevUser, grade: value, company: '', cardNick: '', cardNumber: '', expiredDate: '', companyName: '', cvc:'' }));
     setCard((prev) => ({...prev, cardNum1: '', cardNum2: '', cardNum3: '', cardNum4: '',}))
   };
   const closeAlert = () =>{
@@ -358,8 +433,6 @@ export default function Register() {
       }
       fullAddress += extraAddress !== '' ? ` (${extraAddress})` : '';
     }
-
-    console.log(fullAddress); // 선택된 주소 출력
     setUser((prev) => ({ ...prev, addr1: fullAddress })); // 주소 저장
   };
 
@@ -490,7 +563,7 @@ export default function Register() {
                   <input type='text' placeholder='이름' name='firstName' onChange={ChangeHandler}
                   value={user.firstName} className="signup-input-md mt-10" ></input>
                 </div>
-                <input type='text' placeholder='전화번호 -를 제외하고 입력해주세요.' maxLength={11}
+                <input type='text' placeholder='전화번호 -를 제외하고 입력해주세요.' maxLength={13}
                 name='hp' value={user.hp} onChange={ChangeHandler}
                 className="signup-input-lg mt-10" ></input>
                 <input type='text' placeholder='주소(선택)' onClick={() => handleClick()}
@@ -647,7 +720,7 @@ export default function Register() {
                     <>
                       <p className='text-sm custom-mt-30'>Plantry에서 제공한 회사코드를 입력해주세요.</p>
                       <input type='text' placeholder='회사코드 입력'
-                      name='companyCode' value={user.companyCode} onChange={ChangeHandler}
+                      name='company' value={user.company} onChange={ChangeHandler}
                       className="signup-input-lg mt-10" ></input>
                     </>
                   }
@@ -656,7 +729,7 @@ export default function Register() {
                     <>
                     <p className='text-sm custom-mt-30'>회사 정보를 입력해주세요.</p>
                       <input type='text' placeholder='회사명'
-                      name='company' value={user.company} onChange={ChangeHandler}
+                      name='companyName' value={user.companyName} onChange={ChangeHandler}
                       className="signup-input-lg mt-10" ></input>
                       <div className='signup-input-lg mt-10 flex items-center text-gray-500'>
                         <input type='text' placeholder='카드번호 입력' className="w-1/4 text-center ml-2" maxLength={4}
@@ -676,7 +749,7 @@ export default function Register() {
                         <input type='text' placeholder='카드 별명'
                         name='cardNick' value={user.cardNick} onChange={ChangeHandler}
                         className="card-inp1 mr-1 text-gray-600" ></input>
-                        <input type='text' placeholder='만료일'
+                        <input type='text' placeholder='MM/YY'
                         name='expiredDate' value={user.expiredDate} onChange={ChangeHandler}
                         className="card-inp2 mr-1 text-gray-600" maxLength={5} ></input>
                         <input type='text' placeholder='CVC번호'
@@ -707,7 +780,7 @@ export default function Register() {
                         <input type='text' placeholder='카드 별명'
                         name='cardNick' value={user.cardNick} onChange={ChangeHandler}
                         className="card-inp1 mr-1 text-gray-600" ></input>
-                        <input type='text' placeholder='만료일'
+                        <input type='text' placeholder='MM/YY'
                         name='expiredDate' value={user.expiredDate} onChange={ChangeHandler}
                         className="card-inp2 mr-1 text-gray-600" maxLength={5} ></input>
                         <input type='text' placeholder='CVC번호'

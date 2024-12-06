@@ -22,22 +22,24 @@ export default function AdminUser() {
         setSelectOption(Number(e.target.value))
     }
 
-  return (
-    <div id='admin-user-container'>
-      <AdminSidebar />
-      <section className='admin-user-main'>
-      <AdminHeader />
-        <AdminUserMainTop
-            optionChanger={optionChanger}
-            selectOption={selectOption}
+    return (
+      <div id='admin-user-container'>
+        <AdminSidebar 
+          optionChanger={optionChanger}
         />
-      {selectOption === 0 &&
-        <UserPage1 />
-      }
-      {selectOption === 1 &&
-        <UserPage2 />
-      }
-      </section>
-    </div>
-  )
+        <section className='admin-user-main'>
+        <AdminHeader />
+          <AdminUserMainTop
+              optionChanger={optionChanger}
+              selectOption={selectOption}
+          />
+        {selectOption === 0 &&
+          <UserPage1 />
+        }
+        {selectOption === 1 &&
+          <UserPage2 />
+        }
+        </section>
+      </div>
+    )
 }
