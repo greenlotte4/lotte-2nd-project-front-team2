@@ -17,6 +17,7 @@ const useChatWebSocket = ({
   const isSubscribed = useRef(false); // 중복 구독 방지용
 
   const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
+
   const wsUrl = "ws://" + apiBaseUrl.replace("http://", "") + "/ws-chat";
 
   const [stompClient, setStompClient] = useState(null);
@@ -52,18 +53,12 @@ const useChatWebSocket = ({
   const updateSubscriptions = useCallback(
     (client) => {
       if (selectedRoomId) {
-        // 기존 구독이 존재하면 해제
-        if (subscriptionRef.current) {
-          subscriptionRef.current.unsubscribe();
-        }
-
         // 새로운 구독 설정
         subscriptionRef.current = client.subscribe(
           `/topic/chat/${selectedRoomId}`,
           (message) => {
             try {
               const response = JSON.parse(message.body);
-              console.log("구독 응답 : ", response);
               setMessageList((prev) => [...prev, response]);
             } catch (error) {
               console.error("Failed to parse message:", error);

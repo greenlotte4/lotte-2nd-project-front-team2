@@ -25,6 +25,7 @@ export default function InviteModal_frequent(props) {
   const [isOpen, setIsOpen] = useState(false);
 
   const uid = useUserStore((state) => state.user.uid);
+  console.log("uid:", uid);
 
   const {
     data: memberData,

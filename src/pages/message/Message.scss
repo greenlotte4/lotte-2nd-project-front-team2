@@ -764,6 +764,10 @@
     flex-direction: column;
     border: 1px solid gainsboro;
     box-sizing: border-box;
+    overflow: scroll;
+    &::-webkit-scrollbar {
+      display: none;
+    }
   }
 
   .orgs-User {

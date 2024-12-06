@@ -217,7 +217,6 @@ export default function Message({ selectedRoomId, setSelectedRoomId }) {
         timeStamp: new Date(),
       };
 
-      console.log("Sending message to DB:", newMessage);
       try {
         const resp = await axiosInstance.post(
           "/api/message/saveMessage",
@@ -312,12 +311,8 @@ export default function Message({ selectedRoomId, setSelectedRoomId }) {
       updateUserId(uid);
     }
   }, [members, uid, updateMembers, updateUserId]);
-  console.log("input:", input);
 
   const processedMessages = processMessages(messageList, uid);
-
-  console.log("채팅 내역:", messageList);
-  console.log("선택된 채팅방Id:", selectedRoomId);
 
   //================================================================================================
 
