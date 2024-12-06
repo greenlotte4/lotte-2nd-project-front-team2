@@ -59,23 +59,29 @@ const cardinit = {
   paymentCardExpiration:"",
   paymentCardCvc:"",
 }
-
+// ===================================================================================
 export default function Register() {
-
   const navigate = useNavigate();
+  
+  // 페이지 구분 & 플랜 구분 & 유효성검사 결과 알리미
+  const [count, setCount] = useState(0);
+  const [selected, setSelected] = useState(''); // 선택된 플랜 이름 저장
+  const [alert, setAlert] = useState({message : '', type: '', isOpen: false, onClose: false})
+  const [statusMessage, setStatusMessage] = useState({ message: '', type: '' }); // 메시지와 유형 상태 통합
+
+  // 보낼 데이터
   const [user, setUser] = useState({...initState});
   const [payment, setPayment] = useState({...cardinit});
+
+  //페이지별 전체 유효성 검사 완료 상태 표시(이게 트루여야 다음으로 넘어감)
   const [page1success, setPage1success] = useState(false);
   const [page2success, setPage2success] = useState(false);
   const [page3success, setPage3success] = useState(false);
   
-  const [alert, setAlert] = useState({message : '', type: '', isOpen: false, onClose: false})
-  const [count, setCount] = useState(0);
-  const [selected, setSelected] = useState(''); // 선택된 플랜 이름 저장
+  //set card 말곤 없어도 될 것 같다. 
   const [email, setEmail] = useState('');
   const [sendMail, setSendMail] = useState(false);
   const [code, setCode] = useState(''); // 입력한 인증번호 상태
-  const [statusMessage, setStatusMessage] = useState({ message: '', type: '' }); // 메시지와 유형 상태 통합
   const [card, setCard] = useState({cardNum1: '', cardNum2: '', cardNum3: '', cardNum4: '',})
  
   // 각 페이지의 검증 상태를 관리
@@ -89,6 +95,7 @@ export default function Register() {
     lastName: false,
     hp: false,
   });
+  //3페이지는 플랜별로 검증 상태 관리
   const [validationEnterprise, setValidationEnterprise] = useState({
     companyName: false,
     paymentCardNo: false,
@@ -99,6 +106,7 @@ export default function Register() {
   useState({paymentCardNo: false, paymentCardExpiration: false, paymentCardCvc: false})
   const [validationCompany, setValidationCompany] = 
   useState({company: false})
+
   
   useEffect(() => {
     if(validation1.email && validation1.uid && validation1.pwd){
@@ -128,7 +136,7 @@ export default function Register() {
       );
       console.log('dfsa', validationEnterprise)
     }else if(selected ==='Basic'){
-      setPage3success(true); // 아무 플랜도 선택하지 않은 경우 비활성화
+      setPage3success(true); // 베이직 플랜은 바로 활성화
     }else {
       setPage3success(false); // 아무 플랜도 선택하지 않은 경우 비활성화
     }
@@ -332,8 +340,7 @@ export default function Register() {
       return;
     }else{
       setStatusMessage({ message: ``, type: '' });
-      setValidation2((prev) => ({ ...prev, firstName: true }));
-      setValidation2((prev) => ({ ...prev, lastName: true }));
+      setValidation2((prev) => ({ ...prev, [name]: true }));
       setValidationEnterprise((prev) => ({ ...prev, [name]: true}));
       setValidationStandard((prev) => ({ ...prev, [name]: true}));
       setValidationCompany((prev) => ({ ...prev, [name]: true}));
@@ -612,7 +619,7 @@ export default function Register() {
                   onChange={(e) => setUser(prev => ({...prev, [e.target.name]: e.target.value}))}
                   className="signup-input-md mr-1 mt-10" ></input>
                   <select name="country" className="signup-input-md mt-10" onChange={ChangeHandler}>
-                    <option name="country" value="NotSelected">선택 안 함</option>
+                    <option name="country" value="NotSelected" selected>선택 안 함</option>
                     <option name="country" value="SouthKorea">대한민국</option>
                     <option name="country" value="USA">미국</option>
                     <option name="country" value="China">중국</option>
