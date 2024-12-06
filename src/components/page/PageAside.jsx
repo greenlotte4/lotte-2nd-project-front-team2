@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
 import { CustomSearch } from "@/components/Search";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import axiosInstance from "../../services/axios";
 
 export default function PageAside() {
   const [isMyPageOpen, setIsMyPageOpen] = useState(true); // State to track "My Page" section visibility    
@@ -11,6 +13,24 @@ export default function PageAside() {
 
   const toggleSharePageSection = () => {
     setIsSharePageOpen((prev) => !prev);
+  }
+
+  // Fetching page list using useQuery
+  const { data: pageList = [], isLoading, isFetching, isError } = useQuery({
+    queryKey: ["pageList"],
+    queryFn: async () => {
+        const response = await axiosInstance.get("/api/page/list");
+        return response.data;
+    },
+    initialData: [],
+});
+
+  if (isLoading) {
+    return <p>Loading...</p>;
+  }
+
+  if (isError) {
+    return <p>Error loading page list.</p>;
   }
 
   return (
@@ -48,7 +68,7 @@ export default function PageAside() {
             <div>
                 <p className="text-2xl font-bold">
                 나의 페이지{" "}
-                <span className="text-xs font-normal opacity-60">(3)</span>
+                <span className="text-xs font-normal opacity-60">({pageList.length})</span>
                 </p>
             </div>
             <div>
@@ -69,30 +89,16 @@ export default function PageAside() {
                 isMyPageOpen ? "max-h-[180px]" : "max-h-0"
             }`}
             >
-            <Link to="/page/list" className="flex gap-4 items-center mb-1">
+           {pageList.map((page) => (
+              <Link
+                key={page.id}
+                to={`/page/view/${page.id}`}
+                className="flex gap-4 items-center mb-1"
+              >
                 <img src="/images/pagesIcon.png" alt="" />
-                <p className="opacity-60 pt-1">새 페이지 1</p>
-            </Link>
-            <Link to="/page/list"  className="flex gap-4 items-center mb-1">
-                <img src="/images/pagesIcon.png" alt="" />
-                <p className="opacity-60 pt-1">새 페이지 2</p>
-            </Link>
-            <Link to="/page/list"  className="flex gap-4 items-center mb-1">
-                <img src="/images/pagesIcon.png" alt="" />
-                <p className="opacity-60 pt-1">새 페이지 3</p>
-            </Link>
-            <Link to="/page/list"  className="flex gap-4 items-center mb-1">
-                <img src="/images/pagesIcon.png" alt="" />
-                <p className="opacity-60 pt-1">새 페이지 3</p>
-            </Link>
-            <Link to="/page/list"  className="flex gap-4 items-center mb-1">
-                <img src="/images/pagesIcon.png" alt="" />
-                <p className="opacity-60 pt-1">새 페이지 3</p>
-            </Link>
-            <Link to="/page/list"  className="flex gap-4 items-center mb-1">
-                <img src="/images/pagesIcon.png" alt="" />
-                <p className="opacity-60 pt-1">새 페이지 3</p>
-            </Link>
+                <p className="opacity-60 pt-1">{page.title}</p>
+              </Link>
+            ))}
             </section>
 
             <section className="flex justify-between items-center p-4 mt-4">

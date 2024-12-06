@@ -218,7 +218,7 @@ function App() {
           <Route index element={<Page />} />
           <Route path="newPage" element={<NewPagePages />} />
           <Route path="list" element={<PageListPage />} />
-          <Route path="view" element={<PageViewPages />} />
+          <Route path="view/:pageId" element={<NewPagePages />} />
         </Route>
       </Routes>
     </div>
