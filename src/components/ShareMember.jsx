@@ -13,7 +13,7 @@ const ShareMember = ({ members = [], maxNum="3", listName="참여자", children 
 
   const handleMouseEnter = (e, index, name) => {
     let x= 120;
-    if(maxNum >= members.length){x -= 28*(members.length-index-1)}
+    if(maxNum > members.length){x -= 28*(members.length-index-1)}
     else{x -= 28*(maxNum-index);}
     let y = 40;
     setTooltip({ visible: true, name, x, y });

@@ -57,8 +57,8 @@ export const AddProjectModal = ({
   if (!isOpen) return null;
 
   const [searchKeyword, setSearchKeyword] = useState("");
-  const [selectedGroupId, setSelectedGroupId] = useState(0);
-  const [listType, setListType] = useState("");
+  const [selectedGroupId, setSelectedGroupId] = useState();
+  const [listType, setListType] = useState(1);
   const [project,setProject] = useState({title: "새 프로젝트", type: 1, template: selectedTemplate, coworkers: selectedUsers})
 
   const fetchAllUsers = async ({ pageParam }) => {
@@ -68,10 +68,10 @@ export const AddProjectModal = ({
       );
       return response.data;
     } catch (err) {
-      return err;
+      console.error("Users fetching error:", err);
+      return null;
     }
   };
-
   const fetchAllGroups = async ({ pageParam }) => {
     try {
       const response = await axiosInstance.get(
@@ -79,7 +79,8 @@ export const AddProjectModal = ({
       );
       return response.data;
     } catch (err) {
-      return err;
+      console.error("groups fetching error:", err);
+      return null;
     }
   };
 
@@ -106,10 +107,11 @@ export const AddProjectModal = ({
     },
     select: (data) => {
       const allUsers = data.pages.flatMap((page) => page.users);
-      return { ...data, pages: [{ ...data.pages[0], users: allUsers }] };
+      return { ...data, pages: [{ ...data.pages[0], users: [...new Set(allUsers)] }],};
     },
     cacheTime: 6 * 1000 * 60,
     retry: false,
+    enabled: !!selectedGroupId, // selectedGroupId가 null이 아닐 때만 실행
   });
   // 무한 스크롤로 그룹 데이터를 가져오는 React Query 훅
   const {
@@ -169,7 +171,22 @@ export const AddProjectModal = ({
     },
     [isFetchingNextPageAllGroups, hasNextPageAllGroups, fetchNextPageAllGroups]
   );
-
+  useEffect(() => {
+    if(text=="새 프로젝트"){
+      const fetchGroupInfo = async () => {
+        try {
+          const res = await axiosInstance.get("/api/project/user/group"); // 그룹 정보를 가져오는 API 호출
+          console.log(res.data);
+          selectGroup(res?.data.id); // 데이터에서 필요한 값 설정
+        } catch (error) {
+          console.error("그룹 정보를 가져오는 중 오류가 발생했습니다:", error);
+          selectGroup(0);
+        }
+      };
+      fetchGroupInfo();
+      refetchAllUsers();
+    }
+  }, []);
   useEffect(() => {
     if (searchKeyword !== "") {
       refetchAllUsers();
@@ -181,7 +198,7 @@ export const AddProjectModal = ({
   // 검색 입력 핸들러
   const handleSearch = (e) => {
     setSearchKeyword(e.target.value.toLowerCase());
-    setListType("1"); selectGroup("0")
+    setListType(1); selectGroup(0)
   };
 
   // 프로젝트 상태 변경 핸들러
@@ -190,8 +207,9 @@ export const AddProjectModal = ({
     setProject((prev) => ({
       ...prev,
       [name]: value,
-      ...(name === 'type' ? { coworkers: [] } : {}),
+      ...(name === 'type' && value !== "2" ? { coworkers: [] } : {}),
     }));
+    if (name === 'type' && value === '2') { selectGroup(0);}
   };
   
   // 멤버 클릭 핸들러 (토글 방식)
@@ -311,7 +329,8 @@ export const AddProjectModal = ({
                     <option value="1" selected>부서 내 프로젝트</option>
                     <option value="2">회사 내 프로젝트</option>
                     <option value="3">협력 프로젝트</option>
-                    <option value="4">공개 프로젝트</option>
+                    <option value="4">팀 프로젝트</option>
+                    <option value="5">공개 프로젝트</option>
                   </select>
                 </div>
                 <div className="w-3/5 flex flex-col">
@@ -383,125 +402,149 @@ export const AddProjectModal = ({
           )}
           {/* 리스트 */}
           <ul className="border rounded-lg w-full h-[400px] mt-10 px-4 pb-3 overflow-auto scrollbar-none scroll-smooth relative">
-            
-          <div className="cursor-pointer text-xs sticky bg-white top-0 text-left z-30 py-2 mt-0">
-            <span onClick={()=>{setListType("1"); selectGroup("0")}}> 전체 보기 </span> | 
-            <span onClick={()=>setListType("2")}> 부서별 보기 </span>
-          </div>
-            {(listType === "2" && (
+          {
+            selectedGroupId === null ? (
+              project.type === 1 ? (
+                <>
+                  <li>부서가 존재하지 않습니다.</li>
+                </>
+              ) : null
+            ) : (
               <>
-                {allGroups &&
-                allGroups.pages[0] &&
-                allGroups.pages[0].groups &&
-                allGroups.pages[0].groups.length > 0 ? (
-                  allGroups.pages[0].groups.slice().sort((a, b) => a.name.localeCompare(b.name)).map((group) => (
-                    <li className="sticky" key={group.id}>
-                      <div
-                        onClick={() => selectGroup(group.id)}
-                        className="flex justify-between items-center px-[10px] relative border-b"
-                      >
-                        <div className='flex flex-col'>
-                          <div className="flex px-3 py-2 cursor-pointer">
-                            <span className="mr-[10px]">{group.name}</span>
-                            <span className="text-gray-400">({group.cnt})</span>
-                          </div>
-                        </div>
-                        <div className="flex items-center">
-                            <CustomSVG id={selectedGroupId == group.id &&'expand-up'||'expand-down'} color="currentColor" />
-                        </div>
-                      </div>
-                      {selectedGroupId == group.id && (
-                        <ul className="pl-4 mt-2 max-h-[330px]  overflow-auto scrollbar-none border-b pb-3">
-                          {allUsers &&
-                          allUsers.pages[0] &&
-                          allUsers.pages[0].users &&
-                          allUsers.pages[0].users.length > 0 ? (
-                            allUsers.pages[0].users.slice().sort((a, b) => a.name.localeCompare(b.name)).map((m) => (
-                              <li
-                                key={m.id}
-                                onClick={() => handleMemberClick(m)}
-                                className={`flex rounded-3xl p-3 mt-2 cursor-pointer border border-transparent  ${
-                                    project.coworkers.some(coworker => coworker.id === m.id)
-                                    ? "bg-indigo-100 hover:border-indigo-300" // 선택된 멤버의 배경색
-                                    : "bg-gray-100 hover:border-gray-300"
-                                }`}
-                              >
-                                <img
-                                  src={m.img}
-                                  alt="user-img"
-                                  className="w-[45px] h-[45px]"
-                                />
-                                <div className="ml-10 flex flex-col  text-left">
-                                  <p className="font-light text-black">
-                                    <span className="opacity-80">{m.group} </span>
-                                    {m.name}
-                                  </p>
-                                  <span className="font-light text-black opacity-50 text-sm">
-                                    {m.email}
-                                  </span>
-                                </div>
-                              </li>
-                            ))
-                          ) : (
-                            <li>로딩중입니다...</li>
-                          )}
-                        </ul>
-                      )}
-                    </li>
-                  ))
-                ) : (
-                  <li>로딩중입니다...</li>
-                )}
-                {hasNextPageAllGroups && (
-                  <div ref={lastGroupRef} className="text-center mt-4">
-                    {isFetchingNextPageAllGroups
-                      ? "Loading more..."
-                      : "Load more"}
+                {project.type === 2 && (
+                  <div className="cursor-pointer text-xs sticky bg-white top-0 text-left z-30 py-2 mt-0">
+                    <span onClick={() => { setListType(1); selectGroup(0); }}> 전체 보기 </span> | 
+                    <span onClick={() => setListType(2)}> 부서별 보기 </span>
                   </div>
                 )}
-              </>
-            )) || (
-              <>
-                {allUsers &&
-                allUsers.pages[0] &&
-                allUsers.pages[0].users &&
-                allUsers.pages[0].users.length > 0 ? (
-                  allUsers.pages[0].users.slice().sort((a, b) => a.name.localeCompare(b.name)).map((m) => (
-                    <li
-                      key={m.id}
-                      onClick={() => handleMemberClick(m)}
-                      className={`rounded-3xl px-3 py-3 flex mt-2 cursor-pointer border border-transparent  ${
-                        project.coworkers.some(coworker => coworker.id === m.id)
-                          ? "bg-indigo-100 hover:border-indigo-300" // 선택된 멤버의 배경색
-                          : "bg-gray-100 hover:border-gray-300"
-                      }`}
-                    >
-                      <img
-                        src={m.img}
-                        alt="user-img"
-                        className="w-[45px] h-[45px]"
-                      />
-                      <div className="ml-10 flex flex-col  text-left">
-                        <p className="font-light text-black">
-                          <span className="opacity-80">{m.group} </span>
-                          {m.name}
-                        </p>
-                        <span className="font-light text-black opacity-50 text-sm">
-                          {m.email}
-                        </span>
+
+                {listType === 1 && (
+                  <>
+                    {allUsers &&
+                    allUsers.pages[0] &&
+                    allUsers.pages[0].users &&
+                    allUsers.pages[0].users.length > 0 ? (
+                      allUsers.pages[0].users
+                        .slice()
+                        .sort((a, b) => a.name.localeCompare(b.name))
+                        .map((m) => (
+                          <li
+                            key={m?.id}
+                            onClick={() => handleMemberClick(m)}
+                            className={`rounded-3xl px-3 py-3 flex mt-2 cursor-pointer border border-transparent ${
+                              project.coworkers.some((coworker) => coworker.id === m.id)
+                                ? "bg-indigo-100 hover:border-indigo-300"
+                                : "bg-gray-100 hover:border-gray-300"
+                            }`}
+                          >
+                            <img
+                              src={m?.img}
+                              alt="user-img"
+                              className="w-[45px] h-[45px]"
+                            />
+                            <div className="ml-10 flex flex-col text-left">
+                              <p className="font-light text-black">
+                                <span className="opacity-80">{m?.group} </span>
+                                {m?.name}
+                              </p>
+                              <span className="font-light text-black opacity-50 text-sm">
+                                {m?.email}
+                              </span>
+                            </div>
+                          </li>
+                        ))
+                    ) : (
+                      <li>로딩중입니다...</li>
+                    )}
+                  </>
+                )}
+
+                {listType === 2 && (
+                  <>
+                    {allGroups &&
+                    allGroups.pages[0] &&
+                    allGroups.pages[0].groups &&
+                    allGroups.pages[0].groups.length > 0 ? (
+                      allGroups.pages[0].groups
+                        .slice()
+                        .sort((a, b) => a.name.localeCompare(b.name))
+                        .map((group) => (
+                          <li key={group.id}>
+                            <div
+                              onClick={() => selectGroup(group.id)}
+                              className="flex justify-between items-center px-[10px] relative border-b"
+                            >
+                              <div className="flex flex-col">
+                                <div className="flex px-3 py-2 cursor-pointer">
+                                  <span className="mr-[10px]">{group.name}</span>
+                                  <span className="text-gray-400">({group.cnt})</span>
+                                </div>
+                              </div>
+                              <div className="flex items-center">
+                                <CustomSVG
+                                  id={selectedGroupId == group.id && "expand-up" || "expand-down"}
+                                  color="currentColor"
+                                />
+                              </div>
+                            </div>
+                            {selectedGroupId == group.id && (
+                              <ul className="pl-4 mt-2 max-h-[330px] overflow-auto scrollbar-none border-b pb-3">
+                                {allUsers &&
+                                allUsers.pages[0] &&
+                                allUsers.pages[0].users &&
+                                allUsers.pages[0].users.length > 0 ? (
+                                  allUsers.pages[0].users
+                                    .slice()
+                                    .sort((a, b) => a.name.localeCompare(b.name))
+                                    .map((m) => (
+                                      <li
+                                        key={m.id}
+                                        onClick={() => handleMemberClick(m)}
+                                        className={`flex rounded-3xl p-3 mt-2 cursor-pointer border border-transparent ${
+                                          project.coworkers.some((coworker) => coworker.id === m.id)
+                                            ? "bg-indigo-100 hover:border-indigo-300"
+                                            : "bg-gray-100 hover:border-gray-300"
+                                        }`}
+                                      >
+                                        <img
+                                          src={m.img}
+                                          alt="user-img"
+                                          className="w-[45px] h-[45px]"
+                                        />
+                                        <div className="ml-10 flex flex-col text-left">
+                                          <p className="font-light text-black">
+                                            <span className="opacity-80">{m.group} </span>
+                                            {m.name}
+                                          </p>
+                                          <span className="font-light text-black opacity-50 text-sm">
+                                            {m.email}
+                                          </span>
+                                        </div>
+                                      </li>
+                                    ))
+                                ) : (
+                                  <li>로딩중입니다...</li>
+                                )}
+                              </ul>
+                            )}
+                          </li>
+                        ))
+                    ) : (
+                      <li>로딩중입니다...</li>
+                    )}
+                    {hasNextPageAllGroups && (
+                      <div ref={lastGroupRef} className="text-center mt-4">
+                        {isFetchingNextPageAllGroups
+                          ? "Loading more..."
+                          : "Load more"}
                       </div>
-                    </li>
-                  ))
-                ) : (
-                  <li>로딩중입니다...</li>
+                    )}
+                  </>
                 )}
               </>
-            )}
-            {hasNextPageAllUsers && (
-              <div ref={lastUserRef} className="text-center mt-4">
-                {isFetchingNextPageAllUsers ? "Loading more..." : "Load more"}
-              </div>
-            )}
+            )
+          }
+
           </ul>
           <div className="flex justify-between w-full mt-1">
             <span className="flex items-center gap-1 text-xs text-gray-500">
