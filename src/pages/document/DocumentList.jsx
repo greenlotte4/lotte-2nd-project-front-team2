@@ -14,6 +14,7 @@ import FileUploads from '../../components/document/FileUploads';
 import RenameModal from '../../components/document/ChangeName';
 import ContextMenu from '../../components/document/ContextMenu';
 import ContextFileMenu from '../../components/document/ContextFileMenu';
+import CustomAlert from '../../components/Alert';
 
 export default function DocumentList() {
     const [viewType, setViewType] = useState('box'); // Default to 'box'
@@ -22,7 +23,7 @@ export default function DocumentList() {
     const [editing, setEditing] = useState(false); // 이름 변경 모드
     const [newFolderName, setNewFolderName] = useState(''); // 새로운 폴더 이름
     const [isRenameModalOpen, setIsRenameModalOpen] = useState(false); // 모달 열림 상태
-    
+    const [isFavorite,setIsFavorite] = useState(0);
 
     const location = useLocation();
     const user = useUserStore((state) => state.user);
@@ -97,6 +98,8 @@ export default function DocumentList() {
         staleTime: 300000, // 데이터가 5분 동안 신선하다고 간주
     });
 
+
+
     // 폴더 이름 변경 Mutation
     const renameFolderMutation = useMutation({
         mutationFn: async (newName) => {
@@ -111,6 +114,7 @@ export default function DocumentList() {
             setEditing(false);
         },
     });
+
     // 파일 업로드 Mutation
     const uploadFileMutation = useMutation({
         mutationFn: async (files) => {
@@ -229,6 +233,13 @@ export default function DocumentList() {
         // 드래그 상태 초기화
         setDraggedFolder(null);
     };
+
+
+    //즐겨찾기
+    const [folders, setFolders] = useState([]); // 폴더 데이터 관리
+    const [favoritfiles , setFiles] = useState([]);
+    const [alert, setAlert] = useState(null); // 알림 상태 관리
+
     
     
     // Folder Context Menu State
@@ -262,6 +273,7 @@ const handleCloseFileMenu = () => setContextFileMenu({ visible: false, position:
             position: { top: e.clientY, left: e.clientX },
             folder,
             folderId : folder.id,
+            isPinned : folder.isPinned,
             folderName: folder.name,
             path: folder.path,
         });
@@ -468,6 +480,8 @@ const handleCloseFileMenu = () => setContextFileMenu({ visible: false, position:
                                 path={folder.path}
                                 cnt={folder.cnt}
                                 updatedAt={folder.updatedAt}
+                                isFavorite={folder.isPinned}
+                                setIsFavorite={setIsFavorite}
                                 onDragStart={handleDragStart}
                                 onDrop={(e) => handleDrop(folder, "before")}
                                 onDragOver={handleDragOver}
@@ -571,6 +585,7 @@ const handleCloseFileMenu = () => setContextFileMenu({ visible: false, position:
                     position={contextMenu.position}
                     onClose={handleCloseMenu}
                     folder={contextMenu.folder}
+                    isPinned={contextMenu.isPinned}
                     folderName={contextMenu.folderName}
                     folderId={contextMenu.folderId}
                     path={contextMenu.path}
@@ -589,6 +604,17 @@ const handleCloseFileMenu = () => setContextFileMenu({ visible: false, position:
                     onDetailToggle={() => handleDetailFileToggle(contextFileMenu.file)}
                     downloadHandler={downloadHandler}
                 />
+
+
+                  {alert && (
+                    <CustomAlert
+                        type={alert.type}
+                        title={alert.title}
+                        message={alert.message}
+                        confirmText="확인"
+                        onConfirm={alert.onConfirm}
+                    />
+                    )}
             
         </DocumentLayout>
     );

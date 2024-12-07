@@ -3,6 +3,7 @@ import { FaTrash, FaDownload, FaEdit, FaStar, FaShareAlt, FaInfo } from 'react-i
 import RenameModal from "./ChangeName";
 import axiosInstance from "../../services/axios";
 import { useQueryClient } from "@tanstack/react-query";
+import CustomAlert from "./CustomAlert";
 
 
 export default function ContextMenu({
@@ -11,6 +12,7 @@ export default function ContextMenu({
     onClose,
     folder,
     folderId,
+    isPinned,
     folderName,
     path,
     onDetailToggle,
@@ -24,6 +26,50 @@ export default function ContextMenu({
     const [newName, setNewName] = useState(folderName); // 폴더 이름 상태
     const [isAlertOpen, setIsAlertOpen] = useState(false);
     const queryClient = useQueryClient(); // Access query client
+
+    const [isFavorite, setIsFavorite] = useState(Boolean(isPinned));
+    const [alert, setAlert] = useState(null); // 알림 상태 관리
+
+    const handleFavoriteToggle = async () => {
+        const newFavoriteState = !isFavorite;
+        setIsFavorite(newFavoriteState);
+
+        try {
+            const response = await axiosInstance.put(`/api/drive/folder/${folderId}/favorite`, {
+                isPinned: newFavoriteState ? 1 : 0,
+            });
+
+            if (response.status === 200) {
+                if (response.data.result === 1) {
+                    setAlert({
+                        type: 'success',
+                        title: '즐겨찾기 성공',
+                        message: `"${folderName}" 폴더가 즐겨찾기에 추가되었습니다.`,
+                        onConfirm: () => setAlert(null),
+                    });
+                } else {
+                    setAlert({
+                        type: 'success',
+                        title: '즐겨찾기 해제',
+                        message: `"${folderName}" 폴더가 즐겨찾기에서 제거되었습니다.`,
+                        onConfirm: () => setAlert(null),
+                    });
+                }
+                queryClient.invalidateQueries(['folderContents']);
+            } else {
+                throw new Error('즐겨찾기 업데이트 실패');
+            }
+        } catch (error) {
+            setIsFavorite(!newFavoriteState);
+            setAlert({
+                type: 'error',
+                title: '오류 발생',
+                message: '즐겨찾기 상태를 업데이트하는 중 오류가 발생했습니다.',
+                onConfirm: () => setAlert(null),
+            });
+        }
+    };
+
 
     const actions = [
         {
@@ -52,7 +98,7 @@ export default function ContextMenu({
             label: '즐겨찾기 추가',
             icon: FaStar,
             color: 'text-yellow-500',
-            onClick: (folder) => console.log(`즐겨찾기 추가: ${folder.name}`),
+            onClick: () => handleFavoriteToggle(),
         },
         {
             id: 'share',
@@ -214,6 +260,15 @@ export default function ContextMenu({
             type={"folder"}
             path={path}
         />
+        {alert && (
+            <CustomAlert
+                type={alert.type}
+                title={alert.title}
+                message={alert.message}
+                confirmText="확인"
+                onConfirm={alert.onConfirm}
+            />
+             )}
         </>
     );
 }

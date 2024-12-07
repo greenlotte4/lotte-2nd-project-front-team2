@@ -209,7 +209,7 @@ export default function DocumentAside(){
                 <section className="py-[0px] px-[20px] mb-10">
                     <div className='flex gap-4 items-center opacity-60 mb-[10px]'>
                         <img className='w-6 h-6' src='/images/document-star.png'></img>
-                        <Link   to={'/document/list/favorite'}
+                        <Link   to={'/document/favorite'}
                                 state={{ folderName: "즐겨찾기" }} // folder.name 전달 
                         >
                             <p>즐겨찾기</p>

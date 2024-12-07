@@ -22,6 +22,8 @@ export const DocumentCard1 = ({
     onContextMenu,
     downloadHandler,
     togglePin,
+    isFavorite,
+    setIsFavorite,
 
 }) => {
     const [isMenuOpen, setIsMenuOpen] = useState(false); // 토글 상태 관리
@@ -33,24 +35,59 @@ export const DocumentCard1 = ({
     const [isRenameModalOpen, setIsRenameModalOpen] = useState(false); // RenameModal 상태
     const [newName, setNewName] = useState(folderName); // 폴더 이름 상태
     const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 }); // 메뉴 위치
-    const [isFavorite, setIsFavorite] = useState(false); // 즐겨찾기 상태
+
+    const [alert, setAlert] = useState(null); // 알림 상태 관리
+
 
     const handleFavoriteToggle = async () => {
-        setIsFavorite((prev) => !prev); // 즐겨찾기 상태 변경
+        const newFavoriteState = !isFavorite; // 새로운 상태
+        setIsFavorite(newFavoriteState); // UI 업데이트
     
         try {
             const response = await axiosInstance.put(`/api/drive/folder/${folderId}/favorite`, {
-                isFavorite: !isFavorite, // 새로운 상태를 백엔드에 전달
+                isPinned: newFavoriteState ? 1 : 0, // 백엔드에 맞는 값으로 변환하여 전송
             });
     
             if (response.status === 200) {
                 console.log('즐겨찾기 상태 업데이트 성공');
+                if(response.data.result === 1){
+                    setAlert({
+                        type: 'success',
+                        title: '즐겨찾기 성공',
+                        message: `폴더 "${folderName}"가 즐겨찾기에 추가되었습니다.`,
+                        onConfirm: () => setAlert(null), // 알림 닫기
+                    });
+                    queryClient.invalidateQueries(['favorite'])
+                }else{
+                    setAlert({
+                        type: 'success',
+                        title: '즐겨찾기 해제성공',
+                        message: `폴더 "${folderName}"가 즐겨찾기 해제되었습니다.`,
+                        onConfirm: () => setAlert(null), // 알림 닫기
+                    });
+                    queryClient.invalidateQueries(['favorite'])
+
+                }
+                
             } else {
                 console.error('즐겨찾기 상태 업데이트 실패:', response.data);
+                setAlert({
+                    type: 'error',
+                    title: '즐겨찾기 실패',
+                    message: '즐겨찾기 상태를 업데이트하지 못했습니다. 다시 시도해주세요.',
+                    onConfirm: () => setAlert(null),
+                });
+                setIsFavorite(!newFavoriteState); // 실패 시 상태 원복
             }
         } catch (error) {
             console.error('즐겨찾기 상태 업데이트 중 오류 발생:', error);
-            setIsFavorite((prev) => !prev); // 실패 시 상태를 원복
+            setAlert({
+                type: 'error',
+                title: '오류 발생',
+                message: '즐겨찾기 상태를 업데이트하는 중 오류가 발생했습니다.',
+                onConfirm: () => setAlert(null),
+            });
+            setIsFavorite(!newFavoriteState); // 실패 시 상태 원복
         }
     };
 
@@ -210,6 +247,16 @@ export const DocumentCard1 = ({
                     downloadHandler={(folderId) => downloadHandler(folderId)} // Pass selectedFolder
                     />
             )}
+
+            {alert && (
+            <CustomAlert
+                type={alert.type}
+                title={alert.title}
+                message={alert.message}
+                confirmText="확인"
+                onConfirm={alert.onConfirm}
+            />
+             )}
                        
 
 
