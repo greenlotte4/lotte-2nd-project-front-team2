@@ -316,6 +316,7 @@ export default function DocumentAside(){
                 </section> */}
                 <div className='drive-modal'>
                     <NewDrive 
+                       order={folderResponse?.folderDtoList?.length}
                        isOpen={drive}
                        onClose={() => setDrive(false)}
                        text="드라이브 만들기"

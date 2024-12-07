@@ -13,6 +13,7 @@ import { Modal } from '../../components/Modal';
 import FileUploads from '../../components/document/FileUploads';
 import RenameModal from '../../components/document/ChangeName';
 import ContextMenu from '../../components/document/ContextMenu';
+import ContextFileMenu from '../../components/document/ContextFileMenu';
 
 export default function DocumentList() {
     const [viewType, setViewType] = useState('box'); // Default to 'box'
@@ -21,6 +22,7 @@ export default function DocumentList() {
     const [editing, setEditing] = useState(false); // 이름 변경 모드
     const [newFolderName, setNewFolderName] = useState(''); // 새로운 폴더 이름
     const [isRenameModalOpen, setIsRenameModalOpen] = useState(false); // 모달 열림 상태
+    
 
     const location = useLocation();
     const user = useUserStore((state) => state.user);
@@ -31,9 +33,12 @@ export default function DocumentList() {
 
     const [isDetailVisible, setIsDetailVisible] = useState(false); // 상세 정보 표시 상태 추가
     const [selectedFolder, setSelectedFolder] = useState(null); // 선택된 폴더 정보 상태 추가
+    const [selectedFile, setSelectedFile] = useState(null); // 선택된 폴더 정보 상태 추가
 
     const handleDetailToggle = (folder) => {
         console.log("handleDetailToggle",folder)
+        setSelectedFile(null);
+
         setSelectedFolder(folder); // 선택된 폴더 정보 설정
         setIsDetailVisible(!isDetailVisible);
     };
@@ -41,6 +46,20 @@ export default function DocumentList() {
     const closeDetailView = () => {
         setIsDetailVisible(false);
         setSelectedFolder(null);
+        setSelectedFile(null)
+      };
+
+      const handleDetailFileToggle = (file) => {
+        console.log("handleDetailFileToggle",file)
+        setSelectedFolder(null);
+    
+        setSelectedFile(file); // 선택된 폴더 정보 설정
+        setIsDetailVisible(!isDetailVisible);
+    };
+
+    const closeDetailFileView = () => {
+        setIsDetailVisible(false);
+        setSelectedFile(null);
       };
 
 
@@ -212,17 +231,30 @@ export default function DocumentList() {
     };
     
     
+    // Folder Context Menu State
     const [contextMenu, setContextMenu] = useState({
         visible: false,
         position: { top: 0, left: 0 },
         folder: null,
     });
+
+    // File Context Menu State
+    const [contextFileMenu, setContextFileMenu] = useState({
+        visible: false,
+        position: { top: 0, left: 0 },
+        file: null,
+    });
+
+// Close Handlers
+const handleCloseFolderMenu = () => setContextMenu({ visible: false, position: { top: 0, left: 0 }, folder: null });
+const handleCloseFileMenu = () => setContextFileMenu({ visible: false, position: { top: 0, left: 0 }, file: null });
     const contextMenuRef = useRef(null); // 메뉴 DOM 참조
+    const contextFileMenuRef = useRef(null); // 메뉴 DOM 참조
 
     const handleCloseMenu = () => {
         setContextMenu({ visible: false, position: { top: 0, left: 0 }, folder: null });
     };
-    
+
     const handleContextMenu = (e, folder) => {
         e.preventDefault(); // 기본 컨텍스트 메뉴 방지
         setContextMenu({
@@ -234,6 +266,19 @@ export default function DocumentList() {
             path: folder.path,
         });
     };
+
+    const handleContextFileMenu = (e, file) => {
+        e.preventDefault(); // 기본 컨텍스트 메뉴 방지
+        setContextFileMenu({
+            visible: true,
+            position: { top: e.clientY, left: e.clientX },
+            file,
+            fileId : file.id,
+            fileName: file.name,
+            path: file.path,
+        });
+    };
+
 
     
     
@@ -262,6 +307,10 @@ export default function DocumentList() {
 
     //파일 다운로드 핸들러
     const downloadHandler = (file) => {
+        if (!file || !file.id) {
+            console.error('Invalid file:', file);
+            return;
+        }
         const downloadUrl = `${fileServerBaseUrl}${file.path}`;
     
         // 다운로드 요청
@@ -278,8 +327,11 @@ export default function DocumentList() {
 
     //폴더 zip 다운로드 핸들러
     const zipDownloadHandler = async (folder) => {
+        console.log('Selected folder for zip download:', folder); // Debugging log
+        const id = contextMenu.folderId;
+        
         try {
-            const response = await axiosInstance.get(`/api/drive/generateZip/${folderId}`);
+            const response = await axiosInstance.get(`/api/drive/generateZip/${id}`);
     
             if (response.status === 200) {
                 console.log('zip 파일 생성 성공');
@@ -331,7 +383,7 @@ export default function DocumentList() {
     if (isError) return <div>Error loading folder contents.</div>;
 
     return (
-        <DocumentLayout isDetailVisible={isDetailVisible} selectedFolder={selectedFolder} uid={data.uid} closeDetailView={closeDetailView}>
+        <DocumentLayout isDetailVisible={isDetailVisible} selectedFolder={selectedFolder} selectedFile={selectedFile} path={location.pathname} parentfolder={location.state?.folderName} uid={data.uid} closeDetailView={closeDetailView}>
             <section className="flex gap-4 items-center">
                 {editing ? (
                     <input
@@ -400,15 +452,19 @@ export default function DocumentList() {
 
             {viewType === 'box' ? (
                 <div className='h-[600px] mx-[30px] w-[97%] overflow-scroll scrollbar-none'>
-                    <div className='sticky pb-[5px] h-[26px] my-[10px] text-[15px] top-0 z-10 bg-white'>폴더</div>
-                    <section  className="flex items-center flex-wrap relative"
-                         >
-                        {subFolders.map((folder) => (
-                            <DocumentCard1
+                   {subFolders?.length === 0 || subFolders === null ? (
+                       <div></div>
+                        ) : (
+                        <>
+                            <div className='sticky pb-[5px] h-[26px] my-[10px] text-[15px] top-0 z-10 bg-white'>폴더</div>
+                            <section className="flex items-center flex-wrap relative">
+                            {subFolders.map((folder) => (
+                                <DocumentCard1
                                 key={folder.id}
                                 folder={folder}
                                 folderId={folder.id}
                                 folderName={folder.name}
+                                setSelectedFolder={setSelectedFolder}
                                 path={folder.path}
                                 cnt={folder.cnt}
                                 updatedAt={folder.updatedAt}
@@ -416,59 +472,88 @@ export default function DocumentList() {
                                 onDrop={(e) => handleDrop(folder, "before")}
                                 onDragOver={handleDragOver}
                                 onContextMenu={handleContextMenu}
-                                downloadHandler={() => zipDownloadHandler(folder)}
-                            />
-                        ))}
-                    </section>
-                    <div className='text-[15px] my-[20px]'>file</div>
-                    <section className="inline-block ">
-                        {files.map((file) => (
-                            <DocumentCard2                                 
-                                onContextMenu={(e) => handleContextMenu(e, folder)}
-                                key={file.id} 
-                                file={file} 
-                                fileName={file.originalName} 
-                                path={file.path} 
-                                savedName={file.savedName}
-                                downloadHandler={() => downloadHandler(file)}
+                                downloadHandler={zipDownloadHandler} // 수정: folder 객체 전달
+                                onClick={() => {
+                                    console.log('Selected folder:', folder);
+                                    setSelectedFolder(folder);
+                                }}
                                 />
-                        ))}
-                    </section>
+                            ))}
+                            </section>
+                        </>
+                    )}
+                   {files?.length ===0 || files===null? (
+                                            <div></div>
+
+                    )
+                   :(<>
+                         <div className='text-[15px] my-[20px]'>file</div>
+                            <section className="inline-block ">
+                                {files.map((file) => (
+                                    <DocumentCard2                                 
+                                        onContextMenu={handleContextFileMenu}
+                                        key={file.id} 
+                                        file={file} 
+                                        fileName={file.originalName} 
+                                        path={file.path} 
+                                        savedName={file.savedName}
+                                        setSelectedFile={setSelectedFile}
+                                        downloadHandler={() => downloadHandler(file)}
+                                        />
+                                ))}
+                            </section>
+                   </>)}
+                   
                 </div>
             ) : (<>
                 <div  className="h-[570px] overflow-scroll scrollbar-none">
                     <table className="docList mx-[20px] w-[98%]">
                     <thead className="h-[48px] bg-[#F2F4F8] sticky top-0 z-10">
-                        <tr>
-                            <th><input type="checkbox"  /></th>
+                        <tr className='text-left'>
+                            <th className='pl-[20px]'><input type="checkbox"  /></th>
                             <th>Title</th>
                             <th>Type</th>
                             <th>Size</th>
                             <th>Last Modified</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        {[...subFolders, ...files].map((item) => (
-                             <tr
-                                key={folder.id}
-                                draggable
-                                onDragStart={() => handleDragStart(folder)} // 드래그 시작 핸들러
-                                onDragOver={(e) => handleDragOver(e)} // 드래그 오버 핸들러
-                                onDrop={(e) => handleDrop(folder, "before")} // 드롭 시 동작 (리스트에서는 기본적으로 "before")
-                                className="draggable-row"
-                            >
-                                <td><input type="checkbox"  /></td>
-                                <td>
-                                    <Link to={`/document/list/${item.id}`} state={{ folderName: item.name }}>
-                                        {item.name}
-                                    </Link>
-                                </td>
-                                <td>{item.type}</td>
-                                <td>{item.size || '-'}</td>
-                                <td>{item.lastModified || 'Unknown'}</td>
-                            </tr>
-                        ))}
-                    </tbody>
+                    <tbody >
+                    {[...subFolders, ...files].map((item) => {
+                        console.log("아이템!!",item);
+                        const isFolder = item.type === "folder"; // Assume `type` differentiates folder/file
+                        return (
+                        <tr 
+                            key={item.id}
+                            draggable
+                            onDragStart={() => handleDragStart(item)} // 드래그 시작 핸들러
+                            onDragOver={(e) => handleDragOver(e)} // 드래그 오버 핸들러
+                            onDrop={(e) => handleDrop(item, "before")} // 드롭 시 동작 (리스트에서는 기본적으로 "before")
+                            className="draggable-row text-left"
+                            onContextMenu={(e) =>
+                                isFolder ? handleContextMenu(e, item) : handleContextFileMenu(e, item)
+                              } // Wrap in a function                           
+                        >
+                            <td  className='pl-[20px]'><input type="checkbox" /></td>
+                            <td className='text-left'>
+                            {isFolder ? (
+                                <Link to={`/document/list/${item.id}`} state={{ folderName: item.name }}>
+                                📁 {item.name} {/* Add a folder icon */}
+                                </Link>
+                            ) : (
+                                <span>
+                                📄 {item.originalName} {/* Add a file icon */}
+                                </span>
+                            )}
+                            </td>
+                            <td>{isFolder ? "Folder" : "File"}</td>
+                            <td>{item.size || "-"}</td>
+                            <td  className='w-[2
+                            00px]'>{item.updatedAt || "Unknown"}</td>
+                        </tr>
+                        );
+                    })}
+                                        
+                </tbody>
                 </table>
                 
                 </div>
@@ -478,7 +563,7 @@ export default function DocumentList() {
             )}
 
             <FileUploads isOpen={isOpen} onClose={() => setIsOpen(false)} folderId={folderId} maxOrder={fileMaxOrder} uid={user.uid} />
-            <NewFolder isOpen={folder} onClose={() => setFolder(false)} parentId={folderId}     maxOrder={maxOrder} // 최대 order 값을 계산해서 전달
+            <NewFolder isOpen={folder} onClose={() => setFolder(false)} parentId={folderId}     maxOrder={subFolders.length} // 최대 order 값을 계산해서 전달
             />
              {/* ContextMenu 컴포넌트 */}
              <ContextMenu
@@ -492,6 +577,17 @@ export default function DocumentList() {
                     onDetailToggle={() => handleDetailToggle(contextMenu.folder)} // 상세 정보 토글 함수 전달
                     downloadHandler={() => zipDownloadHandler(folder)}
 
+                />
+              <ContextFileMenu
+                    visible={contextFileMenu.visible}
+                    position={contextFileMenu.position}
+                    onClose={handleCloseFileMenu}
+                    file={contextFileMenu.file}
+                    fileName={contextFileMenu.file?.name} // Use optional chaining to avoid errors
+                    fileId={contextFileMenu.file?.id}
+                    path={contextFileMenu.file?.path}
+                    onDetailToggle={() => handleDetailFileToggle(contextFileMenu.file)}
+                    downloadHandler={downloadHandler}
                 />
             
         </DocumentLayout>

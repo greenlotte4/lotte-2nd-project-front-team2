@@ -11,6 +11,7 @@ import ContextMenu from './ContextMenu';
 export const DocumentCard1 = ({
     cnt,
     folderName,
+    setSelectedFolder,
     folderId,
     folder,
     path,
@@ -20,6 +21,8 @@ export const DocumentCard1 = ({
     updatedAt,
     onContextMenu,
     downloadHandler,
+    togglePin,
+
 }) => {
     const [isMenuOpen, setIsMenuOpen] = useState(false); // 토글 상태 관리
     const [isAlertOpen, setIsAlertOpen] = useState(false);
@@ -53,6 +56,9 @@ export const DocumentCard1 = ({
 
     const toggleMenu = (e) => {
         e.preventDefault(); // 기본 컨텍스트 메뉴 방지
+        console.log('Folder for context menu:', folder); // 디버깅용
+        setSelectedFolder(folder); // Set the selected folder
+
         setMenuPosition({ top: e.clientY, left: e.clientX }); // 클릭 위치 기반으로 위치 설정
         setIsMenuOpen(true); // 메뉴 열기
     };
@@ -147,6 +153,7 @@ export const DocumentCard1 = ({
         console.log('Share folder:', folderId);
         // 폴더 공유 로직
     };
+    
 
     return (
         <div className="document-card1 flex flex-row items-center z-1"  draggable
@@ -165,6 +172,8 @@ export const DocumentCard1 = ({
                         cursor: 'grab',
                         position: 'relative', // Ensure this is relative for child absolute positioning
                     }}
+                    onClick={() => setSelectedFolder(folder)} // 폴더 선택
+
         >
                
             <div className=" flex flex-row mr-[20px]">
@@ -191,14 +200,15 @@ export const DocumentCard1 = ({
                 />
             {isMenuOpen && (
                  <ContextMenu
+                    type={"folder"}
                     visible={true}
                     position={menuPosition}
                     folder={folder}
-                    folderName={folderName}
-                    folderId={folderId}
+                    name={folderName}
+                    Id={folderId}
                     path={path}
-                    downloadHandler={downloadHandler}
-                />
+                    downloadHandler={(folderId) => downloadHandler(folderId)} // Pass selectedFolder
+                    />
             )}
                        
 
