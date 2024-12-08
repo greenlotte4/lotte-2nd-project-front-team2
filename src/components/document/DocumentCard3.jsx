@@ -21,6 +21,8 @@ export const DocumentCard3 = ({
     onContextMenu,
     onClick,
     isActive,
+    downloadHandler, // 수정: folder 객체 전달
+
 }) => {
     const [isMenuOpen, setIsMenuOpen] = useState(false); // 토글 상태 관리
     const [isAlertOpen, setIsAlertOpen] = useState(false);

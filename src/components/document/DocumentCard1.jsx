@@ -24,10 +24,11 @@ export const DocumentCard1 = ({
     togglePin,
     isFavorite,
     setIsFavorite,
+    handleDelete
 
 }) => {
     const [isMenuOpen, setIsMenuOpen] = useState(false); // 토글 상태 관리
-    const [isAlertOpen, setIsAlertOpen] = useState(false);
+    // const [isAlertOpen, setIsAlertOpen] = useState(false);
     const queryClient = useQueryClient(); // Access query client
 
     const navigate = useNavigate();
@@ -138,53 +139,53 @@ export const DocumentCard1 = ({
         return () => document.removeEventListener('click', handleClickOutside);
     }, []); */
 
-    const handleDelete = () => {
-        console.log('Delete folder:', folderId);
-        setIsAlertOpen(true); // CustomAlert 열기
+    // const handleDelete = () => {
+    //     console.log('Delete folder:', folderId);
+    //     setIsAlertOpen(true); // CustomAlert 열기
 
-        // 폴더 삭제 로직
-    };
+    //     // 폴더 삭제 로직
+    // };
 
-    const handleConfirm = async() => {
-        console.log('Deleting folder:', folderId);
-        setIsAlertOpen(false); // CustomAlert 닫기
+    // const handleConfirm = async() => {
+    //     console.log('Deleting folder:', folderId);
+    //     setIsAlertOpen(false); // CustomAlert 닫기
     
-        // 폴더 삭제 로직
-        try {
-            // 실제 삭제 API 호출
-           const response =  await axiosInstance.delete(`/api/drive/folder/delete/${folderId}`,
-            { params: { path } } // 쿼리 매개변수로 path 전달
-           );
-           if (response.status === 200) {
-            queryClient.invalidateQueries(['folderContents']); // Replace with the relevant query key
-            alert('휴지통으로 이동  성공');
-          } else {
-            console.error('삭제 실패:', error);
-            alert('폴더 삭제에 실패했습니다. 다시 시도해주세요.');
-          }
-        } catch (error) {
-            console.error('폴더 삭제 중 오류 발생:', error);
+    //     // 폴더 삭제 로직
+    //     try {
+    //         // 실제 삭제 API 호출
+    //        const response =  await axiosInstance.delete(`/api/drive/folder/delete/${folderId}`,
+    //         { params: { path } } // 쿼리 매개변수로 path 전달
+    //        );
+    //        if (response.status === 200) {
+    //         queryClient.invalidateQueries(['folderContents']); // Replace with the relevant query key
+    //         alert('휴지통으로 이동  성공');
+    //       } else {
+    //         console.error('삭제 실패:', error);
+    //         alert('폴더 삭제에 실패했습니다. 다시 시도해주세요.');
+    //       }
+    //     } catch (error) {
+    //         console.error('폴더 삭제 중 오류 발생:', error);
 
-        }
-                /* .then((response) => {
-                    if (response.status === 200) {
-                        alert('폴더가 삭제되었습니다.');
-                        // QueryClient로 폴더 목록 업데이트
-                        queryClient.invalidateQueries(['folderContents']);
-                    }
-                })
-                .catch((error) => {
-                    console.error('삭제 실패:', error);
-                    alert('폴더 삭제에 실패했습니다. 다시 시도해주세요.');
-                });
-        } catch (error) {
-            console.error('폴더 삭제 중 오류 발생:', error);
-        } */
-    };
+    //     }
+    //             /* .then((response) => {
+    //                 if (response.status === 200) {
+    //                     alert('폴더가 삭제되었습니다.');
+    //                     // QueryClient로 폴더 목록 업데이트
+    //                     queryClient.invalidateQueries(['folderContents']);
+    //                 }
+    //             })
+    //             .catch((error) => {
+    //                 console.error('삭제 실패:', error);
+    //                 alert('폴더 삭제에 실패했습니다. 다시 시도해주세요.');
+    //             });
+    //     } catch (error) {
+    //         console.error('폴더 삭제 중 오류 발생:', error);
+    //     } */
+    // };
     
-    const handleCancel = () => {
-        setIsAlertOpen(false); // CustomAlert 닫기
-    };
+    // const handleCancel = () => {
+    //     setIsAlertOpen(false); // CustomAlert 닫기
+    // };
 
     const handleShare = () => {
         console.log('Share folder:', folderId);
@@ -245,6 +246,7 @@ export const DocumentCard1 = ({
                     Id={folderId}
                     path={path}
                     downloadHandler={(folderId) => downloadHandler(folderId)} // Pass selectedFolder
+                    // handleDelete={handleDelete}
                     />
             )}
 

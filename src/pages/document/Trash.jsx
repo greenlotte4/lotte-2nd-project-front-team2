@@ -15,7 +15,7 @@ import RenameModal from '../../components/document/ChangeName';
 import ContextMenu from '../../components/document/ContextMenu';
 import ContextFileMenu from '../../components/document/ContextFileMenu';
 
-export default function Favorite() {
+export default function Trash() {
     const [viewType, setViewType] = useState('box'); // Default to 'box'
     const [isOpen, setIsOpen] = useState(false);
     const [folder, setFolder] = useState(false);
@@ -84,18 +84,11 @@ export default function Favorite() {
 
     // 폴더 및 파일 데이터 가져오기
     const { data, isLoading, isError } = useQuery({
-        queryKey: [`data-${location?.state?.folderName}`,location?.state?.folderName],
+        queryKey: [`trash`],
         queryFn: async () => {
           try {
-            const locationName = location?.state?.folderName;
-            let response = null;
-             if(location?.state?.folderName === "즐겨찾기"){
-                response = await axiosInstance.get(`/api/drive/favorite`);
-             }else{
-                response = await axiosInstance.get(`/api/drive/latest`);
-             }
-             
-              console.log("API Response:", response.data);
+              const response  = await axiosInstance.get(`/api/drive/trash`);
+        
               return response.data;
           } catch (error) {
               console.error("Error fetching favorites:", error);
@@ -105,7 +98,54 @@ export default function Favorite() {
         staleTime: 300000, // 데이터가 5분 동안 신선하다고 간주
     });
 
-   
+    // 폴더 이름 변경 Mutation
+    const renameFolderMutation = useMutation({
+        mutationFn: async (newName) => {
+            if (!newName) throw new Error('Folder name cannot be empty');
+            await axiosInstance.put(`/api/drive/folder/${folderId}/rename`, { newName });
+        },
+        onError: (error) => {
+            console.error('Failed to rename folder:', error.message);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries(['favorite', folderId, user.uid]);
+            setEditing(false);
+        },
+    });
+    // 파일 업로드 Mutation
+    const uploadFileMutation = useMutation({
+        mutationFn: async (files) => {
+            const formData = new FormData();
+            files.forEach((file) => formData.append('files', file));
+            await axiosInstance.post(`/api/drive/upload?folderId=${folderId}`, formData, {
+                headers: { 'Content-Type': 'multipart/form-data' },
+            });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['favorite', folderId, user.uid] });
+        },
+    });
+
+    // 이름 변경 핸들러
+    const handleRename = () => {
+        if (newFolderName.trim() && newFolderName !== location.state?.folderName) {
+            renameFolderMutation.mutate(newFolderName);
+        }
+    };
+
+    // 드래그 시작 핸들러
+    const handleDragStart = (folder) => {
+        console.log("handelDragStart ",folder)
+        setDraggedFolder(folder); // 드래그된 폴더 저장
+    }
+     
+     // 드래그 오버 핸들러 (드롭 가능 영역 활성화)
+     const handleDragOver = (e) => {
+        e.preventDefault(); // 기본 동작 방지
+    };
+
+  
+    
     
     // Folder Context Menu State
     const [contextMenu, setContextMenu] = useState({
@@ -155,8 +195,53 @@ export default function Favorite() {
         });
     };
 
-    //폴더 zip 다운로드 핸들러
 
+    
+    
+    
+
+    // 드래그 앤 드롭 업로드 핸들러
+    const handleFileDrop = useCallback(
+        (event) => {
+            event.preventDefault();
+            const files = Array.from(event.dataTransfer.files);
+            if (files.length === 0) {
+                console.error('No files dropped');
+                return;
+            }
+            uploadFileMutation.mutate(files);
+        },
+        [uploadFileMutation]
+    );
+
+    const handleKeyDown = (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            handleRename();
+        }
+    };
+
+    //파일 다운로드 핸들러
+    const downloadHandler = (file) => {
+        if (!file || !file.id) {
+            console.error('Invalid file:', file);
+            return;
+        }
+        const downloadUrl = `${fileServerBaseUrl}${file.path}`;
+    
+        // 다운로드 요청
+       /*  window.open(downloadUrl, file.savedName); */
+        // 가상의 링크 생성
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.setAttribute('download', file.originalName); // 원본 파일명으로 다운로드
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+    };
+
+    //폴더 zip 다운로드 핸들러
     const zipDownloadHandler = async (folder) => {
         console.log('Selected folder for zip download:', folder); // Debugging log
         const id = contextMenu.folderId;
@@ -182,26 +267,7 @@ export default function Favorite() {
         }
     }
 
- //파일 다운로드 핸들러
- const downloadHandler = (file) => {
-    if (!file || !file.id) {
-        console.error('Invalid file:', file);
-        return;
-    }
-    const downloadUrl = `${fileServerBaseUrl}${file.path}`;
-
-    // 다운로드 요청
-   /*  window.open(downloadUrl, file.savedName); */
-    // 가상의 크 생성
-    const link = document.createElement('a');
-    link.href = downloadUrl;
-    link.setAttribute('download', file.originalName); // 원본 파일명으로 다운로드
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-};
-
+  
 
 
 
@@ -220,6 +286,13 @@ export default function Favorite() {
         type: 'file', // 파일 타입 추가
     }));
 
+    const maxOrder = Math.max(...subFolders.map(folder => folder.order || 0));
+    const fileMaxOrder =
+        files.length > 0
+            ? Math.max(...files.map(file => file.order || 0))
+            : 0; // 기본값을 0으로 설정
+
+    console.log("fileMaxorder",fileMaxOrder);
 
     
     if (isLoading) return <div>Loading...</div>;
@@ -285,6 +358,9 @@ export default function Favorite() {
                                 isFavorite={folder.isPinned}
                                 setIsFavorite={setIsFavorite}
                                 updatedAt={folder.updatedAt}
+                                onDragStart={handleDragStart}
+                                onDrop={(e) => handleDrop(folder, "before")}
+                                onDragOver={handleDragOver}
                                 onContextMenu={handleContextMenu}
                                 downloadHandler={zipDownloadHandler} // 수정: folder 객체 전달
                                 onClick={() => {
@@ -388,6 +464,8 @@ export default function Favorite() {
                     path={contextMenu.path}
                     onDetailToggle={() => handleDetailToggle(contextMenu.folder)} // 상세 정보 토글 함수 전달
                     downloadHandler={() => zipDownloadHandler(folder)}
+                    type={"trash"}
+
                 />
               <ContextFileMenu
                     visible={contextFileMenu.visible}

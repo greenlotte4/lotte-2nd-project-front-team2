@@ -203,7 +203,7 @@ export default function DocumentList() {
         let orderAfter = 0;
     
         if (position === "before") {
-            // 타겟 폴더 이전의 폴더와 타겟 폴더 사이의 값 계산
+            // 타겟 폴더 이전 폴더와 타겟 폴더 사이의 값 계산
             if (targetIndex > 0) {
                 orderBefore = subFolders[targetIndex - 1]?.order || 0;
             }
@@ -327,7 +327,7 @@ const handleCloseFileMenu = () => setContextFileMenu({ visible: false, position:
     
         // 다운로드 요청
        /*  window.open(downloadUrl, file.savedName); */
-        // 가상의 링크 생성
+        // 가상의 크 생성
         const link = document.createElement('a');
         link.href = downloadUrl;
         link.setAttribute('download', file.originalName); // 원본 파일명으로 다운로드
@@ -356,12 +356,42 @@ const handleCloseFileMenu = () => setContextFileMenu({ visible: false, position:
                 link.click();
                 document.body.removeChild(link);
             } else {
-                console.error('zip 파일 생성 실패:', response.data);
+                console.error('zip 파��� 생성 실패:', response.data);
             }
         } catch (error) {
             console.error('zip 파일 생성 업데이트 중 오류 발생:', error);
         }
     }
+
+    //폴더 삭제
+    const [isDeleteAlert, setIsDeleteAlertOpen] = useState(false);
+
+    const handleDelete = () => {
+        console.log("삭제요청 들어옴 ")
+        setIsDeleteAlertOpen(true); // CustomAlert 표시
+        handleCloseMenu(); // ContextMenu 닫기
+    };
+
+    const handleCancel = () => {
+        setIsDeleteAlertOpen(false);
+    };
+
+
+    const handleDeleteConfirm = async() => {
+        try {
+            const response = await axiosInstance.delete(`/api/drive/folder/delete/${contextMenu.folderId}`,
+                { params: { path: contextMenu.path } }
+            );
+            if (response.status === 200) {
+                queryClient.invalidateQueries(['folderContents']);
+                alert('휴지통으로 이동 성공');
+            }
+        } catch (error) {
+            console.error('폴더 삭제 중 오류 발생:', error);
+        } finally {
+            setIsDeleteAlertOpen(false);
+        }
+    };
 
   
 
@@ -390,12 +420,19 @@ const handleCloseFileMenu = () => setContextFileMenu({ visible: false, position:
 
     console.log("fileMaxorder",fileMaxOrder);
 
+    useEffect(() => {
+        console.log("isDeleteAlert 상태 변경:", isDeleteAlert);
+    }, [isDeleteAlert]);
+
     
     if (isLoading) return <div>Loading...</div>;
     if (isError) return <div>Error loading folder contents.</div>;
 
     return (
         <DocumentLayout isDetailVisible={isDetailVisible} selectedFolder={selectedFolder} selectedFile={selectedFile} path={location.pathname} parentfolder={location.state?.folderName} uid={data.uid} closeDetailView={closeDetailView}>
+           
+    
+           
             <section className="flex gap-4 items-center">
                 {editing ? (
                     <input
@@ -441,7 +478,7 @@ const handleCloseFileMenu = () => setContextFileMenu({ visible: false, position:
                                  style={{
                                     filter: viewType === 'box'
                                         ? 'invert(29%) sepia(96%) saturate(748%) hue-rotate(180deg) brightness(89%) contrast(101%)'
-                                        : 'invert(0%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(0%) contrast(0%)', // 블랙 필터
+                                        : 'invert(0%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(0%) contrast(0%)', // 블랙 필��
                                 }}
                                 src='/images/document-menu.png' />
                             </button>
@@ -590,7 +627,7 @@ const handleCloseFileMenu = () => setContextFileMenu({ visible: false, position:
                     folderId={contextMenu.folderId}
                     path={contextMenu.path}
                     onDetailToggle={() => handleDetailToggle(contextMenu.folder)} // 상세 정보 토글 함수 전달
-                    downloadHandler={() => zipDownloadHandler(folder)}
+                    downloadHandler={() => zipDownloadHandler(contextMenu.folder)}
 
                 />
               <ContextFileMenu
@@ -615,7 +652,22 @@ const handleCloseFileMenu = () => setContextFileMenu({ visible: false, position:
                         onConfirm={alert.onConfirm}
                     />
                     )}
-            
+                    {isDeleteAlert  && (
+                                
+                        <CustomAlert
+                            type="warning" // success, error, warning, info 중 선택
+                            title="확인"
+                            message="폴더를 삭제하시겠습니까?"
+                            subMessage="해당 폴더 삭제시 폴더 안의 파일 까지 삭제됩니다."
+                            onConfirm={handleDeleteConfirm} // 확인 버튼 클릭 핸들러
+                            onCancel={handleCancel} // 취소 버튼 클릭 핸들러
+                            confirmText="예"
+                            cancelText="아니오"
+                            showCancel={true} // 취소 버튼 표시 여부
+                        />
+                    )}
+
+                   
         </DocumentLayout>
     );
 }
