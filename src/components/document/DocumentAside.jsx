@@ -8,10 +8,11 @@ import axiosInstance from '@/services/axios.jsx'
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { FaTrash, FaDownload, FaEdit, FaStar, FaShareAlt } from 'react-icons/fa';
 import ContextMenu from "./ContextMenu";
+import useStorageStore from "../../store/useStorageStore";
 
 
 
-export default function DocumentAside(){
+export default function DocumentAside({onStorageInfo}){
    
     // const [folders, setFolders] = useState([]); // 폴더 목록 상태
     const [drive, setDrive] = useState(false);
@@ -39,7 +40,19 @@ export default function DocumentAside(){
             const response = await axiosInstance.get("/api/drive/folders");
             return response.data; // 백엔드의 데이터 구조 반환
         },
-        staleTime: 300000, // 데이터 신선 유지 시간 (5분)
+        staleTime: 300000, // 데이터 신선 유지 시간 (5분)+
+        onSuccess: (data) => {
+            // 데이터 성공적으로 로드 시 스토리지 정보 업데이트
+            const sizeInBytes = data.size * 1024;
+            const currentUsedSize = sizeInBytes;
+            const currentRemainingSize = maxSize - currentUsedSize;
+    
+            setStorageInfo({
+                maxSize,
+                currentUsedSize,
+                currentRemainingSize,
+            });
+        },
     });
 
     const user = useUserStore((state) => state.user);
@@ -47,10 +60,12 @@ export default function DocumentAside(){
     // 폴더 필터링 (공유 및 개인)
     const sharedFolders = folderResponse?.folderDtoList?.filter((folder) => folder.isShared === 1) || [];
     const personalFolders = folderResponse?.folderDtoList?.filter((folder) => folder.isShared === 0) || [];
-   
+    const setStorageInfo = useStorageStore((state) => state.setStorageInfo);
+
+ 
+
     const size = folderResponse?.size || 0; // 기본값 0
     const userGrade = user?.grade || 1;    // 기본값 1
-    console.log("사이즈!!!",size);
     let maxSize = 0;
         if (userGrade === 1 || userGrade  === null) {
             maxSize = 524288000; // 500 MB
@@ -72,7 +87,15 @@ export default function DocumentAside(){
         setUsedSize(currentUsedSize);
         setRemainingSize(currentRemainingSize);
         setUsedPercentage(currentUsedPercentage);
-    }, [size, user]); // `size`와 `userGrade`가 변경될 때 계산
+        const fetchedStorageInfo = {
+            maxSize: maxSize,
+            currentUsedSize: currentUsedSize,
+            currentRemainingSize: currentRemainingSize,
+        };
+        setStorageInfo(fetchedStorageInfo);
+
+
+    }, [size, user, usedSize ,folderResponse]); // `size`와 `userGrade`가 변경될 때 계산
    
 
     const togglePinnedSection = () => {
@@ -97,6 +120,11 @@ export default function DocumentAside(){
             visible: true,
             position: { top: e.clientY, left: e.clientX },
             folder,
+            folderId : folder.id,
+            isPinned : folder.isPinned,
+            folderName: folder.name,
+            path: folder.path,
+
         });
     };
     const handleCloseMenu = () => {
@@ -330,6 +358,11 @@ export default function DocumentAside(){
                     onClose={handleCloseMenu}
                     actions={actions}
                     folder={contextMenu.folder}
+                    isPinned={contextMenu.isPinned}
+                    folderName={contextMenu.folderName}
+                    folderId={contextMenu.folderId}
+                                        path={contextMenu.path}
+
                 />
             
             </aside>

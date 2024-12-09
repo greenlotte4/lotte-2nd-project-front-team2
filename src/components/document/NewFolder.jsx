@@ -2,6 +2,7 @@ import axios from "axios";
 import axiosInstance from '@/services/axios.jsx'
 import React, { useEffect, useState } from "react";
 import useUserStore from "../../store/useUserStore";
+import { useQueryClient } from "@tanstack/react-query";
 
 // 날짜 : 2024.11.27
 // 이름 : 하진희
@@ -11,6 +12,7 @@ import useUserStore from "../../store/useUserStore";
 
 export default function NewFolder({ isOpen, onClose ,parentId,maxOrder }) {
   const [authType, setAuthType] = useState("0"); // 기본값: '나만 사용'
+  const queryClient = useQueryClient();
   const [formData, setFormData] = useState({
     name: "",
     owner: "",
@@ -20,7 +22,7 @@ export default function NewFolder({ isOpen, onClose ,parentId,maxOrder }) {
     isShared : 0,
     linkSharing: "0", // 허용안함
     parentId:"",
-    permissions:0,
+    permissions:7,
   });
 
   const permissionOptions = [
@@ -110,6 +112,7 @@ export default function NewFolder({ isOpen, onClose ,parentId,maxOrder }) {
       console.log("formData : ",formData);
       const response = await axiosInstance.post("/api/drive/newFolder", formData);
       console.log("Response:", response.data);
+      queryClient.invalidateQueries(['folderContents']);
 
       // 성공 시 모달 닫기
       onClose();
