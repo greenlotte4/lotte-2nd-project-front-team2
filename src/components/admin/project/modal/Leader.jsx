@@ -58,33 +58,36 @@ export default function Leader({isOpen, onClose , id}) {
                 : (leaderDetail && typeof leaderDetail === 'object' && leaderDetail !== null)
                 ? 
                 (
+                <>
                 <div key={leaderDetail.id} className='flex gap-[10px] text-[15px]'>
-                    <div className='p-[20px] w-[300px]'>
-                        <div className='text-[18px] font-bold mb-[10px]'>부서장 정보</div>
+                    <div className='p-[20px] w-[200px]'>
+                        <div className='text-[18px] font-bold mb-[10px]'>개인 정보</div>
                         <div className='flex flex-col gap-[5px]'>
-                        <p className=''>이름 : {leaderDetail.name}</p>
-                        <p>전화번호 : {leaderDetail.hp}</p>
-                        <p>주소 : {leaderDetail.address}</p>
+                        <p className=''>{leaderDetail.name} ({leaderDetail.level})</p>
+                        <p>{leaderDetail.hp}</p>
+                        <p>{leaderDetail.address}</p>
                         </div>
                     </div>
-                    <div className='p-[20px] w-[300px]'>
+                    <div className='p-[20px] w-[250px] mx-auto'>
                         <div className='text-[18px] font-bold mb-[10px]'>부서 일정</div>
-                        <div>캘린더 이름 : {leaderDetail.calendarName}</div>
+                        <div className='hover:text-purple-400 cursor-pointer'>{leaderDetail.calendarName}</div>
                     </div>
                     <div className='flex flex-col gap-[10px] p-[20px] w-[300px]'>
                         <div className='text-[18px] font-bold mb-[10px]'>부서 프로젝트</div>
                         {Array.isArray(leaderDetail.projects)&&leaderDetail.projects.length>0
                         ?leaderDetail.projects.map((v,i)=>{return(
                         <>
-                        <div key={i}>프로젝트 이름 : {v.projectTitle} ({v.projectStatus})</div>
-                        <div>프로젝트 진행도 : </div>
+                        <div className='hover:text-purple-400 cursor-pointer' key={i}>{v.projectTitle} ({v.projectStatus}) 0%</div>
                         </>
                         )}) :
                         (<div>진행중인 프로젝트 없음</div>)
                         }
                     </div>
                 </div>
-                
+                <div className='border-t'>
+                    <div className='p-[20px]'>ddd</div>
+                </div>
+                </>
                 ):(<p>정보가 없습니다...</p>)
                 }
             </div>

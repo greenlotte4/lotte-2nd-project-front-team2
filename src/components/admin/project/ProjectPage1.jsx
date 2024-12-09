@@ -4,7 +4,6 @@ import Select from './Select'
 import { useQuery } from '@tanstack/react-query'
 import axiosInstance from '@/services/axios.jsx'
 import { useDispatch, useSelector } from 'react-redux'
-import Leader from './modal/Leader'
 
 export default function Project1({optionChanger, selectOption}) {
     const dispatch = useDispatch();
@@ -12,6 +11,13 @@ export default function Project1({optionChanger, selectOption}) {
     const selectedTeamId = useSelector((state) => state.team.selectedTeamId);
     const [group,setGroup] = useState('')
     const [leader, setLeader] = useState({});
+    const [type, setType] = useState("");
+    const [message, setMessage] = useState("");
+    const [alert, setAlert] = useState(false);
+    const [leaderId, setLeaderId] = useState(0);
+    const [page,setPage] = useState(1)
+    const [subPage,setSubPage] = useState(0);
+
 
     const leaderDummy = {
         name : "박연화",
@@ -32,78 +38,70 @@ export default function Project1({optionChanger, selectOption}) {
       queryKey : ['admin-project',group],
       queryFn : async () => {
         try {
-          const resp = await axiosInstance.get('/api/admin/project?group='+group)
+          const resp = await axiosInstance.get('/api/admin/projects?group='+group)
           console.log(resp.data)
           return resp.data
         } catch (err) {
           return err;
         }
       },
-      enabled : !!group,
+      enabled : !!group && page == 1,
       cacheTime : 10 * 1000 * 60,
       refetchOnWindowFocus : false
     })
 
     useEffect(()=>{
       if(!isLoadingProject&&!isErrorProject&&projectData){
-        setLeader(projectData.leader)
+        setLeader(projectData)
+        console.log(projectData)
       }
     },[projectData])
 
+    const {
+      data : column ,
+      isLoading : isLoadingColumn ,
+      isError : isErrorColumn
+    } = useQuery({
+      queryKey : ['project-column',subPage],
+      queryFn : async () => {
+        try {
+          const resp = await axiosInstance.get("/api/admin/project/columns?id="+subPage)
+          console.log(resp.data)
+          return resp.data
+        } catch (err) {
+          return err
+        }
+      },
+      enabled : !!group && subPage !=0,
+      cacheTime : 10 * 1000 * 60,
+      refetchOnWindowFocus : false
+    })
+
+    useEffect(()=>{
+      if(Array.isArray(column)&&column.length>0){
+        console.log(column)
+      }
+    },[column])
 
   return (
     <>
-      <Leader 
-        isOpen = {openLeader}
-        onClose = {()=>setOpenLeader(false)}
-        id = {leader.id}
-      />
-      
-      
-      <section className='flex items-center gap-4 mb-12'>
-            <Select
-                optionChanger={optionChanger}
-                selectOption={selectOption}
-            />
-            </section>
-            
-            <section className='flex justify-around inline-block mb-12'>
-            {isLoadingProject?(<p>로딩중...</p>):isErrorProject?(<p>에러....</p>)? !projectData.leader : (<p>알수없는 에러...</p>) :
-                (
-                <AdminCard3 
-                clickHandler={()=>setOpenLeader(true)}
-                title="부서장"
-                leader={leader}
-                messanger={leaderDummy.messanger}
-                />)}
-                <AdminCard3 
-                clickHandler={null}
-                title="업무"
-                content="화면설계 및 구현"
-                messanger={leaderDummy.messanger}
-                />
-                <AdminCard3 
-                clickHandler={null}
-                title="진행도"
-                content={10/12}
-                messanger={leaderDummy.messanger}
-                />
-            </section>
-            <section className='flex justify-around inline-block'>
-                <AdminCard3 
-                clickHandler={null}
-                title="외주업체"
-                content="그린디자인"
-                messanger={leaderDummy.messanger}
-                />
-                <AdminCard3 
-                clickHandler={null}
-                title="휴가"
-                content="없음"
-                messanger={leaderDummy.messanger}
-                />
-            </section>
-     
+      <section className='flex items-center gap-4'>
+            <div className='border-b text-[12px] text-gray-400 w-full'>
+              <button onClick={()=>setPage(1)} className={page==1 ? 'bg-blue-200 w-[120px] h-[40px] text-gray-700' :'hover:bg-gray-200 hover:text-gray-600 w-[120px] h-[40px]'}>프로젝트</button>
+              <button onClick={()=>setPage(2)} className={page==2 ? 'bg-blue-200 w-[120px] h-[40px] text-gray-700' : 'hover:bg-gray-200 hover:text-gray-600 w-[120px] h-[40px]'}>일정</button>
+              <button onClick={()=>setPage(3)} className={page==3 ? 'bg-blue-200 w-[120px] h-[40px] text-gray-700' : 'hover:bg-gray-200 hover:text-gray-600 w-[120px] h-[40px]'}>진행상황</button>
+              <button onClick={()=>setPage(4)} className={page==4 ? 'bg-blue-200 w-[120px] h-[40px] text-gray-700' : 'hover:bg-gray-200 hover:text-gray-600 w-[120px] h-[40px]'}>프로젝트등록</button>
+            </div>
+      </section>
+      <section className="overflow-auto max-h-[400px] min-h-[400px] scrollbar-none">
+      <div className='text-[12px] text-gray-400'>
+          {Array.isArray(projectData)&&projectData.length>0 ? projectData.map((v)=>{return(
+            <button onClick={()=>setSubPage(v.projectId)} className={subPage==(v.projectId) ? 'bg-blue-200 w-[120px] h-[40px] text-gray-700' :'hover:bg-gray-200 hover:text-gray-600 w-[120px] h-[40px]'}>{v.projectTitle}</button>
+          )})
+          : (<p className='ml-[480px] mt-[200px]'>진행중인 프로젝트가 없습니다...</p>)
+          }
+        </div>
+      </section>
       </>
   )
 }
