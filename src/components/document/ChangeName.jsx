@@ -29,7 +29,7 @@ const RenameModal = ({
     const updatedPath = `${path.substring(0, path.lastIndexOf('/'))}/${newName}`; // 기존 경로에서 새로운 이름 적용
     const payload = {
       id: id, // 폴더 ID
-      type: "folder", // 폴더 타입
+      type: type, // 폴더 타입
       newName: newName, // 새 이름
       currentPath : path,
       newPath : updatedPath,

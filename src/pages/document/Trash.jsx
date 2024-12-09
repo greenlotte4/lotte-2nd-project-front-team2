@@ -26,7 +26,6 @@ export default function Trash() {
     const location = useLocation();
     const user = useUserStore((state) => state.user);
     const queryClient = useQueryClient();
-    const [draggedFolder, setDraggedFolder] = useState(null); // 드래그된 폴더
     const fileServerBaseUrl = `http://3.35.170.26:90/download/`;
 
     const [isDetailVisible, setIsDetailVisible] = useState(false); // 상세 정보 표시 상태 추가
@@ -358,9 +357,6 @@ export default function Trash() {
                                 isFavorite={folder.isPinned}
                                 setIsFavorite={setIsFavorite}
                                 updatedAt={folder.updatedAt}
-                                onDragStart={handleDragStart}
-                                onDrop={(e) => handleDrop(folder, "before")}
-                                onDragOver={handleDragOver}
                                 onContextMenu={handleContextMenu}
                                 downloadHandler={zipDownloadHandler} // 수정: folder 객체 전달
                                 onClick={() => {
@@ -477,6 +473,8 @@ export default function Trash() {
                     path={contextFileMenu.file?.path}
                     onDetailToggle={() => handleDetailFileToggle(contextFileMenu.file)}
                     downloadHandler={downloadHandler}
+                    type={"trash"}
+
                 />
             
         </DocumentLayout>

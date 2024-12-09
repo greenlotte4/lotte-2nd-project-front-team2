@@ -1,5 +1,5 @@
 /* eslint-disable react/prop-types */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { MenuItem } from "./_CustomDropdown";
 import { CustomSVG } from "./_CustomSVG";
 import axiosInstance from "@/services/axios.jsx";
@@ -12,25 +12,44 @@ export const ColumnHeader = ({
   onDelete,
 }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const toggleDropdown = () => setIsDropdownOpen(!isDropdownOpen);
+
+  const toggleDropdown = (e) => {
+    e.stopPropagation(); // 클릭 이벤트 전파 방지
+    setIsDropdownOpen((prev) => !prev);
+  };
+
+  const handleOutsideClick = (e) => {
+    if (!e.target.closest(".dropdown")) {
+      setIsDropdownOpen(false);
+    }
+  };
+
+  useEffect(() => {
+    document.addEventListener("click", handleOutsideClick);
+    return () => document.removeEventListener("click", handleOutsideClick);
+  }, []);
+
   return (
     <header className="flex flex-col w-full text-base leading-none">
-      <div className="flex gap-3 items-center w-full min-h-[32px]">
+      <div className="flex gap-3 items-center w-full min-h-[32px] relative">
         <div className="relative flex flex-1 shrink gap-2 items-start justify-between self-stretch my-auto basis-0 w-full handle">
           <div>
             <span className="text-black text-opacity-80 text-sm font-[550]">
-              {column.title}{" "}
+              {column.title}
             </span>
-            {/* <span className="text-black text-opacity-50 text-sm">{column.count}</span> */}
           </div>
-          <button onClick={toggleDropdown} aria-label="더보기">
+          <button
+            onClick={toggleDropdown}
+            aria-label="더보기"
+            className="dropdown" // 드롭다운 클래스 추가
+          >
             <CustomSVG id="more" />
           </button>
           {isDropdownOpen && (
             <div
               role="menu"
               aria-labelledby="more"
-              className="absolute mt-1 w-20 py-2 right-2 bg-white border rounded-md text-gray-600 shadow-md z-30"
+              className="dropdown absolute mt-1 w-20 py-2 right-2 bg-white border rounded-md text-gray-600 shadow-md z-30"
             >
               <MenuItem
                 onClick={() => {
@@ -45,8 +64,11 @@ export const ColumnHeader = ({
                   onDelete();
                   setIsDropdownOpen(false);
                 }}
-                tooltip="이 보드를 삭제합니다."
                 confirm="true"
+                tooltip="정말 이 보드를 삭제하시겠어요? 이 작업은 되돌릴 수 없습니다."
+                pointColor="red-500"
+                border="0"
+                icon="trash"
               >
                 삭제
               </MenuItem>
@@ -55,8 +77,10 @@ export const ColumnHeader = ({
                   clearTasks();
                   setIsDropdownOpen(false);
                 }}
-                tooltip="보드 안의 모든 목표를 지웁니다."
                 confirm="true"
+                tooltip="한번 더 누르면 보드 안의 모든 목표를 삭제합니다. 이 작업은 되돌릴 수 없습니다."
+                pointColor="red-500"
+                border="0"
               >
                 비우기
               </MenuItem>
@@ -71,6 +95,7 @@ export const ColumnHeader = ({
     </header>
   );
 };
+
 export const ColumnHeaderEdit = ({
   projectId,
   column = [],

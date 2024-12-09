@@ -29,7 +29,7 @@ export default function ContextMenu({
     const queryClient = useQueryClient(); // Access query client
 
     const [isFavorite, setIsFavorite] = useState(Boolean(isPinned));
-
+    const [alert,setAlert] = useState();
     const handleFavoriteToggle = async () => {
         const newFavoriteState = !isFavorite;
         setIsFavorite(newFavoriteState);
@@ -93,7 +93,7 @@ export default function ContextMenu({
             label: '영구 삭제',
             icon: FaTrash,
             color: 'text-red-500',
-            onClick: () => console.log('영구 삭제 클릭됨'),
+            onClick: () => setIsDeletedAlert(true),
         },
     ]:  [
         {
@@ -190,27 +190,33 @@ export default function ContextMenu({
         }
     };
 
-
-
-    const [isRestoreAlert,setIsRestoreAlert] = useState(false);
-
-    const handleRestoreCancel = () => {
-        setIsRestoreAlert(false); // CustomAlert 닫기
+    const closeMenu = () => {
+        setMenuState({ visible: false, position: { top: 0, left: 0 }, activeFolder: null });
     };
+    
+
+    const [isRestoreAlert,setIsRestoreAlert] = useState(false);;
 
     const handleRestoreConfirm =  async() => {
-        console.log('Deleting folder:', folderId);
+        console.log('Restore folder:', folderId);
         setIsAlertOpen(false); // CustomAlert 닫기
     
-        // 폴더 삭제 로직
+        // 폴더 복구 로직
         try {
-            // 실제 삭제 API 호출
-           const response =  await axiosInstance.delete(`/api/drive/folder/restore/${folderId}`,
-            { params: { path } } // 쿼리 매개변수로 path 전달
+            // 실제 복구 API 호출
+           const response =  await axiosInstance.delete(`/api/drive/folder/restore/${folderId}`
            );
            if (response.status === 200) {
-            queryClient.invalidateQueries(['folderContents']); // Replace with the relevant query key
-            alert('복구 성공');
+
+                if(response.data){
+                    queryClient.invalidateQueries(['folderContents']); // Replace with the relevant query key
+                    queryClient.invalidateQueries(['trash']); // Replace with the relevant query key
+                    alert('복구 성공');
+                }else{
+                    alert('복구실패');
+                }
+
+           
           } else {
             console.error('복구 실패:', error);
             alert('폴더 복구에 실패했습니다. 다시 시도해주세요.');
@@ -221,14 +227,41 @@ export default function ContextMenu({
         }
     };
 
-    const closeMenu = () => {
-        setMenuState({ visible: false, position: { top: 0, left: 0 }, activeFolder: null });
-    };
+    //폴더 영구삭제
+    const [isDeletedAlert,setIsDeletedAlert] = useState(false);;
+    const handleDeleted = ()=>{
+        
+        setIsDeletedAlert(true);
+    }
+
+    const handleDeleteConfirm = async() => {
+        console.log('Deleting folder:', folderId);
+        setIsAlertOpen(false); // CustomAlert 닫기
     
+        // 폴더 영구삭제 로직
+        try {
+            // 영구삭제 API 호출
+           const response =  await axiosInstance.delete(`/api/drive/folder/permanent/${folderId}`
+           );
+           if (response.status === 200) {
+            queryClient.invalidateQueries(['folderContents']); // Replace with the relevant query key
+            alert('삭제 성공');
+          } else {
+            console.error('삭제 실패:', error);
+            alert('폴더 삭제에 실패했습니다. 다시 시도해주세요.');
+          }
+        } catch (error) {
+            console.error('폴더 삭제 중 오류 발생:', error);
+
+        }
+    };
+
+   
     
     
     const handleCancel = () => {
         setIsAlertOpen(false); // CustomAlert 닫기
+        setIsRestoreAlert(false);
     };
 
     const handleShare = () => {
@@ -248,6 +281,8 @@ export default function ContextMenu({
             ) {
                 onClose();
                 setIsRenameModalOpen(false);
+                setIsRestoreAlert(false); // CustomAlert 닫기
+                setIsDeletedAlert(false);
             }
         } else {
             // If the RenameModal is not open, only check clicks outside the ContextMenu
@@ -255,6 +290,9 @@ export default function ContextMenu({
                 contextMenuRef.current &&
                 !contextMenuRef.current.contains(event.target)
             ) {
+                
+                setIsDeletedAlert(false);
+                setIsRestoreAlert(false); // CustomAlert 닫기
                 onClose();
             }
         }
@@ -302,6 +340,15 @@ export default function ContextMenu({
                 ))}
             </div>
         </div>
+        {alert && (
+                    <CustomAlert
+                        type={alert.type}
+                        title={alert.title}
+                        message={alert.message}
+                        confirmText="확인"
+                        onConfirm={alert.onConfirm}
+                    />
+                    )}
 
         {isAlertOpen  && (
                                 
@@ -317,19 +364,36 @@ export default function ContextMenu({
                     showCancel={true} // 취소 버튼 표시 여부
                 />
             )}
-              {isRestoreAlert  && (
-                                
-                                <CustomAlert
-                                    type="warning" // success, error, warning, info 중 선택
-                                    title="확인"
-                                    message="폴더를 복구하시겠습니까?"
-                                    onConfirm={handleRestoreConfirm} // 확인 버튼 클릭 핸들러
-                                    onCancel={handleRestoreCancel} // 취소 버튼 클릭 핸들러
-                                    confirmText="예"
-                                    cancelText="아니오"
-                                    showCancel={true} // 취소 버튼 표시 여부
-                                />
-                            )}
+            {isRestoreAlert  && (
+                            
+                <CustomAlert
+                    type="warning" // success, error, warning, info 중 선택
+                    title="확인"
+                    message="폴더를 복구하시겠습니까?"
+                    onConfirm={handleRestoreConfirm} // 확인 버튼 클릭 핸들러
+                    onCancel={handleCancel} // 취소 버튼 클릭 핸들러
+                    confirmText="예"
+                    cancelText="아니오"
+                    showCancel={true} // 취소 버튼 표시 여부
+                />
+            )}
+             {isDeletedAlert  && (
+                            
+                <CustomAlert
+                    type="warning" // success, error, warning, info 중 선택
+                    title="확인"
+                    message="폴더를 영구삭제 하시겠습니까?"
+                    subMessage="해당 폴더 삭제시 더이상 되돌릴 수 없습니다."
+                    onConfirm={handleDeleteConfirm} // 확인 버튼 클릭 핸들러
+                    onCancel={handleCancel} // 취소 버튼 클릭 핸들러
+                    confirmText="예"
+                    cancelText="아니오"
+                    showCancel={true} // 취소 버튼 표시 여부
+                />
+            )}
+            
+
+
         
 
         <RenameModal

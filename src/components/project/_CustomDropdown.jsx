@@ -1,33 +1,56 @@
 /* eslint-disable react/prop-types */
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { CustomSVG } from "./_CustomSVG";
 
-export const MenuItem = ({ onClick, children, tooltip, confirm }) => {
+export const MenuItem = ({ onClick, children, tooltip, confirm, pointColor, border, icon }) => {
   const [showTooltip, setShowTooltip] = useState(false); // 툴팁 표시 상태
   const [confirmReady, setConfirmReady] = useState(false); // 확인 준비 상태
   const [tooltipPosition, setTooltipPosition] = useState({});
   const itemRef = useRef(null);
   const tooltipTimer = useRef(null);
 
-  // 첫 번째 클릭 시 툴팁 표시, 두 번째 클릭 시 동작 실행
-  const handleClick = () => {
-    if (!confirmReady) {
-      setShowTooltip(true); // 툴팁 표시
-      setConfirmReady(true); // 확인 준비 상태로 전환
-      tooltipTimer.current = setTimeout(() => {
-        setShowTooltip(false);
-        setConfirmReady(false); // 시간이 지나면 초기화
-      }, 3000); // 3초 후 초기화
-    } else {
-      // 실제 동작 실행
-      if (onClick) onClick();
+  const stopPropagation = (e) => e.stopPropagation();
+
+   const handleClick = (e) => {
+    stopPropagation(e);
+
+    if (confirmReady) {
+      // 두 번째 클릭: 삭제 요청
+      onClick();
       setConfirmReady(false);
       setShowTooltip(false); // 툴팁 닫기
-      clearTimeout(tooltipTimer.current); // 타이머 제거
+      clearTimeout(tooltipTimer.current);
+    } else {
+      // 첫 번째 클릭: 삭제 모드 활성화
+      setConfirmReady(true);
+      setShowTooltip(true);
+
+      // 툴팁이 5초 후 사라지도록 설정
+      tooltipTimer.current = setTimeout(() => {
+        setConfirmReady(false);
+        setShowTooltip(false);
+      }, 5000);
     }
   };
 
-  // 화면 경계 및 툴팁 위치 조정
+  // 화면 다른 곳 클릭 시 초기화
+  const handleOutsideClick = (event) => {
+    if (itemRef.current && !itemRef.current.contains(event.target)) {
+      setConfirmReady(false);
+      setShowTooltip(false);
+      clearTimeout(tooltipTimer.current);
+    }
+  };
+
+  useEffect(() => {
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideClick);
+    };
+  }, []);
+
+  // 툴팁 위치 계산
   useEffect(() => {
     if (showTooltip && itemRef.current) {
       const rect = itemRef.current.getBoundingClientRect();
@@ -46,35 +69,32 @@ export const MenuItem = ({ onClick, children, tooltip, confirm }) => {
     }
   }, [showTooltip]);
 
-  // 외부 클릭 감지
-  useEffect(() => {
-    const handleOutsideClick = (event) => {
-      if (itemRef.current && !itemRef.current.contains(event.target)) {
-        setShowTooltip(false);
-        setConfirmReady(false);
-        clearTimeout(tooltipTimer.current);
-      }
-    };
-    document.addEventListener("mousedown", handleOutsideClick);
-    return () => {
-      document.removeEventListener("mousedown", handleOutsideClick);
-    };
-  }, []);
 
   return (
     <div className="relative" ref={itemRef}>
-      <li
+      <div
         role="menuitem"
-        className="flex items-center p-2 hover:bg-gray-200 cursor-pointer text-xs"
-        onClick={confirm?handleClick:onClick}
-        onMouseEnter={() => !confirm && tooltip && setShowTooltip(true)}
-        onMouseLeave={() => tooltip && setShowTooltip(false)}
+        className={`relative flex items-center p-2 cursor-pointer text-sm text-center transition-all duration-150 group
+          border-${border} ${
+            confirmReady
+              ? `text-white bg-${pointColor} font-semibold`
+              : `hover:bg-gray-200 ${border && "border-slate-500/50"}`
+          }`}
+        onClick={confirm ? handleClick : onClick}
       >
-        {children}
-      </li>
-      {showTooltip && (
-        <Tooltip text={tooltip} position={tooltipPosition} />
-      )}
+        {/* 배경 슬라이드 효과 */}
+        <span
+          className={`absolute inset-0 bg-gradient-to-r from-blue-500 to-blue-700 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left`}
+          aria-hidden="true"
+        ></span>
+  
+        {/* 텍스트와 아이콘 */}
+        <span className="relative z-10 flex items-center space-x-2">
+          {children}
+          {icon ? confirmReady && <CustomSVG id={icon} color="currentColor" /> : null}
+        </span>
+      </div>
+      {showTooltip && <Tooltip text={tooltip} position={tooltipPosition} />}
     </div>
   );
 };
@@ -82,7 +102,7 @@ export const MenuItem = ({ onClick, children, tooltip, confirm }) => {
 export const Tooltip = ({ text, position }) => {
   return createPortal(
     <div
-      className="absolute px-3 py-1 text-white bg-black bg-opacity-90 rounded-md shadow-md text-xs"
+      className="absolute px-3 py-2 text-black bg-white bg-opacity-80 rounded-md shadow-md text-xs"
       style={{
         position: "absolute",
         top: position.top,

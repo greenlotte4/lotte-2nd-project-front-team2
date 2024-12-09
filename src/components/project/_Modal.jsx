@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { CustomSVG } from "./_CustomSVG";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import axiosInstance from "@/services/axios.jsx";
+import templates from "./templates.json";
 
 export const TemplateSelection = ({isOpen,onClose,onSelectTemplate}) => {
   if (!isOpen) return null;
@@ -59,8 +60,13 @@ export const AddProjectModal = ({
   const [searchKeyword, setSearchKeyword] = useState("");
   const [selectedGroupId, setSelectedGroupId] = useState();
   const [listType, setListType] = useState(1);
-  const [project,setProject] = useState({title: "새 프로젝트", type: 1, template: selectedTemplate, coworkers: selectedUsers})
-
+  const [project, setProject] = useState({
+    title: "새 프로젝트",
+    type: 1,
+    template: selectedTemplate,
+    coworkers: selectedUsers,
+    ...(selectedTemplate && { columns: templates[selectedTemplate].columns }) // selectedTemplate이 있을 때만 columns 설정
+  });
   const fetchAllUsers = async ({ pageParam }) => {
     try {
       const response = await axiosInstance.get(

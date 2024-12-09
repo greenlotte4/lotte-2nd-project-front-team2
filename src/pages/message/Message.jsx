@@ -1,7 +1,14 @@
+/* eslint-disable no-unused-vars */
 /* eslint-disable react/prop-types */
 /* eslint-disable react-hooks/exhaustive-deps */
 import "@/pages/message/Message.scss";
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import MessageToolTip from "../../components/message/MessageToolTip";
 import InviteModal from "../../components/message/InviteModal";
 import ShowMoreModal from "../../components/message/ShowMoreModal";
@@ -176,7 +183,29 @@ export default function Message({ selectedRoomId, setSelectedRoomId }) {
     const fetchChatRooms = async () => {
       try {
         const response = await axiosInstance.get(`/api/message/room/${uid}`);
-        setRoomData(response.data);
+        console.log(response);
+
+        if (response.data === "") {
+          return;
+        } else {
+          const rooms = response.data;
+          // 각 채팅방에 대해 읽지 않은 메시지 수를 가져옵니다.
+          const roomsWithUnread = await Promise.all(
+            rooms.map(async (room) => {
+              const unreadResponse = await axiosInstance.get(
+                "/api/message/unreadCount",
+                {
+                  params: { uid, chatRoomId: room.id },
+                }
+              );
+              return {
+                ...room,
+                unreadCount: unreadResponse.data.unreadCount,
+              };
+            })
+          );
+          setRoomData(roomsWithUnread);
+        }
       } catch (error) {
         console.error("채팅방 호출 오류:", error);
       }
@@ -189,6 +218,7 @@ export default function Message({ selectedRoomId, setSelectedRoomId }) {
     if (selectedRoomId === roomId) {
       return;
     }
+    setHasMore(true); // 채팅방 변경 시 hasMore를 true로 초기화
     setSelectedRoomId(roomId);
     localStorage.removeItem("roomId");
     localStorage.setItem("roomId", roomId);
@@ -203,6 +233,15 @@ export default function Message({ selectedRoomId, setSelectedRoomId }) {
   //==========================================▼웹소켓 연결과 채팅 전송===================================================
 
   const [input, setInput] = useState("");
+  const [hasMore, setHasMore] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0); // 읽지 않은 메시지 수
+  const shouldScrollToBottomRef = useRef(true);
+  const chatContainerRef = useRef(null);
+  const lastTimeStampRef = useRef(null);
+  const stompClientRef = useRef(null);
+  const isInitialLoadRef = useRef(true); // 초기 로드 플래그
+  const inputRef = useRef(null);
 
   const { mutate } = useMutation({
     mutationFn: async (inputText) => {
@@ -232,6 +271,7 @@ export default function Message({ selectedRoomId, setSelectedRoomId }) {
       if (newMessage) {
         sendWebSocketMessage(newMessage, "/app/chat.sendMessage");
         setInput(""); // 입력 필드 초기화
+        shouldScrollToBottomRef.current = true; // 스크롤 이동 플래그 설정
       }
     },
     onError: (error) => {
@@ -265,52 +305,191 @@ export default function Message({ selectedRoomId, setSelectedRoomId }) {
     stompClient,
     isConnected,
     updateMembers,
-    updateUserId,
+    updateuid,
     sendWebSocketMessage,
     updateSubscriptions,
   } = useChatWebSocket({
     selectedRoomId,
     setMessageList,
+    setUnreadCount,
+    chatContainerRef,
+    shouldScrollToBottomRef,
   });
 
   const [members, setMembers] = useState();
 
-  // 채팅방 변경 시 메시지 가져오기
+  // 초기 로드 및 채팅방 변경 시 메시지 로드
   useEffect(() => {
     if (selectedRoomId) {
-      // 기존 메시지 리스트 초기화
+      console.log("Selected Room ID changed:", selectedRoomId);
+      // 메시지 목록 초기화
       setMessageList([]);
+      lastTimeStampRef.current = null;
+      isInitialLoadRef.current = true;
 
-      // 초기 메시지 로딩
-      axiosInstance
-        .get(`/api/message/getMessage/${selectedRoomId}`)
-        .then((resp) => {
-          console.log("채팅목록:", resp.data);
-          setMessageList(resp.data);
-        })
-        .catch((error) => {
-          console.error("Error fetching messages:", error);
-        });
+      // 메시지 로드
+      loadMessages().then(() => {
+        // 초기 로드 후 스크롤을 맨 아래로 설정
+        if (chatContainerRef.current) {
+          chatContainerRef.current.scrollTop =
+            chatContainerRef.current.scrollHeight;
+        }
+        isInitialLoadRef.current = false;
+      });
 
       // 채팅방 정보 가져오기
       axiosInstance
         .get(`/api/message/roomInfo/${selectedRoomId}`)
         .then((resp) => {
+          console.log("Fetched room info:", resp.data);
           setRoomInfo(resp.data);
           setMembers([...resp.data.members, resp.data.leader]);
         })
         .catch((error) => {
           console.error("Error fetching room info:", error);
         });
+
+      fetchUnreadCount();
     }
   }, [selectedRoomId]);
 
-  useEffect(() => {
-    if (members && uid) {
-      updateMembers(members);
-      updateUserId(uid);
+  // 메시지 로드 함수
+  const loadMessages = async () => {
+    console.log("loadMessages called with selectedRoomId:", selectedRoomId);
+
+    if (loading || !hasMore || !selectedRoomId) {
+      console.log(
+        "loadMessages aborted: loading =",
+        loading,
+        ", hasMore =",
+        hasMore,
+        ", selectedRoomId =",
+        selectedRoomId
+      );
+      return;
     }
-  }, [members, uid, updateMembers, updateUserId]);
+    setLoading(true);
+
+    try {
+      const params = lastTimeStampRef.current
+        ? { chatRoomId: selectedRoomId, before: lastTimeStampRef.current }
+        : { chatRoomId: selectedRoomId };
+
+      console.log("API params:", params);
+
+      // 이전 스크롤 높이 저장
+      const container = chatContainerRef.current;
+      console.log("container : ", container);
+
+      const previousScrollHeight = container ? container.scrollHeight : 0;
+      console.log("previousScrollHeight : ", previousScrollHeight);
+
+      const response = await axiosInstance.get("/api/message/getMessage", {
+        params,
+      });
+
+      console.log("API response:", response);
+
+      const newMessages = response.data.messages;
+      console.log("불러온 메시지 : ", newMessages);
+
+      if (newMessages.length > 0) {
+        setMessageList((prev) => [...newMessages.reverse(), ...prev]);
+        lastTimeStampRef.current =
+          newMessages[newMessages.length - 1].timeStamp;
+      }
+      setHasMore(response.data.hasMore);
+      // 새로운 스크롤 높이 계산 후 위치 조정
+      if (container) {
+        const newScrollHeight = container.scrollHeight;
+        container.scrollTop = newScrollHeight - previousScrollHeight;
+      }
+    } catch (error) {
+      console.error("메시지 로드 실패:", error);
+      alert("메시지 로드에 실패했습니다. 다시 시도해주세요."); // 사용자에게 에러 피드백 제공
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const container = chatContainerRef.current;
+    console.log(shouldScrollToBottomRef);
+
+    if (container && shouldScrollToBottomRef.current) {
+      // 특정 이벤트 발생 시 스크롤을 맨 아래로 설정
+      container.scrollTop = container.scrollHeight;
+    }
+  }, [messageList]);
+
+  const handleScroll = () => {
+    const container = chatContainerRef.current;
+    if (container.scrollTop === 0 && hasMore && !loading) {
+      const currentScrollHeight = container.scrollHeight;
+      loadMessages().then(() => {
+        // 메시지 추가 후 스크롤 위치 유지
+        container.scrollTop = container.scrollHeight - currentScrollHeight;
+      });
+    }
+  };
+
+  // 읽지 않은 메시지 수 가져오기
+  const fetchUnreadCount = async () => {
+    if (!selectedRoomId || !uid) return;
+    try {
+      const response = await axiosInstance.get("/api/message/unreadCount", {
+        params: { uid, chatRoomId: selectedRoomId },
+      });
+      setUnreadCount(response.data.unreadCount);
+    } catch (error) {
+      console.error("읽지 않은 메시지 수 로드 실패:", error);
+    }
+  };
+
+  // 사용자가 채팅방을 읽었다고 표시
+  const markAsRead = async () => {
+    if (!selectedRoomId || !uid) return;
+    try {
+      const readTimestamp = new Date();
+      await axiosInstance.post("/api/message/markAsRead", null, {
+        params: { uid, chatRoomId: selectedRoomId, readTimestamp },
+      });
+      setUnreadCount(0); // 읽음 상태 업데이트
+    } catch (error) {
+      console.error("읽음 상태 업데이트 실패:", error);
+    }
+  };
+
+  // 창 포커스 이벤트 처리 (읽음 상태 업데이트)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        markAsRead();
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [selectedRoomId, uid]);
+
+  // 메시지 목록이 변경될 때 스크롤 처리
+  useLayoutEffect(() => {
+    if (isInitialLoadRef.current) {
+      // 초기 로드 이후에는 이미 스크롤이 설정되었으므로 무시
+      return;
+    }
+
+    if (shouldScrollToBottomRef.current) {
+      if (chatContainerRef.current) {
+        chatContainerRef.current.scrollTop =
+          chatContainerRef.current.scrollHeight;
+      }
+      shouldScrollToBottomRef.current = false; // 스크롤 이동 후 플래그 초기화
+    }
+  }, [messageList]);
 
   const processedMessages = processMessages(messageList, uid);
 
@@ -376,7 +555,7 @@ export default function Message({ selectedRoomId, setSelectedRoomId }) {
                       <div className="date_unRead">
                         <span className="date">2024.11.20</span>
                         <div className="unReadCnt">
-                          <span>{room.chatRoomReadCnt}</span>
+                          <span>{room.unreadCount}</span>
                         </div>
                       </div>
                     </div>
@@ -480,6 +659,8 @@ export default function Message({ selectedRoomId, setSelectedRoomId }) {
                 <ShowMoreModal
                   moreFnHandler={moreFnHandler}
                   showMoreRef={showMoreRef}
+                  uid={uid}
+                  selectedRoomId={selectedRoomId}
                 />
               ) : null}
               <img
@@ -490,7 +671,15 @@ export default function Message({ selectedRoomId, setSelectedRoomId }) {
               />
             </div>
           </div>
-          <div className="messages">
+          <div
+            className="messages"
+            ref={chatContainerRef}
+            onScroll={handleScroll}
+          >
+            {loading && <div className="chatLoading">로딩 중...</div>}
+            {!hasMore && (
+              <div className="end-message">이전 메시지가 없습니다.</div>
+            )}
             {messageList && messageList.length > 0
               ? processedMessages.map((message) => (
                   <div
@@ -577,6 +766,11 @@ export default function Message({ selectedRoomId, setSelectedRoomId }) {
               보내기
             </button>
           </div>
+          {unreadCount > 0 && (
+            <div className="unread-count">
+              {unreadCount}개의 읽지 않은 메시지가 있습니다.
+            </div>
+          )}
         </div>
       ) : (
         <div className="view noChat">
@@ -588,7 +782,7 @@ export default function Message({ selectedRoomId, setSelectedRoomId }) {
   );
 }
 
-const processMessages = (messages, currentUserId) => {
+const processMessages = (messages, currentuid) => {
   if (!messages) return;
   return messages.map((message, index) => {
     const previousMessage = messages[index - 1];
@@ -602,7 +796,7 @@ const processMessages = (messages, currentUserId) => {
       ...message,
       isFirst,
       isLast,
-      isOwnMessage: message.sender === currentUserId,
+      isOwnMessage: message.sender === currentuid,
     };
   });
 };

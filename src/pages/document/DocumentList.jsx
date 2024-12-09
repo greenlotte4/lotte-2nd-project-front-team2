@@ -14,7 +14,7 @@ import FileUploads from '../../components/document/FileUploads';
 import RenameModal from '../../components/document/ChangeName';
 import ContextMenu from '../../components/document/ContextMenu';
 import ContextFileMenu from '../../components/document/ContextFileMenu';
-import CustomAlert from '../../components/Alert';
+import CustomAlert from '../../components/document/CustomAlert';
 
 export default function DocumentList() {
     const [viewType, setViewType] = useState('box'); // Default to 'box'
@@ -35,7 +35,20 @@ export default function DocumentList() {
     const [isDetailVisible, setIsDetailVisible] = useState(false); // 상세 정보 표시 상태 추가
     const [selectedFolder, setSelectedFolder] = useState(null); // 선택된 폴더 정보 상태 추가
     const [selectedFile, setSelectedFile] = useState(null); // 선택된 폴더 정보 상태 추가
+    const [alert, setAlert] = useState({
+        isVisible: false,
+        type: "",
+        title: "",
+        message: "",
+        onConfirm: null, // 기본값은 null
+      });
+    const triggerAlert = (type, title, message) => {
+        setAlert({ isVisible: true, type, title, message});
+      };
 
+      const closeAlert = () => {
+        setAlert({ isVisible: false });
+      };
     const handleDetailToggle = (folder) => {
         console.log("handleDetailToggle",folder)
         setSelectedFile(null);
@@ -235,10 +248,90 @@ export default function DocumentList() {
     };
 
 
+    //선택 삭제
+    const [selectedFolders,setSelectedFolders] = useState([]);
+    const [selectedFiles,setSelectedFiles] = useState([]);
+    const [selectedItems, setSelectedItems] = useState({
+        folders: [],
+        files: [],
+      });
+    const [isDeleteAlertVisible, setIsDeleteAlertVisible] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false); // 삭제 진행 중 상태
+   
+    
+    // 선택 토글 함수
+    const toggleSelectItem = (e,item) => {
+        const isFolder = item.type === "folder";
+        const itemId = item.id;
+         setSelectedItems((prev) => {
+    const updatedItems = { ...prev };
+    if (e.target.checked) {
+      // 체크박스 선택
+      if (isFolder) {
+        updatedItems.folders.push(itemId);
+      } else {
+        updatedItems.files.push(itemId);
+      }
+    } else {
+      // 체크박스 선택 해제
+      if (isFolder) {
+        updatedItems.folders = updatedItems.folders.filter((id) => id !== itemId);
+      } else {
+        updatedItems.files = updatedItems.files.filter((id) => id !== itemId);
+      }
+    }
+    return updatedItems;
+  });
+    };
+    
+    // 전체 선택/해제
+    const toggleSelectAll = () => {
+        const allFolders = subFolders.map((folder) => folder.id);
+        const allFiles = files.map((file) => file.id);
+      
+        setSelectedItems((prev) => {
+          const isAllSelected =
+            prev.folders.length === allFolders.length &&
+            prev.files.length === allFiles.length;
+      
+          return isAllSelected
+            ? { folders: [], files: [] } // 전체 해제
+            : { folders: allFolders, files: allFiles }; // 전체 선택
+        });
+      };
+
+
+    const confirmDelete = async () => {
+        setIsDeleting(true); // 진행 상태 시작
+        try {
+          const response = await axiosInstance.delete("/api/drive/selected/delete",             
+            {data: selectedItems}, // 직접 전달
+          );
+      
+          if (response.status === 200) {
+            queryClient.invalidateQueries(["folderContents"]);
+            setSelectedItems([]); // 선택 상태 초기화
+          } else {
+            console.log("삭제에 실패했습니다.");
+          }
+        } catch (error) {
+          console.error("삭제 중 오류:", error);
+        } finally {
+            setIsDeleting(false); // 진행 상태 종료
+            setIsDeleteAlertVisible(false);
+        }
+      };
+      
+      const cancelDelete = () => {
+        setIsDeleteAlertVisible(false);
+      };
+
+
+
+
     //즐겨찾기
     const [folders, setFolders] = useState([]); // 폴더 데이터 관리
     const [favoritfiles , setFiles] = useState([]);
-    const [alert, setAlert] = useState(null); // 알림 상태 관리
 
     
     
@@ -257,14 +350,16 @@ export default function DocumentList() {
     });
 
 // Close Handlers
-const handleCloseFolderMenu = () => setContextMenu({ visible: false, position: { top: 0, left: 0 }, folder: null });
-const handleCloseFileMenu = () => setContextFileMenu({ visible: false, position: { top: 0, left: 0 }, file: null });
-    const contextMenuRef = useRef(null); // 메뉴 DOM 참조
-    const contextFileMenuRef = useRef(null); // 메뉴 DOM 참조
+const contextMenuRef = useRef(null); // 메뉴 DOM 참조
+const contextFileMenuRef = useRef(null); // 메뉴 DOM 참조
 
-    const handleCloseMenu = () => {
-        setContextMenu({ visible: false, position: { top: 0, left: 0 }, folder: null });
-    };
+const handleCloseMenu = () => {
+    setContextMenu({ visible: false, position: { top: 0, left: 0 }, folder: null });
+};
+const handleCloseFileMenu = () => {
+    setContextFileMenu({ visible: false, position: { top: 0, left: 0 }, file: null })
+};
+
 
     const handleContextMenu = (e, folder) => {
         e.preventDefault(); // 기본 컨텍스트 메뉴 방지
@@ -393,6 +488,7 @@ const handleCloseFileMenu = () => setContextFileMenu({ visible: false, position:
         }
     };
 
+
   
 
 
@@ -412,7 +508,7 @@ const handleCloseFileMenu = () => setContextFileMenu({ visible: false, position:
         type: 'file', // 파일 타입 추가
     }));
 
-    const maxOrder = Math.max(...subFolders.map(folder => folder.order || 0));
+    const maxOrder = subFolders.length*100;
     const fileMaxOrder =
         files.length > 0
             ? Math.max(...files.map(file => file.order || 0))
@@ -488,13 +584,19 @@ const handleCloseFileMenu = () => setContextFileMenu({ visible: false, position:
                         onClick={() => setFolder(true)}
                         className="bg-purple white w-20 h-8 rounded-md text-xs"
                     >
-                        폴더생성
+                        폴더 생성
                     </button>
                     <button
                         onClick={() => setIsOpen(true)}
                         className="bg-purple white w-20 h-8 rounded-md text-xs"
                     >
-                        파일업로드
+                        파일 업로드
+                    </button>
+                    <button
+                        onClick={() => setIsOpen(true)}
+                        className="bg-purple white w-20 h-8 rounded-md text-xs"
+                    >
+                        폴더 업로드
                     </button>
                 </div>
             </section>
@@ -561,7 +663,18 @@ const handleCloseFileMenu = () => setContextFileMenu({ visible: false, position:
                     <table className="docList mx-[20px] w-[98%]">
                     <thead className="h-[48px] bg-[#F2F4F8] sticky top-0 z-10">
                         <tr className='text-left'>
-                            <th className='pl-[20px]'><input type="checkbox"  /></th>
+                            <th className='pl-[20px]'>
+                            <input
+                                type="checkbox"
+                                onChange={toggleSelectAll}
+                                checked={
+                                  subFolders.length > 0 &&
+                                  files.length > 0 &&
+                                  selectedItems.folders.length === subFolders.length &&
+                                  selectedItems.files.length === files.length
+                                }                           
+                                />
+                            </th>
                             <th>Title</th>
                             <th>Type</th>
                             <th>Size</th>
@@ -584,7 +697,17 @@ const handleCloseFileMenu = () => setContextFileMenu({ visible: false, position:
                                 isFolder ? handleContextMenu(e, item) : handleContextFileMenu(e, item)
                               } // Wrap in a function                           
                         >
-                            <td  className='pl-[20px]'><input type="checkbox" /></td>
+                            <td  className='pl-[20px]'>
+                            <input
+                                type="checkbox"
+                                checked={
+                                    item.type === "folder"
+                                      ? selectedItems.folders.includes(item.id)
+                                      : selectedItems.files.includes(item.id)
+                                  }
+                                  onChange={(e) => toggleSelectItem(e, item)}
+                                />
+                            </td>
                             <td className='text-left'>
                             {isFolder ? (
                                 <Link to={`/document/list/${item.id}`} state={{ folderName: item.name }}>
@@ -608,12 +731,12 @@ const handleCloseFileMenu = () => setContextFileMenu({ visible: false, position:
                 </table>
                 
                 </div>
-                <button>선택삭제</button>
+                <button onClick={()=> setIsDeleteAlertVisible(true)}>선택삭제</button>
                 </>
 
             )}
 
-            <FileUploads isOpen={isOpen} onClose={() => setIsOpen(false)} folderId={folderId} maxOrder={fileMaxOrder} uid={user.uid} />
+            <FileUploads isOpen={isOpen} onClose={() => setIsOpen(false)} folderId={folderId} maxOrder={fileMaxOrder} uid={user.uid} triggerAlert={triggerAlert} />
             <NewFolder isOpen={folder} onClose={() => setFolder(false)} parentId={folderId}     maxOrder={subFolders.length} // 최대 order 값을 계산해서 전달
             />
              {/* ContextMenu 컴포넌트 */}
@@ -634,6 +757,7 @@ const handleCloseFileMenu = () => setContextFileMenu({ visible: false, position:
                     visible={contextFileMenu.visible}
                     position={contextFileMenu.position}
                     onClose={handleCloseFileMenu}
+                    isPinned={contextFileMenu.file?.isPinned}
                     file={contextFileMenu.file}
                     fileName={contextFileMenu.file?.name} // Use optional chaining to avoid errors
                     fileId={contextFileMenu.file?.id}
@@ -642,14 +766,16 @@ const handleCloseFileMenu = () => setContextFileMenu({ visible: false, position:
                     downloadHandler={downloadHandler}
                 />
 
-
-                  {alert && (
+                    {alert.isVisible
+                    ? console.log("CustomAlert 렌더링 조건 충족")
+                    : console.warn("CustomAlert 렌더링 조건 미충족")}
+                  {alert.isVisible  && (
                     <CustomAlert
                         type={alert.type}
                         title={alert.title}
                         message={alert.message}
                         confirmText="확인"
-                        onConfirm={alert.onConfirm}
+                        onConfirm={alert.onConfirm || closeAlert}
                     />
                     )}
                     {isDeleteAlert  && (
@@ -666,6 +792,29 @@ const handleCloseFileMenu = () => setContextFileMenu({ visible: false, position:
                             showCancel={true} // 취소 버튼 표시 여부
                         />
                     )}
+                    {isDeleteAlertVisible && (
+                        <CustomAlert
+                            type="warning" // success, error, warning, info 중 선택
+                            title="삭제 확인"
+                            message={`총 ${selectedItems.folders.length+selectedItems.files.length}개의 항목을 삭제하시겠습니까?`}
+                            subMessage="삭제된 항목은 복구할 수 없습니다."
+                            onConfirm={confirmDelete} // 확인 버튼 클릭 시 실행
+                            onCancel={cancelDelete} // 취소 버튼 클릭 시 실행
+                            confirmText="삭제"
+                            cancelText="취소"
+                            showCancel={true} // 취소 버튼 표시
+                        />
+                        )}
+
+                {isDeleting && (
+                    <Modal>
+                        <div className="deleting-modal">
+                            <p>삭제 진행 중입니다...</p>
+                            <p>완료될 때까지 기다려주세요.</p>
+                        </div>
+                    </Modal>
+                )}
+
 
                    
         </DocumentLayout>

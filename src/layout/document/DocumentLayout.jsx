@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import DocumentAside from "../../components/document/DocumentAside";
 import { useAuthStore } from "../../store/useAuthStore";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -9,11 +9,15 @@ import ErrorBoundary from "@/services/ErrorBoundary";
 import FileDetails from "../../components/document/FileDetails";
 import FolderDetails from "../../components/document/FolderDetails";
 
-export default function DocumentLayout({children, isDetailVisible , selectedFolder,selectedFile, parentfolder,path, uid ,closeDetailView}){
+export default function DocumentLayout({children, isDetailVisible , selectedFolder,selectedFile, parentfolder,path, uid ,closeDetailView , storageInfo}){
     console.log("유아이디!!!",uid);
     console.log("selectedFolder:", selectedFolder);    
     console.log("selectedFile:", selectedFile);
     console.log("path:", path);
+  
+
+
+
 
     const navigate = useNavigate();
 
@@ -66,10 +70,10 @@ export default function DocumentLayout({children, isDetailVisible , selectedFold
     return (<>
         <div id='document-container1'>
             <ErrorBoundary>
-            <DocumentAside />
+            <DocumentAside/>
 
-            <section className={`document-main1 ${isDetailVisible ? 'reduced' : ''}`}>
-                {children}
+            <section  className={`document-main1 ${isDetailVisible ? 'reduced' : ''}`}>
+                    {children}
             </section>
             {isDetailVisible && (
                     <section className="document-detail">

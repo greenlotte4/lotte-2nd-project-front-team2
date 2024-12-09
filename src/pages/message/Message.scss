@@ -309,10 +309,21 @@
 
   .messages {
     padding: 20px 10px;
+    box-sizing: border-box;
     overflow: scroll;
     &::-webkit-scrollbar {
       display: none;
     }
+  }
+
+  .end-message {
+    justify-self: center;
+    border-radius: 8px;
+    padding: 5px;
+    color: white;
+    background-color: rgba(0, 0, 0, 0.295);
+    text-align: center;
+    width: 260px;
   }
 
   .profile_name_preview {
@@ -520,6 +531,7 @@
     background-color: white;
     border-radius: 20px;
     padding: 10px;
+    box-sizing: border-box;
   }
 }
 
