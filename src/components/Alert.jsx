@@ -6,7 +6,7 @@ export const CustomAlert = ({ type, message, onClose ,isOpen}) => {
       const alertClass = alertStyles[type] || alertStyles.info;
       if(!isOpen) return null;
       return (
-        <div className={`fixed inset-0 flex justify-center mt-14 items-start z-50`}>
+        <div className={`fixed inset-0 flex justify-center mt-14 items-start z-[999]`}>
           <div
             className={`${alertClass} border-2 border-solid rounded-lg p-4 max-w-xs w-full`}
           >
