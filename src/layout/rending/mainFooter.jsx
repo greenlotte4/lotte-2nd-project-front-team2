@@ -26,7 +26,7 @@ export default function MainFooter(){
                     <Link to=""><img src="/images/LinkedIn.png" alt="sns-LinkedIn Logo"/></Link>
                 </section>  
             </div>
-            <p className="flex justify-center mt-20 text-gray-400 font-light"> Copyright © 2024, Made with ️ by <span>&nbsp; Prantry Technologies &nbsp;</span> Version 0.0.6-SNAPSHOT</p>
+            <p className="flex justify-center mt-20 text-gray-400 font-light"> Copyright © 2024, Made with ️ by <span>&nbsp; Prantry Technologies &nbsp;</span> Version 0.0.7-SNAPSHOT</p>
 
         </footer>
 
