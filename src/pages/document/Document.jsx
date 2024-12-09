@@ -73,6 +73,33 @@ export default function Document() {
         });
     };
 
+    //폴더 zip 다운로드 핸들러
+    const fileServerBaseUrl = `http://3.35.170.26:90/download/`;
+
+    const zipDownloadHandler = async (folder) => {
+        console.log('Selected folder for zip download:', folder); // Debugging log
+        const id = contextMenu.folderId;
+        
+        try {
+            const response = await axiosInstance.get(`/api/drive/generateZip/${id}`);
+    
+            if (response.status === 200) {
+                console.log('zip 파일 생성 성공');
+                const zipName = response.data.zipName;
+                const downloadUrl = `${fileServerBaseUrl}uploads/zip/${zipName}`;
+                const link = document.createElement('a');
+                link.href = downloadUrl;
+                link.setAttribute('download', folder.name); // 원본 파일명으로 다운로드
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            } else {
+                console.error('zip 파일 생성 실패:', response.data);
+            }
+        } catch (error) {
+            console.error('zip 파일 생성 업데이트 중 오류 발생:', error);
+        }
+    }
 
     // 폴더 및 파일 데이터 가져오기
     const { data : drives = [], isLoading, isError } = useQuery({
@@ -341,6 +368,7 @@ export default function Document() {
                                 onContextMenu={handleContextMenu}
                                 onClick={() => setActiveCard(drive.name)}
                                 folderId={drive.id}
+                                downloadHandler={zipDownloadHandler} // 수정: folder 객체 전달
                                 folder={drive}
                                 path={drive.path}
                             />
@@ -407,6 +435,7 @@ export default function Document() {
                     visible={contextMenu.visible}
                     position={contextMenu.position}
                     onClose={handleCloseMenu}
+                    downloadHandler={() => zipDownloadHandler(folder)}
                     folder={contextMenu.folder}
                     folderName={contextMenu.folderName}
                     folderId={contextMenu.folderId}

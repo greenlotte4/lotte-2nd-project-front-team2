@@ -53,6 +53,7 @@ import FAQLayout from "./layout/rending/faqLayout";
 import CustomAlert from "./components/Alert";
 import TestIndex from "./pages/test";
 import useUserStore from "./store/useUserStore";
+import Trash from "./pages/document/Trash";
 const MainIndexComponent = lazy(() => import("./components/render/main"));
 
 function App() {
@@ -209,7 +210,8 @@ function App() {
         {/* 문서작업 */}
         <Route path="/document" element={<Main />}>
           <Route index element={<Document />} />
-          <Route path="favorite" element={<Favorite />} />
+          <Route path=":dynamicPart" element={<Favorite />} />
+          <Route path="trash" element={<Trash />} />
           <Route path="list/:dynamicPart" element={<DocumentList />} />
         </Route>
 

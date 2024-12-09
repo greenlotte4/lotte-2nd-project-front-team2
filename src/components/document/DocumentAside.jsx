@@ -209,7 +209,7 @@ export default function DocumentAside(){
                 <section className="py-[0px] px-[20px] mb-10">
                     <div className='flex gap-4 items-center opacity-60 mb-[10px]'>
                         <img className='w-6 h-6' src='/images/document-star.png'></img>
-                        <Link   to={'/document/list/favorite'}
+                        <Link   to={'/document/favorite'}
                                 state={{ folderName: "즐겨찾기" }} // folder.name 전달 
                         >
                             <p>즐겨찾기</p>
@@ -217,14 +217,14 @@ export default function DocumentAside(){
                     </div>
                     <div className='flex gap-4 items-center opacity-60 mb-[10px]'>
                         <img  className='w-6 h-6' src='/images/document-recent.png'></img>
-                        <Link  to={'/document/list/latest'}
+                        <Link  to={'/document/latest'}
                                 state={{ folderName: "최근문서" }} // folder.name 전달 
                         >
                              <p>최근문서</p>
                         </Link>
                     </div><div className='flex gap-4 items-center opacity-60 mb-[10px]'>
                         <img  className='w-6 h-6' src='/images/trash.png'></img>
-                        <Link  to={'/document/list/trash'}
+                        <Link  to={'/document/trash'}
                                 state={{ folderName: "휴지통" }} // folder.name 전달 
                         >
                              <p>휴지통</p>
@@ -316,6 +316,7 @@ export default function DocumentAside(){
                 </section> */}
                 <div className='drive-modal'>
                     <NewDrive 
+                       order={folderResponse?.folderDtoList?.length}
                        isOpen={drive}
                        onClose={() => setDrive(false)}
                        text="드라이브 만들기"

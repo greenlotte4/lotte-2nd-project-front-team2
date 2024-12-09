@@ -11,6 +11,7 @@ import ContextMenu from './ContextMenu';
 export const DocumentCard1 = ({
     cnt,
     folderName,
+    setSelectedFolder,
     folderId,
     folder,
     path,
@@ -20,9 +21,14 @@ export const DocumentCard1 = ({
     updatedAt,
     onContextMenu,
     downloadHandler,
+    togglePin,
+    isFavorite,
+    setIsFavorite,
+    handleDelete
+
 }) => {
     const [isMenuOpen, setIsMenuOpen] = useState(false); // 토글 상태 관리
-    const [isAlertOpen, setIsAlertOpen] = useState(false);
+    // const [isAlertOpen, setIsAlertOpen] = useState(false);
     const queryClient = useQueryClient(); // Access query client
 
     const navigate = useNavigate();
@@ -30,29 +36,67 @@ export const DocumentCard1 = ({
     const [isRenameModalOpen, setIsRenameModalOpen] = useState(false); // RenameModal 상태
     const [newName, setNewName] = useState(folderName); // 폴더 이름 상태
     const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 }); // 메뉴 위치
-    const [isFavorite, setIsFavorite] = useState(false); // 즐겨찾기 상태
+
+    const [alert, setAlert] = useState(null); // 알림 상태 관리
+
 
     const handleFavoriteToggle = async () => {
-        setIsFavorite((prev) => !prev); // 즐겨찾기 상태 변경
+        const newFavoriteState = !isFavorite; // 새로운 상태
+        setIsFavorite(newFavoriteState); // UI 업데이트
     
         try {
             const response = await axiosInstance.put(`/api/drive/folder/${folderId}/favorite`, {
-                isFavorite: !isFavorite, // 새로운 상태를 백엔드에 전달
+                isPinned: newFavoriteState ? 1 : 0, // 백엔드에 맞는 값으로 변환하여 전송
             });
     
             if (response.status === 200) {
                 console.log('즐겨찾기 상태 업데이트 성공');
+                if(response.data.result === 1){
+                    setAlert({
+                        type: 'success',
+                        title: '즐겨찾기 성공',
+                        message: `폴더 "${folderName}"가 즐겨찾기에 추가되었습니다.`,
+                        onConfirm: () => setAlert(null), // 알림 닫기
+                    });
+                    queryClient.invalidateQueries(['favorite'])
+                }else{
+                    setAlert({
+                        type: 'success',
+                        title: '즐겨찾기 해제성공',
+                        message: `폴더 "${folderName}"가 즐겨찾기 해제되었습니다.`,
+                        onConfirm: () => setAlert(null), // 알림 닫기
+                    });
+                    queryClient.invalidateQueries(['favorite'])
+
+                }
+                
             } else {
                 console.error('즐겨찾기 상태 업데이트 실패:', response.data);
+                setAlert({
+                    type: 'error',
+                    title: '즐겨찾기 실패',
+                    message: '즐겨찾기 상태를 업데이트하지 못했습니다. 다시 시도해주세요.',
+                    onConfirm: () => setAlert(null),
+                });
+                setIsFavorite(!newFavoriteState); // 실패 시 상태 원복
             }
         } catch (error) {
             console.error('즐겨찾기 상태 업데이트 중 오류 발생:', error);
-            setIsFavorite((prev) => !prev); // 실패 시 상태를 원복
+            setAlert({
+                type: 'error',
+                title: '오류 발생',
+                message: '즐겨찾기 상태를 업데이트하는 중 오류가 발생했습니다.',
+                onConfirm: () => setAlert(null),
+            });
+            setIsFavorite(!newFavoriteState); // 실패 시 상태 원복
         }
     };
 
     const toggleMenu = (e) => {
         e.preventDefault(); // 기본 컨텍스트 메뉴 방지
+        console.log('Folder for context menu:', folder); // 디버깅용
+        setSelectedFolder(folder); // Set the selected folder
+
         setMenuPosition({ top: e.clientY, left: e.clientX }); // 클릭 위치 기반으로 위치 설정
         setIsMenuOpen(true); // 메뉴 열기
     };
@@ -95,58 +139,59 @@ export const DocumentCard1 = ({
         return () => document.removeEventListener('click', handleClickOutside);
     }, []); */
 
-    const handleDelete = () => {
-        console.log('Delete folder:', folderId);
-        setIsAlertOpen(true); // CustomAlert 열기
+    // const handleDelete = () => {
+    //     console.log('Delete folder:', folderId);
+    //     setIsAlertOpen(true); // CustomAlert 열기
 
-        // 폴더 삭제 로직
-    };
+    //     // 폴더 삭제 로직
+    // };
 
-    const handleConfirm = async() => {
-        console.log('Deleting folder:', folderId);
-        setIsAlertOpen(false); // CustomAlert 닫기
+    // const handleConfirm = async() => {
+    //     console.log('Deleting folder:', folderId);
+    //     setIsAlertOpen(false); // CustomAlert 닫기
     
-        // 폴더 삭제 로직
-        try {
-            // 실제 삭제 API 호출
-           const response =  await axiosInstance.delete(`/api/drive/folder/delete/${folderId}`,
-            { params: { path } } // 쿼리 매개변수로 path 전달
-           );
-           if (response.status === 200) {
-            queryClient.invalidateQueries(['folderContents']); // Replace with the relevant query key
-            alert('휴지통으로 이동  성공');
-          } else {
-            console.error('삭제 실패:', error);
-            alert('폴더 삭제에 실패했습니다. 다시 시도해주세요.');
-          }
-        } catch (error) {
-            console.error('폴더 삭제 중 오류 발생:', error);
+    //     // 폴더 삭제 로직
+    //     try {
+    //         // 실제 삭제 API 호출
+    //        const response =  await axiosInstance.delete(`/api/drive/folder/delete/${folderId}`,
+    //         { params: { path } } // 쿼리 매개변수로 path 전달
+    //        );
+    //        if (response.status === 200) {
+    //         queryClient.invalidateQueries(['folderContents']); // Replace with the relevant query key
+    //         alert('휴지통으로 이동  성공');
+    //       } else {
+    //         console.error('삭제 실패:', error);
+    //         alert('폴더 삭제에 실패했습니다. 다시 시도해주세요.');
+    //       }
+    //     } catch (error) {
+    //         console.error('폴더 삭제 중 오류 발생:', error);
 
-        }
-                /* .then((response) => {
-                    if (response.status === 200) {
-                        alert('폴더가 삭제되었습니다.');
-                        // QueryClient로 폴더 목록 업데이트
-                        queryClient.invalidateQueries(['folderContents']);
-                    }
-                })
-                .catch((error) => {
-                    console.error('삭제 실패:', error);
-                    alert('폴더 삭제에 실패했습니다. 다시 시도해주세요.');
-                });
-        } catch (error) {
-            console.error('폴더 삭제 중 오류 발생:', error);
-        } */
-    };
+    //     }
+    //             /* .then((response) => {
+    //                 if (response.status === 200) {
+    //                     alert('폴더가 삭제되었습니다.');
+    //                     // QueryClient로 폴더 목록 업데이트
+    //                     queryClient.invalidateQueries(['folderContents']);
+    //                 }
+    //             })
+    //             .catch((error) => {
+    //                 console.error('삭제 실패:', error);
+    //                 alert('폴더 삭제에 실패했습니다. 다시 시도해주세요.');
+    //             });
+    //     } catch (error) {
+    //         console.error('폴더 삭제 중 오류 발생:', error);
+    //     } */
+    // };
     
-    const handleCancel = () => {
-        setIsAlertOpen(false); // CustomAlert 닫기
-    };
+    // const handleCancel = () => {
+    //     setIsAlertOpen(false); // CustomAlert 닫기
+    // };
 
     const handleShare = () => {
         console.log('Share folder:', folderId);
         // 폴더 공유 로직
     };
+    
 
     return (
         <div className="document-card1 flex flex-row items-center z-1"  draggable
@@ -165,6 +210,8 @@ export const DocumentCard1 = ({
                         cursor: 'grab',
                         position: 'relative', // Ensure this is relative for child absolute positioning
                     }}
+                    onClick={() => setSelectedFolder(folder)} // 폴더 선택
+
         >
                
             <div className=" flex flex-row mr-[20px]">
@@ -191,15 +238,27 @@ export const DocumentCard1 = ({
                 />
             {isMenuOpen && (
                  <ContextMenu
+                    type={"folder"}
                     visible={true}
                     position={menuPosition}
                     folder={folder}
-                    folderName={folderName}
-                    folderId={folderId}
+                    name={folderName}
+                    Id={folderId}
                     path={path}
-                    downloadHandler={downloadHandler}
-                />
+                    downloadHandler={(folderId) => downloadHandler(folderId)} // Pass selectedFolder
+                    // handleDelete={handleDelete}
+                    />
             )}
+
+            {alert && (
+            <CustomAlert
+                type={alert.type}
+                title={alert.title}
+                message={alert.message}
+                confirmText="확인"
+                onConfirm={alert.onConfirm}
+            />
+             )}
                        
 
 

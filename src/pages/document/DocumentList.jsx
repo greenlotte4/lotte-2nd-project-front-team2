@@ -13,6 +13,8 @@ import { Modal } from '../../components/Modal';
 import FileUploads from '../../components/document/FileUploads';
 import RenameModal from '../../components/document/ChangeName';
 import ContextMenu from '../../components/document/ContextMenu';
+import ContextFileMenu from '../../components/document/ContextFileMenu';
+import CustomAlert from '../../components/Alert';
 
 export default function DocumentList() {
     const [viewType, setViewType] = useState('box'); // Default to 'box'
@@ -21,6 +23,7 @@ export default function DocumentList() {
     const [editing, setEditing] = useState(false); // 이름 변경 모드
     const [newFolderName, setNewFolderName] = useState(''); // 새로운 폴더 이름
     const [isRenameModalOpen, setIsRenameModalOpen] = useState(false); // 모달 열림 상태
+    const [isFavorite,setIsFavorite] = useState(0);
 
     const location = useLocation();
     const user = useUserStore((state) => state.user);
@@ -31,9 +34,12 @@ export default function DocumentList() {
 
     const [isDetailVisible, setIsDetailVisible] = useState(false); // 상세 정보 표시 상태 추가
     const [selectedFolder, setSelectedFolder] = useState(null); // 선택된 폴더 정보 상태 추가
+    const [selectedFile, setSelectedFile] = useState(null); // 선택된 폴더 정보 상태 추가
 
     const handleDetailToggle = (folder) => {
         console.log("handleDetailToggle",folder)
+        setSelectedFile(null);
+
         setSelectedFolder(folder); // 선택된 폴더 정보 설정
         setIsDetailVisible(!isDetailVisible);
     };
@@ -41,6 +47,20 @@ export default function DocumentList() {
     const closeDetailView = () => {
         setIsDetailVisible(false);
         setSelectedFolder(null);
+        setSelectedFile(null)
+      };
+
+      const handleDetailFileToggle = (file) => {
+        console.log("handleDetailFileToggle",file)
+        setSelectedFolder(null);
+    
+        setSelectedFile(file); // 선택된 폴더 정보 설정
+        setIsDetailVisible(!isDetailVisible);
+    };
+
+    const closeDetailFileView = () => {
+        setIsDetailVisible(false);
+        setSelectedFile(null);
       };
 
 
@@ -78,6 +98,8 @@ export default function DocumentList() {
         staleTime: 300000, // 데이터가 5분 동안 신선하다고 간주
     });
 
+
+
     // 폴더 이름 변경 Mutation
     const renameFolderMutation = useMutation({
         mutationFn: async (newName) => {
@@ -92,6 +114,7 @@ export default function DocumentList() {
             setEditing(false);
         },
     });
+
     // 파일 업로드 Mutation
     const uploadFileMutation = useMutation({
         mutationFn: async (files) => {
@@ -180,7 +203,7 @@ export default function DocumentList() {
         let orderAfter = 0;
     
         if (position === "before") {
-            // 타겟 폴더 이전의 폴더와 타겟 폴더 사이의 값 계산
+            // 타겟 폴더 이전 폴더와 타겟 폴더 사이의 값 계산
             if (targetIndex > 0) {
                 orderBefore = subFolders[targetIndex - 1]?.order || 0;
             }
@@ -210,19 +233,39 @@ export default function DocumentList() {
         // 드래그 상태 초기화
         setDraggedFolder(null);
     };
+
+
+    //즐겨찾기
+    const [folders, setFolders] = useState([]); // 폴더 데이터 관리
+    const [favoritfiles , setFiles] = useState([]);
+    const [alert, setAlert] = useState(null); // 알림 상태 관리
+
     
     
+    // Folder Context Menu State
     const [contextMenu, setContextMenu] = useState({
         visible: false,
         position: { top: 0, left: 0 },
         folder: null,
     });
+
+    // File Context Menu State
+    const [contextFileMenu, setContextFileMenu] = useState({
+        visible: false,
+        position: { top: 0, left: 0 },
+        file: null,
+    });
+
+// Close Handlers
+const handleCloseFolderMenu = () => setContextMenu({ visible: false, position: { top: 0, left: 0 }, folder: null });
+const handleCloseFileMenu = () => setContextFileMenu({ visible: false, position: { top: 0, left: 0 }, file: null });
     const contextMenuRef = useRef(null); // 메뉴 DOM 참조
+    const contextFileMenuRef = useRef(null); // 메뉴 DOM 참조
 
     const handleCloseMenu = () => {
         setContextMenu({ visible: false, position: { top: 0, left: 0 }, folder: null });
     };
-    
+
     const handleContextMenu = (e, folder) => {
         e.preventDefault(); // 기본 컨텍스트 메뉴 방지
         setContextMenu({
@@ -230,10 +273,24 @@ export default function DocumentList() {
             position: { top: e.clientY, left: e.clientX },
             folder,
             folderId : folder.id,
+            isPinned : folder.isPinned,
             folderName: folder.name,
             path: folder.path,
         });
     };
+
+    const handleContextFileMenu = (e, file) => {
+        e.preventDefault(); // 기본 컨텍스트 메뉴 방지
+        setContextFileMenu({
+            visible: true,
+            position: { top: e.clientY, left: e.clientX },
+            file,
+            fileId : file.id,
+            fileName: file.name,
+            path: file.path,
+        });
+    };
+
 
     
     
@@ -262,11 +319,15 @@ export default function DocumentList() {
 
     //파일 다운로드 핸들러
     const downloadHandler = (file) => {
+        if (!file || !file.id) {
+            console.error('Invalid file:', file);
+            return;
+        }
         const downloadUrl = `${fileServerBaseUrl}${file.path}`;
     
         // 다운로드 요청
        /*  window.open(downloadUrl, file.savedName); */
-        // 가상의 링크 생성
+        // 가상의 크 생성
         const link = document.createElement('a');
         link.href = downloadUrl;
         link.setAttribute('download', file.originalName); // 원본 파일명으로 다운로드
@@ -278,8 +339,11 @@ export default function DocumentList() {
 
     //폴더 zip 다운로드 핸들러
     const zipDownloadHandler = async (folder) => {
+        console.log('Selected folder for zip download:', folder); // Debugging log
+        const id = contextMenu.folderId;
+        
         try {
-            const response = await axiosInstance.get(`/api/drive/generateZip/${folderId}`);
+            const response = await axiosInstance.get(`/api/drive/generateZip/${id}`);
     
             if (response.status === 200) {
                 console.log('zip 파일 생성 성공');
@@ -292,12 +356,42 @@ export default function DocumentList() {
                 link.click();
                 document.body.removeChild(link);
             } else {
-                console.error('zip 파일 생성 실패:', response.data);
+                console.error('zip 파��� 생성 실패:', response.data);
             }
         } catch (error) {
             console.error('zip 파일 생성 업데이트 중 오류 발생:', error);
         }
     }
+
+    //폴더 삭제
+    const [isDeleteAlert, setIsDeleteAlertOpen] = useState(false);
+
+    const handleDelete = () => {
+        console.log("삭제요청 들어옴 ")
+        setIsDeleteAlertOpen(true); // CustomAlert 표시
+        handleCloseMenu(); // ContextMenu 닫기
+    };
+
+    const handleCancel = () => {
+        setIsDeleteAlertOpen(false);
+    };
+
+
+    const handleDeleteConfirm = async() => {
+        try {
+            const response = await axiosInstance.delete(`/api/drive/folder/delete/${contextMenu.folderId}`,
+                { params: { path: contextMenu.path } }
+            );
+            if (response.status === 200) {
+                queryClient.invalidateQueries(['folderContents']);
+                alert('휴지통으로 이동 성공');
+            }
+        } catch (error) {
+            console.error('폴더 삭제 중 오류 발생:', error);
+        } finally {
+            setIsDeleteAlertOpen(false);
+        }
+    };
 
   
 
@@ -326,12 +420,19 @@ export default function DocumentList() {
 
     console.log("fileMaxorder",fileMaxOrder);
 
+    useEffect(() => {
+        console.log("isDeleteAlert 상태 변경:", isDeleteAlert);
+    }, [isDeleteAlert]);
+
     
     if (isLoading) return <div>Loading...</div>;
     if (isError) return <div>Error loading folder contents.</div>;
 
     return (
-        <DocumentLayout isDetailVisible={isDetailVisible} selectedFolder={selectedFolder} uid={data.uid} closeDetailView={closeDetailView}>
+        <DocumentLayout isDetailVisible={isDetailVisible} selectedFolder={selectedFolder} selectedFile={selectedFile} path={location.pathname} parentfolder={location.state?.folderName} uid={data.uid} closeDetailView={closeDetailView}>
+           
+    
+           
             <section className="flex gap-4 items-center">
                 {editing ? (
                     <input
@@ -377,7 +478,7 @@ export default function DocumentList() {
                                  style={{
                                     filter: viewType === 'box'
                                         ? 'invert(29%) sepia(96%) saturate(748%) hue-rotate(180deg) brightness(89%) contrast(101%)'
-                                        : 'invert(0%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(0%) contrast(0%)', // 블랙 필터
+                                        : 'invert(0%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(0%) contrast(0%)', // 블랙 필��
                                 }}
                                 src='/images/document-menu.png' />
                             </button>
@@ -400,75 +501,110 @@ export default function DocumentList() {
 
             {viewType === 'box' ? (
                 <div className='h-[600px] mx-[30px] w-[97%] overflow-scroll scrollbar-none'>
-                    <div className='sticky pb-[5px] h-[26px] my-[10px] text-[15px] top-0 z-10 bg-white'>폴더</div>
-                    <section  className="flex items-center flex-wrap relative"
-                         >
-                        {subFolders.map((folder) => (
-                            <DocumentCard1
+                   {subFolders?.length === 0 || subFolders === null ? (
+                       <div></div>
+                        ) : (
+                        <>
+                            <div className='sticky pb-[5px] h-[26px] my-[10px] text-[15px] top-0 z-10 bg-white'>폴더</div>
+                            <section className="flex items-center flex-wrap relative">
+                            {subFolders.map((folder) => (
+                                <DocumentCard1
                                 key={folder.id}
                                 folder={folder}
                                 folderId={folder.id}
                                 folderName={folder.name}
+                                setSelectedFolder={setSelectedFolder}
                                 path={folder.path}
                                 cnt={folder.cnt}
                                 updatedAt={folder.updatedAt}
+                                isFavorite={folder.isPinned}
+                                setIsFavorite={setIsFavorite}
                                 onDragStart={handleDragStart}
                                 onDrop={(e) => handleDrop(folder, "before")}
                                 onDragOver={handleDragOver}
                                 onContextMenu={handleContextMenu}
-                                downloadHandler={() => zipDownloadHandler(folder)}
-                            />
-                        ))}
-                    </section>
-                    <div className='text-[15px] my-[20px]'>file</div>
-                    <section className="inline-block ">
-                        {files.map((file) => (
-                            <DocumentCard2                                 
-                                onContextMenu={(e) => handleContextMenu(e, folder)}
-                                key={file.id} 
-                                file={file} 
-                                fileName={file.originalName} 
-                                path={file.path} 
-                                savedName={file.savedName}
-                                downloadHandler={() => downloadHandler(file)}
+                                downloadHandler={zipDownloadHandler} // 수정: folder 객체 전달
+                                onClick={() => {
+                                    console.log('Selected folder:', folder);
+                                    setSelectedFolder(folder);
+                                }}
                                 />
-                        ))}
-                    </section>
+                            ))}
+                            </section>
+                        </>
+                    )}
+                   {files?.length ===0 || files===null? (
+                                            <div></div>
+
+                    )
+                   :(<>
+                         <div className='text-[15px] my-[20px]'>file</div>
+                            <section className="inline-block ">
+                                {files.map((file) => (
+                                    <DocumentCard2                                 
+                                        onContextMenu={handleContextFileMenu}
+                                        key={file.id} 
+                                        file={file} 
+                                        fileName={file.originalName} 
+                                        path={file.path} 
+                                        savedName={file.savedName}
+                                        setSelectedFile={setSelectedFile}
+                                        downloadHandler={() => downloadHandler(file)}
+                                        />
+                                ))}
+                            </section>
+                   </>)}
+                   
                 </div>
             ) : (<>
                 <div  className="h-[570px] overflow-scroll scrollbar-none">
                     <table className="docList mx-[20px] w-[98%]">
                     <thead className="h-[48px] bg-[#F2F4F8] sticky top-0 z-10">
-                        <tr>
-                            <th><input type="checkbox"  /></th>
+                        <tr className='text-left'>
+                            <th className='pl-[20px]'><input type="checkbox"  /></th>
                             <th>Title</th>
                             <th>Type</th>
                             <th>Size</th>
                             <th>Last Modified</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        {[...subFolders, ...files].map((item) => (
-                             <tr
-                                key={folder.id}
-                                draggable
-                                onDragStart={() => handleDragStart(folder)} // 드래그 시작 핸들러
-                                onDragOver={(e) => handleDragOver(e)} // 드래그 오버 핸들러
-                                onDrop={(e) => handleDrop(folder, "before")} // 드롭 시 동작 (리스트에서는 기본적으로 "before")
-                                className="draggable-row"
-                            >
-                                <td><input type="checkbox"  /></td>
-                                <td>
-                                    <Link to={`/document/list/${item.id}`} state={{ folderName: item.name }}>
-                                        {item.name}
-                                    </Link>
-                                </td>
-                                <td>{item.type}</td>
-                                <td>{item.size || '-'}</td>
-                                <td>{item.lastModified || 'Unknown'}</td>
-                            </tr>
-                        ))}
-                    </tbody>
+                    <tbody >
+                    {[...subFolders, ...files].map((item) => {
+                        console.log("아이템!!",item);
+                        const isFolder = item.type === "folder"; // Assume `type` differentiates folder/file
+                        return (
+                        <tr 
+                            key={item.id}
+                            draggable
+                            onDragStart={() => handleDragStart(item)} // 드래그 시작 핸들러
+                            onDragOver={(e) => handleDragOver(e)} // 드래그 오버 핸들러
+                            onDrop={(e) => handleDrop(item, "before")} // 드롭 시 동작 (리스트에서는 기본적으로 "before")
+                            className="draggable-row text-left"
+                            onContextMenu={(e) =>
+                                isFolder ? handleContextMenu(e, item) : handleContextFileMenu(e, item)
+                              } // Wrap in a function                           
+                        >
+                            <td  className='pl-[20px]'><input type="checkbox" /></td>
+                            <td className='text-left'>
+                            {isFolder ? (
+                                <Link to={`/document/list/${item.id}`} state={{ folderName: item.name }}>
+                                📁 {item.name} {/* Add a folder icon */}
+                                </Link>
+                            ) : (
+                                <span>
+                                📄 {item.originalName} {/* Add a file icon */}
+                                </span>
+                            )}
+                            </td>
+                            <td>{isFolder ? "Folder" : "File"}</td>
+                            <td>{item.size || "-"}</td>
+                            <td  className='w-[2
+                            00px]'>{item.updatedAt || "Unknown"}</td>
+                        </tr>
+                        );
+                    })}
+                                        
+                </tbody>
                 </table>
                 
                 </div>
@@ -478,7 +614,7 @@ export default function DocumentList() {
             )}
 
             <FileUploads isOpen={isOpen} onClose={() => setIsOpen(false)} folderId={folderId} maxOrder={fileMaxOrder} uid={user.uid} />
-            <NewFolder isOpen={folder} onClose={() => setFolder(false)} parentId={folderId}     maxOrder={maxOrder} // 최대 order 값을 계산해서 전달
+            <NewFolder isOpen={folder} onClose={() => setFolder(false)} parentId={folderId}     maxOrder={subFolders.length} // 최대 order 값을 계산해서 전달
             />
              {/* ContextMenu 컴포넌트 */}
              <ContextMenu
@@ -486,14 +622,52 @@ export default function DocumentList() {
                     position={contextMenu.position}
                     onClose={handleCloseMenu}
                     folder={contextMenu.folder}
+                    isPinned={contextMenu.isPinned}
                     folderName={contextMenu.folderName}
                     folderId={contextMenu.folderId}
                     path={contextMenu.path}
                     onDetailToggle={() => handleDetailToggle(contextMenu.folder)} // 상세 정보 토글 함수 전달
-                    downloadHandler={() => zipDownloadHandler(folder)}
+                    downloadHandler={() => zipDownloadHandler(contextMenu.folder)}
 
                 />
-            
+              <ContextFileMenu
+                    visible={contextFileMenu.visible}
+                    position={contextFileMenu.position}
+                    onClose={handleCloseFileMenu}
+                    file={contextFileMenu.file}
+                    fileName={contextFileMenu.file?.name} // Use optional chaining to avoid errors
+                    fileId={contextFileMenu.file?.id}
+                    path={contextFileMenu.file?.path}
+                    onDetailToggle={() => handleDetailFileToggle(contextFileMenu.file)}
+                    downloadHandler={downloadHandler}
+                />
+
+
+                  {alert && (
+                    <CustomAlert
+                        type={alert.type}
+                        title={alert.title}
+                        message={alert.message}
+                        confirmText="확인"
+                        onConfirm={alert.onConfirm}
+                    />
+                    )}
+                    {isDeleteAlert  && (
+                                
+                        <CustomAlert
+                            type="warning" // success, error, warning, info 중 선택
+                            title="확인"
+                            message="폴더를 삭제하시겠습니까?"
+                            subMessage="해당 폴더 삭제시 폴더 안의 파일 까지 삭제됩니다."
+                            onConfirm={handleDeleteConfirm} // 확인 버튼 클릭 핸들러
+                            onCancel={handleCancel} // 취소 버튼 클릭 핸들러
+                            confirmText="예"
+                            cancelText="아니오"
+                            showCancel={true} // 취소 버튼 표시 여부
+                        />
+                    )}
+
+                   
         </DocumentLayout>
     );
 }
