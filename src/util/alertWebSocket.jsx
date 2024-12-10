@@ -2,16 +2,15 @@ import { useEffect, useState, useCallback } from 'react';
 import { Client } from '@stomp/stompjs';
 import axiosInstance from '@/services/axios.jsx';
 
-const useWebSocket = ({ initialDestination, initialMessage, initialCalendarId, initialUserId }) => {
+const alertWebSocket = ({ initialDestination, initialMessage, initialCalendarId, initialUserId }) => {
     const [destination, setDestination] = useState(initialDestination);
     const [sendMessage, setSendMessage] = useState(initialMessage);
-    const [calendarIds, setCalendarIds] = useState(initialCalendarId || []);
     const [isConnected, setIsConnected] = useState(false);
     const [receiveMessage, setReceiveMessage] = useState([]);
     const [userId, setUserId] = useState(initialUserId);
 
     const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
-    const wsUrl = "ws://" + apiBaseUrl.replace("http://", "") + "/ws-calendar";
+    const wsUrl = "ws://" + apiBaseUrl.replace("http://", "") + "/ws-alert";
 
     const [stompClient, setStompClient] = useState(null);
 
@@ -28,10 +27,9 @@ const useWebSocket = ({ initialDestination, initialMessage, initialCalendarId, i
             brokerURL: wsUrl,
             connectHeaders: headers,
             debug: function (str) {
+                console.log(str)
             },
-            reconnectDelay: 5000,
             onConnect: () => {
-                console.log('WebSocket connected');
                 setIsConnected(true);
                 updateSubscriptions(client);
             },
@@ -43,45 +41,29 @@ const useWebSocket = ({ initialDestination, initialMessage, initialCalendarId, i
     }, [wsUrl]);
 
     const updateSubscriptions = (client) => {
-        if (calendarIds && calendarIds.length > 0) {
-            calendarIds.forEach((calendarId) => {
-                // 이미 구독하고 있는 topic에 대한 연결을 끊는다
-                client.unsubscribe(`/topic/calendar/${calendarId}`);
-            });
-        }
-    
         if (userId) {
-            // 이전에 해당 userId에 대한 구독도 끊는다
-            client.unsubscribe(`/topic/calendar/user/${userId}`);
-        }
-    
-        // 새로운 구독 시작
-        if (calendarIds && calendarIds.length > 0) {
-            calendarIds.forEach((calendarId) => {
-                client.subscribe(`/topic/calendar/${calendarId}`, (message) => {
-                    try {
-                        const response = JSON.parse(message.body);
-                        console.log(response);
-                        setReceiveMessage(response);
-                    } catch (error) {
-                        console.error("Failed to parse message:", error);
-                    }
-                });
-            });
-        }
-    
-        if (userId) {
-            client.subscribe(`/topic/calendar/user/${userId}`, (message) => {
+            client.unsubscribe("/topic/alert")
+            client.subscribe(`/topic/alert`, (message) => {
                 try {
                     const response = JSON.parse(message.body);
-                    console.log(response);
-                    setReceiveMessage(response);
+                    console.log("=====================")
+                    console.log(userId)
+                    const filteredResponses = response.filter(item => {
+                        // userIds 배열이 존재하고, userId가 포함되어 있는지 확인
+                        const userIdsArray = item.userIds;
+                        return userIdsArray && userIdsArray.includes(userId.toString());
+                    });
+                    
+                    // 결과 출력
+                    console.log(filteredResponses);
+                    
+                    console.log("=====================")
+                    setReceiveMessage(filteredResponses);
                 } catch (error) {
                     console.error("Failed to parse user message:", error);
                 }
             });
         }
-
         if (destination && sendMessage) {
             client.publish({
                 destination,
@@ -108,7 +90,8 @@ const useWebSocket = ({ initialDestination, initialMessage, initialCalendarId, i
         if (stompClient && isConnected) {
             updateSubscriptions(stompClient);
         }
-    }, [calendarIds, userId, isConnected, stompClient]);
+    }, [userId, isConnected, stompClient]);
+
 
     const sendWebSocketMessage = useCallback((message, path) => {
         if (isConnected && stompClient) {
@@ -121,28 +104,22 @@ const useWebSocket = ({ initialDestination, initialMessage, initialCalendarId, i
         }
     }, [stompClient, isConnected]);
 
-
-    const updateCalendarIds = (newIds) => {
-        setCalendarIds(newIds);
-    };
-
     const updateUserId = (newId) => {
         setUserId(newId);
     };
+
+    
 
     return {
         stompClient,
         setDestination,
         setSendMessage,
-        setCalendarIds,
-        calendarIds,
         isConnected,
         receiveMessage,
         sendWebSocketMessage,
-        updateCalendarIds,
         updateUserId,
         initializeStompClient
     };
 };
 
-export default useWebSocket;
+export default alertWebSocket;

@@ -1,5 +1,6 @@
 import { Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import "@/App.scss";
+import axiosInstance from '@/services/axios.jsx'
 import Index from "@/pages";
 import Main from "@/layout/layout/Main.jsx";
 import Login from "@/pages/user/Login.jsx";
@@ -54,6 +55,8 @@ import CustomAlert from "./components/Alert";
 import TestIndex from "./pages/test";
 import useUserStore from "./store/useUserStore";
 import Trash from "./pages/document/Trash";
+import alertWebSocket from "./util/alertWebSocket";
+import { useMutation, useQuery } from "@tanstack/react-query";
 const MainIndexComponent = lazy(() => import("./components/render/main"));
 
 function App() {
@@ -67,7 +70,7 @@ function App() {
   const [customAlert, setCustomAlert] = useState(false);
   const [customAlertType, setCustomAlertType] = useState("");
   const [customAlertMessage, setCustomAlertMessage] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [isToken, setIsToken] = useState(false);
 
   const [selectedRoomId, setSelectedRoomId] = useState("");
 
@@ -93,24 +96,78 @@ function App() {
       const tokenExpired = isTokenExpired();
 
       if (tokenExpired) {
-        const refreshToken = await useAuthStore.getState().getRefreshToken();
+        const refreshToken = await refreshAccessToken();
         if (!refreshToken) {
-          setCustomAlert(true);
-          setCustomAlertMessage(
-            "로그인 세션이 만료되었습니다. 다시 로그인해주세요."
-          );
-          setCustomAlertType("error");
-          setTimeout(() => {
-            setCustomAlert(false);
-            logout();
-            navigate("/user/login");
-          }, 2000);
+          console.error("액세스 토큰 재발급 실패함. Redirecting to login...");
+          alert("로그인 세션이 만료되었습니다. 다시 로그인해주세요."); 
+          logout();
+          navigate("/user/login");
+        } else {
+          setIsToken(true)
         }
+
+      } else {
+        setIsToken(true)
       }
+      
     };
 
     checkToken();
   }, [location, isTokenExpired, refreshAccessToken, navigate]);
+
+  const {data : initialIds2 , isLoading : isLoadingInitialIds2, isError : isErrorInitialIds2 , refetch : refetchInitialIds2} =
+        useQuery({
+            queryKey: ['initial-ids2'],
+            queryFn : async () => {
+                try {
+                    const resp = await axiosInstance.get("/api/user/id")
+                    return resp.data
+                } catch (err) {
+                    return err
+                }
+            },
+            enabled : true,
+        })
+
+    useEffect(()=>{
+        if(!isLoadingInitialIds2 && !isErrorInitialIds2 && initialIds2){
+            updateUserId(initialIds2)
+            console.log(initialIds2)
+        }
+        
+    },[initialIds2])
+
+
+
+  const {updateUserId , receiveMessage } = alertWebSocket({
+
+  });
+
+  useEffect(()=>{
+    if(Array.isArray(receiveMessage)&&receiveMessage.length>0){
+      setCustomAlert(true)
+      setCustomAlertMessage(receiveMessage[0].title)
+      postAlarm.mutateAsync();
+      if(receiveMessage[0].type==3){
+        setCustomAlertType("error")
+      } else if(receiveMessage[0].type==2){
+        setCustomAlert("warning")
+      } else if(receiveMessage[0].type==1){
+        setCustomAlert("info")
+      }
+    }
+  },[receiveMessage])
+
+  const postAlarm = useMutation({
+    mutationFn : async () => {
+      try {
+        const resp = await axiosInstance.post("/api/alert",receiveMessage[0])
+        return resp.data
+      } catch (err) {
+        return err
+      }
+    },
+  })
 
   return (
     <div id="app-container m-0 xl2:mx-auto">
