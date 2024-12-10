@@ -209,14 +209,12 @@ export default function ContextFileMenu({
                 if(response.data){
                     queryClient.invalidateQueries(['folderContents']); // Replace with the relevant query key
                     queryClient.invalidateQueries(['trash']); // Replace with the relevant query key
-                    alert('복구 성공');
                 }else{
-                    alert('복구실패');
+                    console.error('삭제 실패:', error);
                 }
 
           } else {
             console.error('복구 실패:', error);
-            alert('폴더 복구에 실패했습니다. 다시 시도해주세요.');
           }
         } catch (error) {
             console.error('폴더 복구 중 오류 발생:', error);
@@ -243,10 +241,8 @@ export default function ContextFileMenu({
            if (response.status === 200) {
             queryClient.invalidateQueries(['folderContents']); // Replace with the relevant query key
             queryClient.invalidateQueries(['trash']);
-            alert('삭제 성공');
           } else {
             console.error('삭제 실패:', error);
-            alert('폴더 삭제에 실패했습니다. 다시 시도해주세요.');
           }
         } catch (error) {
             console.error('폴더 삭제 중 오류 발생:', error);

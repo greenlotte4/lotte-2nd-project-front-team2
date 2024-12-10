@@ -15,6 +15,8 @@ import RenameModal from '../../components/document/ChangeName';
 import ContextMenu from '../../components/document/ContextMenu';
 import ContextFileMenu from '../../components/document/ContextFileMenu';
 import CustomAlert from '../../components/document/CustomAlert';
+import MyDropzone from '../../components/DropZone';
+import useStorageStore from '../../store/useStorageStore';
 
 export default function DocumentList() {
     const [viewType, setViewType] = useState('box'); // Default to 'box'
@@ -128,19 +130,6 @@ export default function DocumentList() {
         },
     });
 
-    // 파일 업로드 Mutation
-    const uploadFileMutation = useMutation({
-        mutationFn: async (files) => {
-            const formData = new FormData();
-            files.forEach((file) => formData.append('files', file));
-            await axiosInstance.post(`/api/drive/upload?folderId=${folderId}`, formData, {
-                headers: { 'Content-Type': 'multipart/form-data' },
-            });
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['folderContents', folderId, user.uid] });
-        },
-    });
 
     // 이름 변경 핸들러
     const handleRename = () => {
@@ -389,21 +378,7 @@ const handleCloseFileMenu = () => {
 
     
     
-    
 
-    // 드래그 앤 드롭 업로드 핸들러
-    const handleFileDrop = useCallback(
-        (event) => {
-            event.preventDefault();
-            const files = Array.from(event.dataTransfer.files);
-            if (files.length === 0) {
-                console.error('No files dropped');
-                return;
-            }
-            uploadFileMutation.mutate(files);
-        },
-        [uploadFileMutation]
-    );
 
     const handleKeyDown = (e) => {
         if (e.key === 'Enter') {
@@ -508,11 +483,8 @@ const handleCloseFileMenu = () => {
         type: 'file', // 파일 타입 추가
     }));
 
-    const maxOrder = subFolders.length*100;
-    const fileMaxOrder =
-        files.length > 0
-            ? Math.max(...files.map(file => file.order || 0))
-            : 0; // 기본값을 0으로 설정
+    const folderMaxOrder = subFolders.length;
+    const fileMaxOrder = files.length;
 
     console.log("fileMaxorder",fileMaxOrder);
 
@@ -520,16 +492,126 @@ const handleCloseFileMenu = () => {
         console.log("isDeleteAlert 상태 변경:", isDeleteAlert);
     }, [isDeleteAlert]);
 
+    const [isDragging, setIsDragging] = useState(false); // 드래그 중인지 상태 관리
+    const [isUploading,setIsUploading] = useState(false);
+    const storageInfo = useStorageStore((state) => state.storageInfo) || { currentRemainingSize: 0, totalSize: 0 };
+
+    const [uploadProgress, setUploadProgress] = useState(null); // 업로드 진행 상황 상태
+    const [isUploadInProgress, setIsUploadInProgress] = useState(false);
+    const handleUploadStart = () => {
+      setIsUploadInProgress(true);
+      setUploadProgress(0); // 초기화
+    };
+  
+    const handleUploadComplete = () => {
+      setIsUploadInProgress(false);
+      setUploadProgress(null); // 초기화
+  
+    };
+
+ 
+   // 파일 업로드 Mutation
+   const uploadFileMutation = useMutation({
+    mutationFn: async (files) => {
+      const totalFileSize = files.reduce((total, file) => total + file.size, 0);
+      if (totalFileSize > storageInfo.currentRemainingSize) {
+        throw new Error(`남은 용량(${storageInfo.currentRemainingSize} bytes)보다 큰 파일은 업로드할 수 없습니다.`);
+      }
+  
+      const formData = new FormData();
+      const fileStructure = {};
+  
+      files.forEach((file) => {
+        // 파일 경로 분리
+        const path = file.path || file.name; // `path`가 없으면 파일 이름 사용
+        const segments = path.split('/');
+        const folderPath = segments.slice(0, -1).join('/'); // 폴더 경로만 추출
+        // 폴더 경로에 따라 파일 그룹화
+        if (!fileStructure[folderPath]) {
+          fileStructure[folderPath] = [];
+        }
+        fileStructure[folderPath].push(file);
+  
+        formData.append('files', file);
+        formData.append('relativePaths', folderPath); // 경로를 서버로 전송
+      });
+  
+      formData.append('fileMaxOrder', fileMaxOrder);
+      formData.append('folderMaxOrder', folderMaxOrder);
+      formData.append('uid', user.uid);
+  
+      console.log('FormData before sending:', formData);
+  
+      return axiosInstance.post(`/api/drive/upload/${folderId}`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        onUploadProgress: (progressEvent) => {
+          if (progressEvent.total > 0) {
+            const percentCompleted = Math.round(
+              (progressEvent.loaded / progressEvent.total) * 100
+            );
+            setUploadProgress(percentCompleted); // 진행률 업데이트
+          } else {
+            console.warn('총 파일 크기를 알 수 없습니다.');
+            setUploadProgress(0);
+          }
+        },
+      });
+    },
+    onSuccess: (response, variables) => {
+      queryClient.invalidateQueries(['folderContents']);
+      triggerAlert('success', '업로드 성공', `${variables.length}개의 파일이 성공적으로 업로드되었습니다.`);
+      console.log('업로드 성공:', response.data);
+    },
+    onError: (error) => {
+      const errorMessage = error.response?.data || '파일 업로드 중 오류가 발생했습니다. 다시 시도해주세요.';
+      const errorType = error.response?.status === 400 ? 'warning' : 'error';
+      triggerAlert(errorType, '업로드 실패', errorMessage);
+    },
+    onSettled: () => {
+      setIsUploading(false); // 업로드 상태 초기화
+    },
+  });
+  
+    const handleDropDragOver = (e) => {
+        e.preventDefault(); // 기본 동작 방지
+        setIsDragging(true); // 드래그 중 상태로 설정
+    };
+
+    const handleDragLeave = (e) => {
+        e.preventDefault(); // 기본 동작 방지
+        setIsDragging(false); // 드래그 중 상태 해제
+    };
+
+    const handleD_Drop = (e) => {
+        e.preventDefault(); // 기본 동작 방지
+        setIsDragging(false); // 드래그 상태 해제
+      
+        const files = Array.from(e.dataTransfer.files);
+        if (files.length > 0) {
+          setIsUploading(true); // 업로드 상태 설정
+          uploadFileMutation.mutate(files); // Mutation 호출
+        }
+    };
+
+
+
     
     if (isLoading) return <div>Loading...</div>;
     if (isError) return <div>Error loading folder contents.</div>;
 
     return (
         <DocumentLayout isDetailVisible={isDetailVisible} selectedFolder={selectedFolder} selectedFile={selectedFile} path={location.pathname} parentfolder={location.state?.folderName} uid={data.uid} closeDetailView={closeDetailView}>
-           
     
-           
-            <section className="flex gap-4 items-center">
+           <div   
+                className={`document-list-container ${isDragging ? 'dragging' : ''}`}
+                onDragOver={handleDropDragOver} // 드래그 중 이벤트
+                onDragLeave={handleDragLeave} // 드래그 종료 이벤트
+                onDrop={handleD_Drop} // 파일 드롭 이벤트
+                style={{
+                    border: isDragging ? '2px dashed #0066cc' : 'none',
+                    backgroundColor: isDragging ? '#f0f8ff' : 'transparent',
+                }}>
+           <section className="flex gap-4 items-center">
                 {editing ? (
                     <input
                         className="text-2xl ml-4 mt-4 border-b-2 border-gray-400 outline-none"
@@ -590,16 +672,12 @@ const handleCloseFileMenu = () => {
                         onClick={() => setIsOpen(true)}
                         className="bg-purple white w-20 h-8 rounded-md text-xs"
                     >
-                        파일 업로드
+                        업로드
                     </button>
-                    <button
-                        onClick={() => setIsOpen(true)}
-                        className="bg-purple white w-20 h-8 rounded-md text-xs"
-                    >
-                        폴더 업로드
-                    </button>
+                   
                 </div>
             </section>
+          
 
             {viewType === 'box' ? (
                 <div className='h-[600px] mx-[30px] w-[97%] overflow-scroll scrollbar-none'>
@@ -735,8 +813,10 @@ const handleCloseFileMenu = () => {
                 </>
 
             )}
+           </div>
+            
 
-            <FileUploads isOpen={isOpen} onClose={() => setIsOpen(false)} folderId={folderId} maxOrder={fileMaxOrder} uid={user.uid} triggerAlert={triggerAlert} />
+            <FileUploads isOpen={isOpen} onClose={() => setIsOpen(false)} folderId={folderId} fileMaxOrder={fileMaxOrder} folderMaxOrder={folderMaxOrder} uid={user.uid} triggerAlert={triggerAlert} />
             <NewFolder isOpen={folder} onClose={() => setFolder(false)} parentId={folderId}     maxOrder={subFolders.length} // 최대 order 값을 계산해서 전달
             />
              {/* ContextMenu 컴포넌트 */}
@@ -766,9 +846,7 @@ const handleCloseFileMenu = () => {
                     downloadHandler={downloadHandler}
                 />
 
-                    {alert.isVisible
-                    ? console.log("CustomAlert 렌더링 조건 충족")
-                    : console.warn("CustomAlert 렌더링 조건 미충족")}
+        
                   {alert.isVisible  && (
                     <CustomAlert
                         type={alert.type}

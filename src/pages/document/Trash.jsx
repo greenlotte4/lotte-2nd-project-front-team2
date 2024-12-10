@@ -39,6 +39,9 @@ export default function Trash() {
         setSelectedFolder(folder); // 선택된 폴더 정보 설정
         setIsDetailVisible(!isDetailVisible);
     };
+    const preventHandle=(e) => {
+        e.preventDefault;
+    }
 
     const closeDetailView = () => {
         setIsDetailVisible(false);
@@ -111,38 +114,9 @@ export default function Trash() {
             setEditing(false);
         },
     });
-    // 파일 업로드 Mutation
-    const uploadFileMutation = useMutation({
-        mutationFn: async (files) => {
-            const formData = new FormData();
-            files.forEach((file) => formData.append('files', file));
-            await axiosInstance.post(`/api/drive/upload?folderId=${folderId}`, formData, {
-                headers: { 'Content-Type': 'multipart/form-data' },
-            });
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['favorite', folderId, user.uid] });
-        },
-    });
 
-    // 이름 변경 핸들러
-    const handleRename = () => {
-        if (newFolderName.trim() && newFolderName !== location.state?.folderName) {
-            renameFolderMutation.mutate(newFolderName);
-        }
-    };
 
-    // 드래그 시작 핸들러
-    const handleDragStart = (folder) => {
-        console.log("handelDragStart ",folder)
-        setDraggedFolder(folder); // 드래그된 폴더 저장
-    }
-     
-     // 드래그 오버 핸들러 (드롭 가능 영역 활성화)
-     const handleDragOver = (e) => {
-        e.preventDefault(); // 기본 동작 방지
-    };
-
+    
   
     
     
@@ -196,30 +170,7 @@ export default function Trash() {
 
 
     
-    
-    
-
-    // 드래그 앤 드롭 업로드 핸들러
-    const handleFileDrop = useCallback(
-        (event) => {
-            event.preventDefault();
-            const files = Array.from(event.dataTransfer.files);
-            if (files.length === 0) {
-                console.error('No files dropped');
-                return;
-            }
-            uploadFileMutation.mutate(files);
-        },
-        [uploadFileMutation]
-    );
-
-    const handleKeyDown = (e) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            handleRename();
-        }
-    };
-
+ 
     //파일 다운로드 핸들러
     const downloadHandler = (file) => {
         if (!file || !file.id) {
@@ -359,11 +310,11 @@ export default function Trash() {
                                 updatedAt={folder.updatedAt}
                                 onContextMenu={handleContextMenu}
                                 downloadHandler={zipDownloadHandler} // 수정: folder 객체 전달
-                                onClick={() => {
-                                    console.log('Selected folder:', folder);
-                                    setSelectedFolder(folder);
+                                onClick={(e) => {
+                                    e.preventDefault(); // 기본 링크 이동 방지
                                 }}
-                                />
+                                type={"trash"}
+                                                                />
                             ))}
                             </section>
                         </>
@@ -411,9 +362,6 @@ export default function Trash() {
                         <tr 
                             key={item.id}
                             draggable
-                            onDragStart={() => handleDragStart(item)} // 드래그 시작 핸들러
-                            onDragOver={(e) => handleDragOver(e)} // 드래그 오버 핸들러
-                            onDrop={(e) => handleDrop(item, "before")} // 드롭 시 동작 (리스트에서는 기본적으로 "before")
                             className="draggable-row text-left"
                             onContextMenu={(e) =>
                                 isFolder ? handleContextMenu(e, item) : handleContextFileMenu(e, item)
