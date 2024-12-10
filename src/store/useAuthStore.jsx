@@ -104,7 +104,7 @@ export const useAuthStore = create((set) => ({
                 console.log("로그아웃! 잘 가세요!");
             })
             .catch((err)=>{
-                console.error("Logout failed", error);
+                console.error("Logout failed", err);
             });
         set(() => ({ accessToken: null, authorized: false }));
     },

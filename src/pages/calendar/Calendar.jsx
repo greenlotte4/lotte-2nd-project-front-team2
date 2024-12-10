@@ -18,14 +18,11 @@ import { useAuthStore } from '../../store/useAuthStore'
 export default function Calendar() {
 
     const [calendarId, setCalendarId] = useState(0);
-    const [calendarAdded, setCalendarAdded] = useState(false);
-    const [calendarDeleted, setCalendarDeleted] = useState(false);
-    const [changeCalendarAdd,setChangeCalendarAdd] = useState(false);
-    const [changeCalendarRemove,setChangeCalendarRemove] = useState(false);
     const [openPostCalendar, setOpenPostCalendar] = useState(false);
     const [openDeleteAndModifyCalendar, setOpenDeleteAndModifyCalendar] = useState(false);
     const [selectedCalendarIds, setSelectedCalendarIds] = useState([]);
     const [selectedColor, setSelectedColor] = useState({});
+    const [triger, setTriger] = useState(false);
     const [selectedCalendar, setSelectedCalendar] = useState({
         id : 0,
         color : "",
