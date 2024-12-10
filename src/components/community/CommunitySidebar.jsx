@@ -6,7 +6,7 @@ import axiosInstance from "@/services/axios";
 
 export default function CommunitySidebar({
   userRole = "user",
-  currentUser = null,
+  currentUser,
   departmentBoards: initialDepartmentBoards = [],
   userBoards: initialUserBoards = [],
   onDeleteBoard = () => {},
@@ -14,7 +14,7 @@ export default function CommunitySidebar({
   onNewPost = () => {},
   onNewUserBoard = () => {},
 }) {
-  const { boardType } = useParams();
+  const { boardId } = useParams();
 
   // State 초기화
   const [boards, setBoards] = useState(initialUserBoards);
@@ -27,17 +27,6 @@ export default function CommunitySidebar({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // 상태값과 슬러그 매핑
-  const statusToSlug = {
-    1: "notice", // 공지사항
-    2: "secret", // 익명게시판
-    3: "free", // 자유게시판
-    4: "archive", // 자료실
-    5: "menuToday", // 오늘의 식단
-    6: "department", // 부서별 게시판
-    default: "unknown", // 기본값 추가
-  };
-
   const [sections, setSections] = useState({
     favorites: true,
     allBoards: true,
@@ -47,6 +36,11 @@ export default function CommunitySidebar({
 
   useEffect(() => {
     const fetchData = async () => {
+      if (!currentUser || !currentUser.id) {
+        console.error("사용자 정보를 로드할 수 없습니다.");
+        setError("사용자 정보를 로드할 수 없습니다.");
+        return;
+      }
       try {
         setLoading(true);
         const [
@@ -55,26 +49,24 @@ export default function CommunitySidebar({
           favoritesResponse,
         ] = await Promise.all([
           axiosInstance.get("/api/community/boards"),
-
           axiosInstance.get("/api/community/boards/group/1"),
-          axiosInstance.get("/api/community/favorites"),
+          axiosInstance.get(`/api/community/favorites/${currentUser.id}`),
         ]);
 
-        setBoards(userBoardsResponse?.data || []);
+        console.log("User Boards data:", userBoardsResponse.data);
+        console.log("Department Boards data:", departmentBoardsResponse.data);
+        console.log("Favorites data:", favoritesResponse.data);
 
-        {
-          /*부서별*/
-        }
+        setBoards(userBoardsResponse?.data || []);
         setDepartmentBoards(
           Array.isArray(departmentBoardsResponse?.data)
             ? departmentBoardsResponse.data
-            : departmentBoardsResponse
-            ? [departmentBoardsResponse.data]
             : []
         );
 
+        // 서버에서 반환된 데이터로 즐겨찾기 상태 설정
         setFavoriteIds(
-          favoritesResponse?.data?.map((fav) => fav.boardId) || []
+          favoritesResponse?.data?.map((fav) => fav.itemId || fav.boardId) || []
         );
       } catch (err) {
         console.error("데이터 로드 실패:", err);
@@ -85,7 +77,7 @@ export default function CommunitySidebar({
     };
 
     fetchData();
-  }, []);
+  }, [currentUser]);
 
   const toggleSection = (section) => {
     setSections((prev) => ({
@@ -117,12 +109,35 @@ export default function CommunitySidebar({
     handleCloseModal();
   };
 
-  const toggleFavorite = (boardId) => {
-    setFavoriteIds((prevFavorites) =>
-      prevFavorites.includes(boardId)
-        ? prevFavorites.filter((id) => id !== boardId)
-        : [...prevFavorites, boardId]
-    );
+  const toggleFavorite = async (boardId) => {
+    try {
+      if (favoriteIds.includes(boardId)) {
+        // 즐겨찾기 해제 요청
+        await axiosInstance.delete("/api/community/favorites", {
+          params: {
+            userId: currentUser.id,
+            itemType: "BOARD",
+            itemId: boardId,
+          },
+        });
+        // 상태에서 해당 항목 제거
+        setFavoriteIds((prevFavorites) =>
+          prevFavorites.filter((id) => id !== boardId)
+        );
+      } else {
+        // 즐겨찾기 추가 요청
+        await axiosInstance.post("/api/community/favorites", {
+          userId: currentUser.id,
+          itemType: "BOARD",
+          itemId: boardId,
+        });
+        // 상태에 해당 항목 추가
+        setFavoriteIds((prevFavorites) => [...prevFavorites, boardId]);
+      }
+    } catch (error) {
+      console.error("즐겨찾기 처리 중 에러:", error);
+      alert("즐겨찾기 처리에 실패했습니다. 다시 시도해주세요.");
+    }
   };
 
   const favoriteBoards = boards.filter((board) =>
@@ -188,9 +203,7 @@ export default function CommunitySidebar({
                 />
                 {/* Link가 연결되도록 수정 */}
                 <Link
-                  to={`/community/${
-                    statusToSlug[board.status] || statusToSlug.default
-                  }/list`}
+                  to={`/community/${boardId}/list`}
                   className="flex-grow hover:underline"
                 >
                   {board.boardName || "이름 없음"}
@@ -234,9 +247,7 @@ export default function CommunitySidebar({
                 className="w-5 h-5 mr-2"
               />
               <Link
-                to={`/community/${
-                  statusToSlug[board.status] || statusToSlug.default
-                }/list`}
+                to={`/community/${boardId}/list`}
                 className="flex-grow hover:underline"
               >
                 {board.boardName}
@@ -277,10 +288,10 @@ export default function CommunitySidebar({
           />
         </div>
         {sections.departmentBoards &&
-          (departmentBoards.length > 0 ? (
+          (Array.isArray(departmentBoards) && departmentBoards.length > 0 ? (
             departmentBoards.map((board) => (
               <div
-                key={board.boardId || board.key || Math.random()} // 고유한 key 설정
+                key={board.boardId || Math.random()} // 고유 key 설정
                 className="flex items-center justify-between px-8 py-1 group"
               >
                 <img
@@ -290,7 +301,7 @@ export default function CommunitySidebar({
                 />
                 {board.boardName ? (
                   <Link
-                    to={`/community/${board.boardId}/list`}
+                    to={`/community/${boardId}/list`}
                     className="flex-grow hover:underline"
                   >
                     {board.boardName}
@@ -298,6 +309,7 @@ export default function CommunitySidebar({
                 ) : (
                   <p className="flex-grow text-gray-500">이름 없음</p>
                 )}
+
                 <img
                   src={
                     favoriteIds.includes(board.boardId)
@@ -323,8 +335,11 @@ export default function CommunitySidebar({
 
       {/* 새 게시글 작성 버튼 */}
       <Link
-        to={`/community/${boardType}/write`}
+        to={`/community/${boardId}/write`} // boardId가 undefined일 경우 'default' 사용
         className="new-user-board-button flex items-center justify-center px-4 py-2 mt-4 space-x-2 w-full min-w-[150px] rounded-md"
+        onClick={() =>
+          console.log("Navigating to write with boardId:", boardId)
+        }
       >
         <img
           src="/images/component.png"
@@ -334,7 +349,7 @@ export default function CommunitySidebar({
         새 게시글 작성
       </Link>
 
-      {/* 새 개인 게시판 생성 버튼 */}
+      {/* 새 게시판 생성 버튼 */}
       <button
         onClick={handleOpenModal}
         className="new-user-board-button flex items-center justify-center px-4 py-2 mt-4 space-x-2 w-full min-w-[150px] rounded-md"
@@ -400,7 +415,7 @@ export default function CommunitySidebar({
 
 CommunitySidebar.propTypes = {
   userRole: PropTypes.string,
-  currentUser: PropTypes.string,
+  currentUser: PropTypes.object,
   departmentBoards: PropTypes.array,
   userBoards: PropTypes.array,
   onDeleteBoard: PropTypes.func,

@@ -1,11 +1,14 @@
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 import Sidebar from "@/components/community/CommunitySidebar";
 import "@/pages/community/Community.scss";
 import CommunityCard from "@/components/community/CommunityCard";
+import useUserStore from "../../store/useUserStore";
 
 export default function CommunityIndex() {
   // 즐겨찾기 상태 관리 (key → label 기반)
   const [favorites, setFavorites] = useState([]);
+  const user = useUserStore((state) => state.user);
+  console.log("사용자", user.uid);
 
   const toggleFavorite = (label) => {
     console.log("즐겨찾기 상태 변경 이전:", favorites); // 디버깅용 로그
@@ -18,7 +21,6 @@ export default function CommunityIndex() {
     console.log("즐겨찾기 상태 변경 이후:", favorites); // 디버깅용 로그
   };
   // 현재 사용자와 권한
-  const [currentUser] = useState("user123"); // 현재 로그인된 유저 ID
   const [userRole] = useState("user"); // 'admin' 또는 'user'
 
   // 게시판 데이터
@@ -81,18 +83,7 @@ export default function CommunityIndex() {
     }
   };
 
-  // 새 개인 게시판 생성
-  const handleNewUserBoard = () => {
-    const newBoardName = prompt("새로운 개인 게시판 이름을 입력하세요:");
-    if (newBoardName) {
-      const newBoard = {
-        key: `userBoard-${Date.now()}`,
-        label: newBoardName,
-        owner: currentUser,
-      };
-      setUserBoards((prevBoards) => [...prevBoards, newBoard]);
-    }
-  };
+ 
 
   // 새 게시판 생성 (관리자만)
   const handleNewBoard = () => {
@@ -119,12 +110,11 @@ export default function CommunityIndex() {
         favorites={favorites}
         toggleFavorite={toggleFavorite}
         userRole={userRole}
-        currentUser={currentUser}
+        currentUser={user}
         departmentBoards={departmentBoards}
         userBoards={userBoards}
         onDeleteBoard={handleDeleteBoard}
         onUpdateBoard={handleUpdateBoard}
-        onNewUserBoard={handleNewUserBoard}
         onNewBoard={handleNewBoard}
         onNewPost={handleNewPost}
       />
