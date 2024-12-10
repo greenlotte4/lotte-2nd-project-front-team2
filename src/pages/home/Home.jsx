@@ -5,6 +5,8 @@ import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../../store/useAuthStore';
 import axiosInstance from '@/services/axios.jsx'
 import CustomAlert from '../../components/Alert';
+import { useQuery } from '@tanstack/react-query';
+import useUserStore from '../../store/useUserStore';
 
 export default function Home() {
   const navigate = useNavigate();
@@ -12,7 +14,7 @@ export default function Home() {
   const timeRef = useRef(null); // 시간 DOM 참조
   const dateRef = useRef(null); // 시간 DOM 참조
   const [isActive, setIsActive] = useState(true); // 페이지 활성화 상태 관리
-
+  const user = useUserStore((state)=> state.user);
   const currentDate = new Date();
   const formattedDate = new Intl.DateTimeFormat('ko-KR', {
     timeZone: 'Asia/Seoul',
@@ -31,7 +33,13 @@ export default function Home() {
   
   const [alert, setAlert] = useState({message : '', type: '', isOpen: false, onClose: false})
   const closeAlert = () =>{
-    setAlert(false)
+    setAlert({ message: '', type: '', isOpen: false, onClose: false });
+  }
+
+  const todayAttendanceAPI = async () => {
+    const resp = await axiosInstance.get('/api/attendance/today');
+    console.log("오늘 근태 "+JSON.stringify(resp.data))
+    return resp.data;
   }
 
   
@@ -72,6 +80,22 @@ export default function Home() {
       setIsActive(false); // 비활성화 상태로 변경
     };
   }, [isActive]);
+
+  
+  const { data, error, isLoading, isError } = useQuery({
+    queryKey: [`${user.uid}`],  // 캐싱에 사용할 키
+    queryFn: todayAttendanceAPI,  // 데이터를 가져오는 함수
+    staleTime: 1000 * 60 * 5,  // 5분 동안 데이터가 신선하다고 간주
+    cacheTime: 1000 * 60 * 60, // 10분 후에 캐시가 만료되도록 설정
+  });
+
+  if (isLoading) {
+    return <div>로딩 중...</div>;
+  }
+
+  if (isError) {
+    return <div>Error: {error.message}</div>;
+  }
 
   const goToWorkHandler = async (e) => {
     e.preventDefault();
@@ -211,14 +235,14 @@ export default function Home() {
                     <span className='text-lg w-full h-full text-center flex items-center justify-center text-gray-600'>
                       출근시간</span>
                     <span className='text-2xl w-full h-full text-center text-gray-600 font-extralight'>
-                      08:17:00</span>
+                    {data.checkInTime}</span>
                   </div>
                   <img src='/images/arrowRight.png' alt='allow' className='commute-allow'></img>
                   <div className='checktime flex flex-col'>
                     <span className='text-lg w-full h-full text-center flex items-center justify-center text-gray-600'>
                       퇴근시간</span>
                     <span className='text-2xl w-full h-full text-center text-gray-600 font-extralight'>
-                      -</span>
+                    {data.checkOutTime}</span>
                   </div>
                 </div>
                 <div className='flex flex-col justify-between w-[200px]'>

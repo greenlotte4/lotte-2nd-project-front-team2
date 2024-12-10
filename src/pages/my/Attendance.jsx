@@ -2,8 +2,34 @@ import React from 'react'
 import '@/pages/my/My.scss'
 import MyAside from '../../components/my/MyAside'
 import AttendanceChart from '../../components/my/AttendanceChart'
+import axiosInstance from '@/services/axios.jsx'
+import { useQuery } from '@tanstack/react-query';
+import useUserStore from '../../store/useUserStore';
 
 export default function MyAttendance() {
+
+  const user = useUserStore((state)=> state.user);
+  const todayAttendanceAPI = async () => {
+    const resp = await axiosInstance.get('/api/attendance/today');
+    console.log("오늘 근태 "+JSON.stringify(resp.data))
+    return resp.data;
+  }
+  
+  const { data, error, isLoading, isError } = useQuery({
+    queryKey: [`${user.uid}`],  // 캐싱에 사용할 키
+    queryFn: todayAttendanceAPI,  // 데이터를 가져오는 함수
+    staleTime: 1000 * 60 * 5,  // 5분 동안 데이터가 신선하다고 간주
+    cacheTime: 1000 * 60 * 60, // 10분 후에 캐시가 만료되도록 설정
+  });
+
+  if (isLoading) {
+    return <div>로딩 중...</div>;
+  }
+
+  if (isError) {
+    return <div>Error: {error.message}</div>;
+  }
+  
   return (
     <div id='my-attendance-container'>
       <MyAside/>
@@ -15,12 +41,14 @@ export default function MyAttendance() {
               <div className='w-full flex justify-around items-center mt-[15px]'>
                   <div className='checktime flex flex-col w-[80px]'>
                     <span className='text-md w-full h-full text-center'>출근</span>
-                    <span className='text-lg w-full h-full text-center text-gray-600 font-light mt-2'>08:17:00</span>
+                    <span className='text-lg w-full h-full text-center text-gray-600 font-light mt-2'>
+                    {data.checkInTime}</span>
                   </div>
                   <img src='/images/arrowRight.png' alt='allow' className='icon-size-25'></img>
                   <div className='checktime flex flex-col w-[80px]'>
                     <span className='text-md w-full h-full text-center'>퇴근</span>
-                    <span className='text-lg w-full h-full text-center text-gray-600 font-light mt-2'>-</span>
+                    <span className='text-lg w-full h-full text-center text-gray-600 font-light mt-2'>
+                    {data.checkOutTime}</span>
                   </div>
                 </div>
             </li>
@@ -73,8 +101,8 @@ export default function MyAttendance() {
               </div>
               <div className='flex items-end'>
                 <label className='flex items-center mr-[20px] text-sm'><input type="checkbox" className='mr-1'/>초과근무 포함</label>
-                <button className='bg-indigo-500 flex items-center btn-profile text-white'>
-                  <span>보기</span>
+                <button className='bg-indigo-500 flex justify-around items-center h-[40px] rounded-lg w-[120px] px-5 text-white'>
+                  <span>검색</span>
                   <img className='' src="/images/white-my-btn-arrow.png" alt="allow" />
                 </button>
               </div>

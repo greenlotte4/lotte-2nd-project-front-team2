@@ -70,6 +70,10 @@ export default function Login() {
             setAlert(true)
             setMessage("없는 계정입니다.")
             setType("warning")
+          } else if(err.status === 409){
+            setAlert(true)
+            setMessage("비밀번호를 다시 확인해 주세요.")
+            setType("warning")
           }
         })
     }
