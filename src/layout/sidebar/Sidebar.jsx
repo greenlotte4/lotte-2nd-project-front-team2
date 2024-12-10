@@ -10,6 +10,8 @@ import communityMenu from '@/assets/sidebar-task.png';
 import scheduleMenu from '@/assets/sidebar-schedule.png';
 import vacationMenu from '@/assets/sidebar-vacation.png';
 import { useAuthStore } from "../../store/useAuthStore";
+import { useQueryClient } from "@tanstack/react-query";
+import useUserStore from "../../store/useUserStore";
 
 
 
@@ -19,6 +21,7 @@ export default function Sidebar({ isCollapsed, toggleSidebar }) {
   const sidebarRef = useRef(null); // 사이드바 참조
   const logout = useAuthStore((state) => state.logout)
   const navigate = useNavigate();
+  const user = useUserStore((state)=> state.user);
 
   // 활성화 상태 저장
   const [isActive, setIsActive] = useState(() => {
@@ -94,8 +97,9 @@ export default function Sidebar({ isCollapsed, toggleSidebar }) {
   const activeHandler = () => {
 
   }
-
+  const queryClient = useQueryClient();
   const logoutHandler = async () =>{
+    queryClient.invalidateQueries(`${user.uid}`); 
     logout();
     navigate("/user/login");
   }
