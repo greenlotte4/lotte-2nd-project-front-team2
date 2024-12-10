@@ -4,6 +4,7 @@ import adminProfile from '@/assets/admin-profile.png'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../../store/useAuthStore';
 import axiosInstance from '@/services/axios.jsx'
+import CustomAlert from '../../components/Alert';
 
 export default function Home() {
   const navigate = useNavigate();
@@ -27,6 +28,11 @@ export default function Home() {
 
   const decodeAccessToken = useAuthStore((state)=>state.decodeAccessToken);
   const getAccessToken = useAuthStore((state)=>state.getAccessToken);
+  
+  const [alert, setAlert] = useState({message : '', type: '', isOpen: false, onClose: false})
+  const closeAlert = () =>{
+    setAlert(false)
+  }
 
   
   useEffect(() => {
@@ -67,9 +73,46 @@ export default function Home() {
     };
   }, [isActive]);
 
+  const goToWorkHandler = async (e) => {
+    e.preventDefault();
+    if(confirm("출근하시겠습니까?")){
+      try{
+        const resp = await axiosInstance.post('/api/attendance/checkIn', null);
+        console.log("출근하기! "+resp.data)
+        setAlert({message: `${resp.data} \n \n \n출근이 완료되었습니다.`,type: 'success',isOpen: true, onClose: false,})
+      }catch(err){
+        console.log("에러 "+JSON.stringify(err.response.data))
+        setAlert({message: `${err.response.data}`,type: 'warning',isOpen: true,onClose: false,})
+      }
+    }else{
+      return;
+    }
+  }
+  const leaveWorkHandler = async (e) => {
+    e.preventDefault();
+    if(confirm("퇴근하시겠습니까?")){
+      try{
+        const resp = await axiosInstance.post('/api/attendance/checkOut', null);
+        console.log("퇴근하기! "+resp.data)
+        setAlert({message: `${resp.data} \n 퇴근완료! `,type: 'success',isOpen: true, onClose: false,})
+      }catch(err){
+        console.log("에러 "+JSON.stringify(err.response.data))
+        setAlert({message: `${err.response.data}`,type: 'warning',isOpen: true,onClose: false,})
+      }
+    }else{
+      return;
+    }
+  }
+
     return (
       <div id='home-container'>
         <section className='admin-index-top'>
+        <CustomAlert
+              type={alert.type}
+              message={alert.message}
+              isOpen={alert.isOpen}
+              onClose={closeAlert}
+            />
           <article className='home-top-left'>
             <h2 className='text-2xl'>Project</h2>
             <div className='w-full h-full flex justify-around'>
@@ -179,8 +222,8 @@ export default function Home() {
                   </div>
                 </div>
                 <div className='flex flex-col justify-between w-[200px]'>
-                  <button className='btn-commute bg-indigo-500 text-white'>출근하기</button>
-                  <button className='btn-commute border border-gray-300 text-gray-500 mt-10'>퇴근하기</button>
+                  <button onClick={goToWorkHandler} className='btn-commute bg-indigo-500 text-white'>출근하기</button>
+                  <button onClick={leaveWorkHandler} className='btn-commute border border-gray-300 text-gray-500 mt-10'>퇴근하기</button>
                 </div>
               </div>
             </div>
@@ -237,7 +280,6 @@ export default function Home() {
             <h2 className='text-2xl'>Calendar</h2>
           </div>
         </section>
-      
       </div>
     );
 }
