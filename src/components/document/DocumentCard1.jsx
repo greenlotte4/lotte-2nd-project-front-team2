@@ -24,7 +24,8 @@ export const DocumentCard1 = ({
     togglePin,
     isFavorite,
     setIsFavorite,
-    handleDelete
+    handleDelete,
+    type
 
 }) => {
     const [isMenuOpen, setIsMenuOpen] = useState(false); // 토글 상태 관리
@@ -117,14 +118,17 @@ export const DocumentCard1 = ({
     };
 
     const navigateHandler = () =>{
-        navigate(`/document/list/${folderId}`,{
-            state: {
-                cnt,
-                folderName,
-                folderId,
-                updatedAt,
-            }
-        });
+        if (type !== 'trash') {
+            navigate(`/document/list/${folderId}`,{
+                state: {
+                    cnt,
+                    folderName,
+                    folderId,
+                    updatedAt,
+                }
+            });
+        }
+    
     }
 
 

@@ -4,6 +4,9 @@ import axiosInstance from '@/services/axios.jsx';
 import { useQueries, useQueryClient } from '@tanstack/react-query';
 import CustomAlert from './Alert';
 import useStorageStore from '../store/useStorageStore';
+import { Stomp } from '@stomp/stompjs';
+import useWebSocketProgress from '../util/useWebSocketProgress';
+
 
 const MyDropzone = ({ 
   folderId ,
@@ -13,15 +16,31 @@ const MyDropzone = ({
   onUploadStart, 
   onUploadComplete ,
   triggerAlert,  
+  folderMaxOrder,
+  fileMaxOrder,
 }) => {
   const [uploadedFiles, setUploadedFiles] = useState([]); // 업로드된 파일 목록
   const [isUploading, setIsUploading] = useState(false); // 업로드 중 상태
   const [isPopupVisible, setIsPopupVisible] = useState(false); // 팝업 상태
   const queryClient = useQueryClient();
   const storageInfo = useStorageStore((state) => state.storageInfo);
+  const [progress, setProgress] = useState(0);
 
-  console.log('storageInfo',storageInfo.currentUsedSize);
-  console.log('triggerAlert in MyDropzone:', triggerAlert);
+ 
+  const { isConnected, messages } = useWebSocketProgress({
+    topics: [`/topic/progress/uploads/${uid}`],
+    userId: uid,
+});
+
+  useEffect(() => {
+    console.log('Messages:', messages); // 모든 메시지 로그 확인
+    const progress = messages[`/topic/progress/uploads/${uid}`];
+    if (progress) {
+        console.log('Upload Progress:', progress);
+        setProgress(progress);
+    }
+  }, [messages, uid]);
+
 
 
 
@@ -42,21 +61,32 @@ const MyDropzone = ({
     setIsUploading(true);
   
     const formData = new FormData();
-    const relativePaths = []; // 상대 경로 배열
+    const fileStructure = {};
+
     files.forEach((file) => {
-      formData.append("files", file);
-      relativePaths.push(file.webkitRelativePath); // 상대 경로 배열에 추가
+      // 파일 경로 분리
+      const path = file.path || file.name; // `path`가 없으면 파일 이름 사용
+      const segments = path.split('/');
+      const folderPath = segments.slice(0, -1).join('/'); // 폴더 경로만 추출
+      // 폴더 경로에 따라 파일 그룹화
+      if (!fileStructure[folderPath]) {
+        fileStructure[folderPath] = [];
+      }
+      fileStructure[folderPath].push(file);
+
+      formData.append('files', file);
+      formData.append('relativePaths', folderPath); // 경로를 서버로 전송
     });
-    formData.append("relativePaths", JSON.stringify(relativePaths)); // 상대 경로 배열을 JSON 문자열로 추가
-    formData.append("maxOrder", maxOrder);
+    formData.append("fileMaxOrder", fileMaxOrder);
+    formData.append("folderMaxOrder", folderMaxOrder);
     formData.append("uid",uid);
+    console.log("FormData before sending:", formData); // FormData 확인
 
     setIsUploading(true); // 업로드 중 상태로 설정
     try {
       const response = await axiosInstance.post(`/api/drive/upload/${folderId}`, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
-
         },
         onUploadProgress: (progressEvent) => {
           if (progressEvent.total > 0) {
@@ -109,7 +139,8 @@ const MyDropzone = ({
     onDrop: (acceptedFiles) => {
       const folderStructure = {};
       acceptedFiles.forEach((file) => {
-        const filePath = file.webkitRelativePath; // 상대 경로
+        console.log('File Path:', file.path || file.name); // 경로 확인
+        const filePath = file.path; // 상대 경로
         folderStructure[filePath] = file;
         console.log("File name:", file.name);
         console.log("Relative path:", file.webkitRelativePath); // 여기서 값이 출력되는지 확인
@@ -128,6 +159,7 @@ const MyDropzone = ({
   return (
     <>
     <div>
+    <p>WebSocket 연결 상태: {isConnected ? '연결됨' : '연결되지 않음'}</p>
       {/* 드래그 앤 드롭 영역 */}
       <div
         {...getRootProps()} 
@@ -139,15 +171,15 @@ const MyDropzone = ({
       >
         <input 
           {...getInputProps()}    
-          webkitdirectory
         />
+      
         <p className="text-gray-600">파일을 드래그하거나 클릭하여 업로드하세요.</p>
       </div>
 
       {/* 업로드 중 메시지 */}
       {isUploading && (
         <div className="mt-4 text-center text-blue-600">
-          파일 업로드 중입니다. 잠시만 기다려주세요...
+          <p>업로드 진행률: {progress}%</p>
         </div>
       )}
 

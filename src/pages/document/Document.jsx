@@ -139,19 +139,7 @@ export default function Document() {
             setEditing(false);
         },
     });
-    // 파일 업로드 Mutation
-    const uploadFileMutation = useMutation({
-        mutationFn: async (files) => {
-            const formData = new FormData();
-            files.forEach((file) => formData.append('files', file));
-            await axiosInstance.post(`/api/drive/upload?folderId=${folderId}`, formData, {
-                headers: { 'Content-Type': 'multipart/form-data' },
-            });
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['folderContents', folderId, user.uid] });
-        },
-    });
+
 
     // 이름 변경 핸들러
     const handleRename = () => {
@@ -284,28 +272,6 @@ export default function Document() {
     
     
 
-    // 드래그 앤 드롭 업로드 핸들러
-    const handleFileDrop = useCallback(
-        (event) => {
-            event.preventDefault();
-            const files = Array.from(event.dataTransfer.files);
-            if (files.length === 0) {
-                console.error('No files dropped');
-                return;
-            }
-            uploadFileMutation.mutate(files);
-        },
-        [uploadFileMutation]
-    );
-
-    const handleKeyDown = (e) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            handleRename();
-        }
-    };
-
-  
 
 
     if (isLoading) return <div>Loading...</div>;

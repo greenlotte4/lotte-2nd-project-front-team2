@@ -6,7 +6,7 @@ import NewDrive from "./NewDrive";
 import useUserStore from "../../store/useUserStore";
 import axiosInstance from '@/services/axios.jsx'
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { FaTrash, FaDownload, FaEdit, FaStar, FaShareAlt } from 'react-icons/fa';
+import { FaTrash, FaDownload, FaEdit, FaStar, FaShareAlt, FaBarcode } from 'react-icons/fa';
 import ContextMenu from "./ContextMenu";
 import useStorageStore from "../../store/useStorageStore";
 
@@ -31,6 +31,9 @@ export default function DocumentAside({onStorageInfo}){
     const [pinnedFolders, setPinnedFolders] = useState([]); // Pinned 폴더
     const queryClient = useQueryClient();
     const location = useLocation(); // 현재 경로 가져오기
+
+    const [trashAlert,setTrashAlert] = useState(false);
+    const handleCloseTrashAlert = () => setTrashAlert(false);
 
 
   // React Query를 사용하여 폴더 데이터 가져오기
@@ -87,15 +90,13 @@ export default function DocumentAside({onStorageInfo}){
         setUsedSize(currentUsedSize);
         setRemainingSize(currentRemainingSize);
         setUsedPercentage(currentUsedPercentage);
-        const fetchedStorageInfo = {
-            maxSize: maxSize,
-            currentUsedSize: currentUsedSize,
-            currentRemainingSize: currentRemainingSize,
-        };
-        setStorageInfo(fetchedStorageInfo);
+        setStorageInfo({
+            maxSize,
+            currentUsedSize,
+            currentRemainingSize,
+        });
 
-
-    }, [size, user, usedSize ,folderResponse]); // `size`와 `userGrade`가 변경될 때 계산
+    }, [size, usedSize]); // `size`와 `userGrade`가 변경될 때 계산
    
 
     const togglePinnedSection = () => {
@@ -257,6 +258,9 @@ export default function DocumentAside({onStorageInfo}){
                         >
                              <p>휴지통</p>
                         </Link>
+                        <img src="/images/setting.png"  className="w-[20px] ml-[90px] cursor-pointer" alt="" 
+                            onClick={() => setTrashAlert(true)} // 상태 변경
+                            />
                     </div>
 
                 </section>
@@ -364,7 +368,33 @@ export default function DocumentAside({onStorageInfo}){
                                         path={contextMenu.path}
 
                 />
-            
             </aside>
+            {trashAlert && (
+                <div
+                    className="bg-gray-100 rounded-xl shadow-md p-4 absolute z-[999]"
+                    style={{
+                        top: "50px", // 위치 조정
+                        left: "50px", // 위치 조정
+                        background: "#fff",
+                        boxShadow: "0 4px 8px rgba(0, 0, 0, 0.2)",
+                        padding: "10px",
+                        borderRadius: "4px",
+                    }}
+                >
+                    <div className="space-y-4">
+                        <div
+                            onClick={() => console.log("휴지통 비우기 클릭됨")}
+                            className="flex items-center justify-between rounded-lg p-1 cursor-pointer transition-all duration-300 hover:bg-gray-200 hover:shadow-lg"
+                        >
+                            <div className="flex items-center space-x-4">
+                                <div className={`p-3 rounded-lg bg-opacity-20`}>
+                                    <FaBarcode className={`w-5 h-5`} />
+                                </div>
+                                <span className="font-semibold">휴지통 비우기</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
     </>)
 }
