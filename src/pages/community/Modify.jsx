@@ -3,11 +3,12 @@ import { useNavigate, useParams } from "react-router-dom";
 import { CKEditor } from "@ckeditor/ckeditor5-react";
 import ClassicEditor from "@ckeditor/ckeditor5-build-classic";
 import CommunitySidebar from "@/components/community/CommunitySidebar";
-
+import useUserStore from "../../store/useUserStore";
 
 function CommunityModify() {
   const navigate = useNavigate();
   const { boardType, postId } = useParams(); // URL 파라미터에서 boardType과 postId 가져오기
+  const currentUser = useUserStore((state) => state.user); // 사용자 정보 가져오기
 
   const [title, setTitle] = useState(""); // 제목 상태
   const [content, setContent] = useState(""); // 내용 상태
@@ -54,18 +55,8 @@ function CommunityModify() {
   return (
     <div id="community-container">
       {/* 사이드바 */}
-      <CommunitySidebar
-        favorites={{}}
-        toggleFavorite={() => {}}
-        userRole="user"
-        currentUser="user123"
-        departmentBoards={[
-          { key: "dept1", label: "부서 1" },
-          { key: "dept2", label: "부서 2" },
-        ]}
-        onDeleteBoard={(key) => console.log("삭제:", key)}
-        onUpdateBoard={(key) => console.log("수정:", key)}
-      />
+      <CommunitySidebar currentUser={currentUser} />
+
       <div className="community-modify">
         <h2>게시글 수정</h2>
         <form onSubmit={handleModify}>

@@ -9,6 +9,7 @@ export default function Home() {
   const navigate = useNavigate();
   const [progress, setProgress] = useState(80);
   const timeRef = useRef(null); // 시간 DOM 참조
+  const dateRef = useRef(null); // 시간 DOM 참조
   const [isActive, setIsActive] = useState(true); // 페이지 활성화 상태 관리
 
   const currentDate = new Date();
@@ -17,10 +18,12 @@ export default function Home() {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
+    weekday: 'short'
   }).format(currentDate);
 
   const dateParts = formattedDate.split('.');
   const finalDate = `${dateParts[0]}-${dateParts[1]}-${dateParts[2]}`;
+  const weekday = dateParts[3].trim(); 
 
   const decodeAccessToken = useAuthStore((state)=>state.decodeAccessToken);
   const getAccessToken = useAuthStore((state)=>state.getAccessToken);
@@ -48,6 +51,10 @@ export default function Home() {
       timeRef.current.innerText = currentTimeString; // DOM 업데이트
       timeoutId = setTimeout(updateTime, 1000); // 1초마다 시간 갱신
     };
+
+    if (dateRef.current) {
+      dateRef.current.innerText = `${finalDate} ${weekday}`; // 초기 날짜 설정
+    }
 
     updateTime(); // 초기 시간 설정
 
@@ -151,17 +158,24 @@ export default function Home() {
               </div>
             </div>
             <div className='home-commute'>
-              <p ref={timeRef}></p>
+              <div className='flex flex-col items-center h-[80px] mt-1'>
+                <span className='' ref={dateRef}></span>
+                <p  className='flex items-end' ref={timeRef}></p>
+              </div>
               <div className='commute-inbox flex justify-center'>
                 <div className='commute-check flex items-center mr-10'>
                   <div className='checktime flex flex-col'>
-                    <span className='text-lg w-full h-full text-center flex items-center justify-center text-gray-600'>출근시간</span>
-                    <span className='text-2xl w-full h-full text-center text-gray-600 font-extralight'>08:17:00</span>
+                    <span className='text-lg w-full h-full text-center flex items-center justify-center text-gray-600'>
+                      출근시간</span>
+                    <span className='text-2xl w-full h-full text-center text-gray-600 font-extralight'>
+                      08:17:00</span>
                   </div>
                   <img src='/images/arrowRight.png' alt='allow' className='commute-allow'></img>
                   <div className='checktime flex flex-col'>
-                    <span className='text-lg w-full h-full text-center flex items-center justify-center text-gray-600'>퇴근시간</span>
-                    <span className='text-2xl w-full h-full text-center text-gray-600 font-extralight'>-</span>
+                    <span className='text-lg w-full h-full text-center flex items-center justify-center text-gray-600'>
+                      퇴근시간</span>
+                    <span className='text-2xl w-full h-full text-center text-gray-600 font-extralight'>
+                      -</span>
                   </div>
                 </div>
                 <div className='flex flex-col justify-between w-[200px]'>

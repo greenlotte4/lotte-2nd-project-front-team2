@@ -2,11 +2,13 @@ import React, { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import "@/pages/community/Community.scss";
 import CommunitySidebar from "@/components/community/CommunitySidebar";
+import useUserStore from "../../store/useUserStore";
 
 function CommunityList() {
   const [searchQuery, setSearchQuery] = useState(""); // 검색어 상태
   const [currentPage, setCurrentPage] = useState(1); // 현재 페이지
   const { boardType } = useParams();
+  const currentUser = useUserStore((state) => state.user); // 사용자 정보 가져오기
 
   const itemsPerPage = 5; // 페이지당 아이템 개수
   const navigate = useNavigate(); // 라우팅용 navigate
@@ -79,18 +81,7 @@ function CommunityList() {
   return (
     <div id="community-container">
       {/* 사이드바 */}
-      <CommunitySidebar
-        favorites={{}}
-        toggleFavorite={() => {}}
-        userRole="user"
-        currentUser="user123"
-        departmentBoards={[
-          { key: "dept1", label: "생산팀" },
-          { key: "dept2", label: "영업팀" },
-        ]}
-        onDeleteBoard={(key) => console.log("삭제:", key)}
-        onUpdateBoard={(key) => console.log("수정:", key)}
-      />
+      <CommunitySidebar currentUser={currentUser} />
 
       {/* 리스트 컨테이너 */}
       <div className="list-container">

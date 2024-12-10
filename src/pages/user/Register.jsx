@@ -15,7 +15,7 @@ const validateRules = {
   email: (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email),
   domain: (email) => email.endsWith('.com') || email.endsWith('.net') || email.endsWith('.co.kr'),
   pwd: (pwd) => /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(pwd),
-  uid: (uid) => /^(?=.*[A-Za-z]{4,})(?=.*\d)[A-Za-z\d]+$/.test(uid),
+  uid: (uid) => /^(?=(.*[A-Za-z]){3,})(?=.*\d)[A-Za-z\d]+$/.test(uid),
   hp: (hp) => /^(010-\d{4}-\d{4}|011-\d{3}-\d{4})$/.test(hp),
   company: (code) => /^[A-Za-z\d]+$/.test(code),
   firstName: (firstName) => /^[^\d!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]+$/u.test(firstName),
@@ -189,39 +189,6 @@ export default function Register() {
       setStatusMessage({ message: ``, type: '' }); // 카드 번호가 모두 입력되지 않은 상태
     }
   };
-
-  const submitHandler = async (event) => {
-    event.preventDefault();
-    
-    if(user.grade===null||user.grade ===''){
-      setAlert({
-        message: '이용하실 플랜을 선택해주세요.',
-        type: 'warning',
-        isOpen: true,
-        onClose: false,
-      })
-      return;
-    }
-    if(!page3success){
-      setAlert({
-        message: '입력된 정보를 다시 확인해주세요.',
-        type: 'warning',
-        isOpen: true,
-        onClose: false,
-      })
-      return;
-    }
-    console.log("전송될 데이터 "+JSON.stringify(user));
-    try {
-      const resp = await axios.post(
-        `${baseURL}/api/auth/register`,
-        {user, payment},
-        { headers: { 'Content-Type': 'application/json' } }
-      );
-    } catch (error) {
-      setStatusMessage({ message: '서버 요청 중 오류가 발생했습니다.', type: 'error' });
-    }
-  }
  
   const page1Handler = (event) => {
     event.preventDefault();
@@ -268,12 +235,16 @@ export default function Register() {
       }else if (formattedValue.startsWith('011') && formattedValue.length > 3) {
         formattedValue = `${formattedValue.slice(0, 3)}-${formattedValue.slice(3, 6)}${formattedValue.length > 6 ? '-' + formattedValue.slice(6, 10) : ''}`;
       }
+      if (
+        (formattedValue.startsWith('010') && formattedValue.length === 13) || // 010-XXXX-XXXX
+        (formattedValue.startsWith('011') && formattedValue.length === 12)   // 011-XXX-XXXX
+      ) {
+        debounce(debouncedValidateField(name, formattedValue),300);
+      }
       setUser((prevUser) => ({ ...prevUser, hp: formattedValue }));
-      setValidation2((prev) => ({ ...prev, hp: true }));
-      return;
+      return; 
     }
-  
-    
+ 
     // 만료일 필드일 경우 MM/YY 형식으로 자동 변환
     if (name === 'paymentCardExpiration') {
       let formattedValue = value.replace(/[^0-9]/g, ''); // 숫자만 남김
@@ -310,7 +281,11 @@ export default function Register() {
     if(name ==='paymentCardNick' || name === 'paymentCardCvc'){
       setPayment({...payment, [name]: value});
     }
-
+    if(name==='companyName'){
+      setValidationEnterprise((prev) => ({ ...prev, companyName: true}));
+      setValidationStandard((prev) => ({ ...prev, companyName: true}));
+    }
+    
     // 유효성 검사 규칙이 없는 필드면 메시지 없이 바로 통과
     if (!validateRules[name]) {
       setStatusMessage({ message: ``, type: '' });
@@ -318,10 +293,6 @@ export default function Register() {
       return;
     }
 
-    if(name==='companyName'){
-      setValidationEnterprise((prev) => ({ ...prev, [name]: true}));
-      setValidationStandard((prev) => ({ ...prev, [name]: true}));
-    }
     if(name==='paymentCardCvc'&&value.length >= 3){
       if( !validateRules[name]?.(value)){
         setStatusMessage({ message: `유효하지 않은 형식입니다.`, type: 'error' });
@@ -334,7 +305,7 @@ export default function Register() {
       }
       return;
     }
-
+   
     if(!validateRules[name]?.(value)){
       setStatusMessage({ message: `유효하지 않은 형식입니다.`, type: 'error' });
       return;
@@ -345,11 +316,14 @@ export default function Register() {
       setValidationStandard((prev) => ({ ...prev, [name]: true}));
       setValidationCompany((prev) => ({ ...prev, [name]: true}));
     }
+     
 
-    if(name === 'uid' || name === 'hp'){
-      debouncedValidateField(name, value);
+    if(name === 'uid'){
+      debounce(debouncedValidateField(name, value),300);
+      return;
     }
-   
+    
+
   }
 
   function nameChange (field){
@@ -357,13 +331,15 @@ export default function Register() {
       return '아이디';
     }else if(field=='hp'){
       return '전화번호';
+    }else{
+      return'이메일 주소';
     }
   }
 
-  const debouncedValidateField = debounce(async (field, value) => {
+  const debouncedValidateField = async (field, value) => {
     const changedName = nameChange(field);
-    
-    const data = {type : field, value: value }
+    const data = { type: field, value: value };
+  
     try {
       const response = await axios.post(
         `${baseURL}/api/auth/validation`,
@@ -371,53 +347,75 @@ export default function Register() {
         { headers: { 'Content-Type': 'application/json' } }
       );
       console.log(response.data);
-      if(response.data == 'available' ){
+  
+      if (response.data === 'available') {
         setStatusMessage({ message: ` 사용할 수 있는 ${changedName} 입니다.`, type: 'success' });
-        setValidation1((prev) => ({ ...prev, uid: true }));
-        setValidation2((prev) => ({...prev, hp: true}))
-      }else{
+        field === 'uid'
+          ? setValidation1((prev) => ({ ...prev, uid: true }))
+          : setValidation2((prev) => ({ ...prev, hp: true }));
+        return true;
+      } else {
         setStatusMessage({ message: ` 이미 사용 중인 ${changedName} 입니다.`, type: 'error' });
-        setValidation1((prev) => ({ ...prev, uid: false }));
-        setValidation2((prev) => ({...prev, hp: false}))
+        field === 'uid'
+          ? setValidation1((prev) => ({ ...prev, uid: false }))
+          : setValidation2((prev) => ({ ...prev, hp: false }));
+        return false;
       }
-        
-      } catch {
-        setStatusMessage({ message: `확인 중 서버 오류가 발생했습니다.`, type: 'error' });
-      }
-  }, 200);
-
-  const debouncedSendEmail = debounce(sendEmail, 100);
-  const handleEmailChange = (e) => {
-    const value = e.target.value;
-    setEmail(value);
-    debouncedSendEmail(value);
+    } catch {
+      setStatusMessage({ message: `확인 중 서버 오류가 발생했습니다.`, type: 'error' });
+      return false;
+    }
   };
+
+  const handleEmailChange = async (e) => {
+    const { name, value } = e.target;
+    setEmail(value);
+  
+    const valiResult = emailVali(value);
+    if (valiResult) {
+      const result = await debouncedValidateField(name, value); // 비동기 순서 보장
+      console.log("이메일 유효성 결과: ", result);
+  
+      if (result) {
+        await sendEmail(name, value); // 유효성 검사 통과 후 이메일 전송
+      }
+    }
+  };
+
   const handleCodeChange = (e) => {
     setCode(e.target.value); // 입력한 인증번호 상태 업데이트
   };
-  async function sendEmail (value){
-    if (validateRules.email(value) && validateRules.domain(value)) {
-      setStatusMessage({ message: '', type: '' });
-      try {
-        const response = await axios.post(`${baseURL}/api/auth/sendMail`,
-          { email: value },
-          { headers: { 'Content-Type': 'application/json' } }
-        );
 
-        if (response.status === 200) {
-          setStatusMessage({ message: '이메일 인증 메일이 발송되었습니다.', type: 'success' });
-          setSendMail(true);
-        } else {
-          setStatusMessage({ message: '이메일 전송에 실패했습니다.', type: 'error' });
-        }
-      } catch (error) {
-        setStatusMessage({ message: '서버 요청 중 오류가 발생했습니다.', type: 'error' });
-      }
-    } else {
+  const emailVali = (value) => {
+    if (validateRules.email(value) && validateRules.domain(value)){
+      setStatusMessage({
+        message: '',type: '',
+      });
+      return true;
+    }else{
       setStatusMessage({
         message: '유효하지 않은 이메일 형식입니다.',type: 'error',
       });
+      return false;
     }
+  }
+
+  async function sendEmail (field, value){
+        try {
+          const response = await axios.post(`${baseURL}/api/auth/sendMail`,
+            { email: value },
+            { headers: { 'Content-Type': 'application/json' } }
+          );
+
+          if (response.status === 200) {
+            setStatusMessage({ message: '이메일 인증 메일이 발송되었습니다.', type: 'success' });
+            setSendMail(true);
+          } else {
+            setStatusMessage({ message: '이메일 전송에 실패했습니다.', type: 'error' });
+          }
+        } catch (error) {
+          setStatusMessage({ message: '서버 요청 중 오류가 발생했습니다.', type: 'error' });
+        }
   };
   const verifyCode = async () => {
     try {
@@ -486,6 +484,108 @@ export default function Register() {
     );
   };
 
+  
+  const submitHandler = async (event) => {
+    event.preventDefault();
+    
+    if(user.grade===null||user.grade ===''){
+      setAlert({
+        message: '이용하실 플랜을 선택해주세요.',
+        type: 'warning',
+        isOpen: true,
+        onClose: false,
+      })
+      return;
+    }
+    if(!page3success){
+      setAlert({
+        message: '입력된 정보를 다시 확인해주세요.',
+        type: 'warning',
+        isOpen: true,
+        onClose: false,
+      })
+      return;
+    }
+    console.log('전송될 데이터:', JSON.stringify({ user, payment }));
+
+    try {
+      const resp = await axios.post(
+        `${baseURL}/api/auth/register`,
+        { user, payment },
+        { headers: { 'Content-Type': 'application/json' } }
+      );
+  
+      console.log('회원가입 결과:', resp.data);
+  
+      // 상태 코드와 응답 데이터에 따른 처리
+      if (resp.status === 200) {
+        if (resp.data === 'success') {
+          setAlert({
+            message: '회원가입이 완료되었습니다.',
+            type: 'success',
+            isOpen: true,
+            onClose: false,
+          });
+          setTimeout(() => {
+            navigate('/user/login');
+          }, 2000); 
+          // navigate('/user/login'); // 성공 시 로그인 페이지로 이동
+        } else if (resp.data === 'not found company') {
+          setAlert({
+            message: '1올바른 회사코드를 입력해주십시오.',
+            type: 'error',
+            isOpen: true,
+            onClose: false,
+          });
+        }
+      } else if (resp.status === 400) {
+        setAlert({
+          message: '잘못된 요청입니다. 회사 코드를 다시 확인하세요.',
+          type: 'error',
+          isOpen: true,
+          onClose: false,
+        });
+      } else {
+        setAlert({
+          message: '예기치 않은 오류가 발생했습니다. 다시 시도해주세요.',
+          type: 'error',
+          isOpen: true,
+          onClose: false,
+        });
+      }
+    } catch (error) {
+      // HTTP 상태 코드 확인
+      if (error.response?.status === 400) {
+        setAlert({
+          message: '회사 코드를 다시 확인해주세요.',
+          type: 'error',
+          isOpen: true,
+          onClose: false,
+        });
+        setTimeout(() => {
+          navigate('/user/register', { replace: true }); // replace: true는 현재 히스토리 엔트리를 대체
+          window.location.reload(); // 페이지 새로고침
+        }, 2000); 
+      } else if (error.response?.status === 500) {
+        setAlert({
+          message: '서버에서 오류가 발생했습니다. 잠시 후 다시 시도해주세요.',
+          type: 'error',
+          isOpen: true,
+          onClose: false,
+        });
+      } else {
+        setAlert({
+          message: '서버 요청 중 알 수 없는 오류가 발생했습니다.',
+          type: 'error',
+          isOpen: true,
+          onClose: false,
+        });
+      }
+  
+      console.error('Error Response:', error.response);
+      console.error('Error Message:', error.message);
+    }
+  };
     return (
       <form>
         <div className='register-container'>
@@ -548,6 +648,7 @@ export default function Register() {
                   placeholder='이메일을 입력해 주세요.'
                   className='signup-input-lg'
                   value={email}
+                  name='email'
                   onChange={handleEmailChange}
                 />
                 {!!sendMail && (
@@ -776,7 +877,7 @@ export default function Register() {
                     <p className='text-sm custom-mt-30'>회사 정보를 입력해주세요.</p>
                       <input type='text' placeholder='회사명'
                       name='companyName' value={user.companyName} 
-                      onChange={(e) => setUser(prev => ({...prev, [e.target.name]: e.target.value}))}
+                      onChange={ChangeHandler}
                       className="signup-input-lg mt-10" ></input>
                       <div className='signup-input-lg mt-10 flex items-center text-gray-500'>
                         <input type='text' placeholder='카드번호 입력' className="w-1/4 text-center ml-2" maxLength={4}

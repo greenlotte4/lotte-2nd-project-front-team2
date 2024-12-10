@@ -1,69 +1,123 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import "@/pages/community/Community.scss";
 import CommunitySidebar from "@/components/community/CommunitySidebar";
-
+import useUserStore from "../../store/useUserStore";
 import { CKEditor } from "@ckeditor/ckeditor5-react";
 import ClassicEditor from "@ckeditor/ckeditor5-build-classic";
+import { useParams } from "react-router-dom";
+import axiosInstance from "../../services/axios";
+import { useQuery } from "@tanstack/react-query";
 
 function CommunityWrite() {
-  const [type, setType] = useState(""); // 게시판 유형
+  const { boardId } = useParams(); // URL에서 boardId 추출
+  console.log("boardId from URL:", boardId); // 콘솔로 확인
+  const currentUser = useUserStore((state) => state.user); // 사용자 정보 가져오기
+
   const [title, setTitle] = useState(""); // 제목
   const [content, setContent] = useState(""); // 내용
-  const [file, setFile] = useState(null); // 첨부 파일
+  const [files, setFiles] = useState([]); // 첨부 파일
+  const [fileCount, setFileCount] = useState(0);
   const [isPinned, setIsPinned] = useState(false); // 필독 등록 여부
   const [isCommentEnabled, setIsCommentEnabled] = useState(false); // 댓글 활성화 여부
   const [commentOption, setCommentOption] = useState("모두"); // 댓글 설정 옵션
   const [showModal, setShowModal] = useState(false); // 모달 상태
+  const [selectedBoardId, setSelectedBoardId] = useState(""); // 게시판 ID 상태 관리
 
   const handleModalOpen = () => setShowModal(true); // 모달 열기
   const handleModalClose = () => setShowModal(false); // 모달 닫기
+  console.log("boardId from URL:", boardId);
 
-  const handleSubmit = (e) => {
+  const fetchBoards = async () => {
+    const response = await axiosInstance(`/api/community/write`);
+    console.log("데이터 " + JSON.stringify(response.data));
+    return response.data;
+  };
+
+  // useQuery를 사용하여 데이터를 불러옴
+  const { data, error, isLoading, isError } = useQuery({
+    queryKey: ["boards"],
+    queryFn: fetchBoards,
+  });
+
+  if (isLoading) {
+    return <div>로딩 중...</div>;
+  }
+
+  if (isError) {
+    return <div>에러 발생: {error.message}</div>;
+  }
+
+  const handleFileChange = (e) => {
+    const selectedFiles = Array.from(e.target.files);
+
+    // 최대 두 개까지만 선택 가능
+    if (selectedFiles.length > 2) {
+      alert("파일은 최대 두 개까지만 첨부할 수 있습니다.");
+      return;
+    }
+
+    setFiles(selectedFiles);
+    setFileCount(selectedFiles.length);
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log("handleSubmit에서 boardId:", boardId);
+
     const postData = {
-      type,
-      title,
-      content,
-      file,
+      boardId: selectedBoardId,
+      title: title,
+      content: content,
+      files: files,
       commentOption: isCommentEnabled ? commentOption : "댓글 비활성화",
       isPinned,
+      fileCount: fileCount,
+      favoritePost: false,
+      isMandatory: isPinned,
+      writer: currentUser.username, // 사용자 이름
+      uid: currentUser?.id,
     };
-    console.log("작성된 데이터:", postData);
-    alert("작성 완료!");
+    console.log("전송 데이터 " + JSON.stringify(postData));
+
+    try {
+      const response = await axiosInstance.post(
+        `/api/community/write`,
+        postData,
+        {
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+      console.log("작성 성공:", response.data);
+      alert("글 작성이 완료되었습니다!");
+    } catch (error) {
+      console.error("작성 실패:", error);
+      alert("글 작성에 실패했습니다. 다시 시도해주세요.");
+    }
   };
 
   return (
     <div id="community-container">
       {/* 사이드바 */}
-      <CommunitySidebar
-        favorites={{}}
-        toggleFavorite={() => {}}
-        userRole="user"
-        currentUser="user123"
-        departmentBoards={[
-          { key: "dept1", label: "부서 1" },
-          { key: "dept2", label: "부서 2" },
-        ]}
-        onDeleteBoard={(key) => console.log("삭제:", key)}
-        onUpdateBoard={(key) => console.log("수정:", key)}
-      />
+      <CommunitySidebar currentUser={currentUser} boardId={boardId} />
 
       {/* 작성 폼 */}
       <div className="community-main">
-        <h2>{type ? `${type} 작성` : "게시판을 선택하세요"}</h2>
+        <h2>{`${boardId} 작성`}</h2>
         <form onSubmit={handleSubmit}>
           {/* 게시판 유형 선택 및 필독 등록 */}
           <div className="form-group">
             <label>유형</label>
             <div className="select-pinned-wrapper">
               <select
-                value={type}
-                onChange={(e) => setType(e.target.value)}
+                value={selectedBoardId}
+                onChange={(e) => setSelectedBoardId(e.target.value)}
                 required
               >
-                <option value="">게시판 선택</option>
-                <option value="공지사항">공지사항</option>
-                <option value="일반 게시판">일반 게시판</option>
+                {data.map((board) => (
+                  <option key={board.boardId} value={board.boardId}>
+                    {board.boardName}
+                  </option>
+                ))}
               </select>
               <div className="pinned">
                 <input
@@ -130,16 +184,19 @@ function CommunityWrite() {
           <div className="form-group">
             <div className="file-upload-wrapper">
               <label htmlFor="file-upload" className="file-upload-label">
-                파일 선택
+                파일 선택(최대 2개)
               </label>
               <input
                 id="file-upload"
                 type="file"
                 className="file-upload-input"
-                onChange={(e) => setFile(e.target.files[0])}
+                multiple
+                onChange={handleFileChange}
               />
               <span className="file-selected">
-                {file ? file.name : "선택된 파일 없음"}
+                {files.length > 0
+                  ? files.map((file) => file.name).join(", ")
+                  : "선택된 파일 없음"}
               </span>
             </div>
           </div>
