@@ -282,10 +282,12 @@ export const AddProjectModal = ({
     }
     else{
       try {
-        await axiosInstance.post('/api/project', project);
+        console.log(project);
+        const res = await axiosInstance.post('/api/project', project);
+        console.log(res.data)
         onClose();
       } catch (err) {
-          return err;
+        console.error(err);
       }
     }
   };

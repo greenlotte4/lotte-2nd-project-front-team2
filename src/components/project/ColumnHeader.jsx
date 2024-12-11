@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 /* eslint-disable react/prop-types */
 import { useEffect, useState } from "react";
 import { MenuItem } from "./_CustomDropdown";
@@ -30,7 +31,7 @@ export const ColumnHeader = ({
   }, []);
 
   return (
-    <header className="flex flex-col w-full text-base leading-none">
+    <header className="flex flex-col w-full text-base leading-none handle">
       <div className="flex gap-3 items-center w-full min-h-[32px] relative">
         <div className="relative flex flex-1 shrink gap-2 items-start justify-between self-stretch my-auto basis-0 w-full handle">
           <div>
@@ -123,7 +124,7 @@ export const ColumnHeaderEdit = ({
       ...prev,
       ...res.data,
     }));
-    onSave();
+    setMode("basic");
   };
   const handleClose = () => {
     if (mode == "new") {

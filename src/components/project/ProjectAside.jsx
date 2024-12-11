@@ -17,6 +17,7 @@ function ProjectAside({ setData }) {
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isChanging, setIsChanging] = useState(false);
 
   const handleOpenTemplateModal = () => setIsTemplateModalOpen(true);
   const handleTemplateSelect = (template) => {
@@ -39,7 +40,7 @@ function ProjectAside({ setData }) {
 
   // useQuery 사용, refetch는 반환되는 객체에서 가져옴
   const { data, error, isLoading, refetch } = useQuery({
-    queryKey: ["projects", openSections], // openSections 상태가 변경될 때마다 쿼리 새로 호출
+    queryKey: ["projects", openSections, isChanging], // openSections 상태가 변경될 때마다 쿼리 새로 호출
     queryFn: fetchProjectsList,
   });
 
@@ -92,6 +93,7 @@ function ProjectAside({ setData }) {
             data={section}
             isCompleted={key === "completed"}
             isOpen={openSections[key]}
+            setIsChanging = {setIsChanging}
             toggleSection={() => toggleSection(key)}
             activeItemId={activeItemId}
             onItemClick={handleItemClick}

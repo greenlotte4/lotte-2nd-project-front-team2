@@ -141,19 +141,20 @@ const initialData = {
 
 export default function Project() {
  // Tailwind CSS 클래스 묶음
- const addBoardClass =
- "flex gap-2 items-center px-3 py-2 w-full text-sm rounded-lg bg-zinc-200 bg-opacity-30";
+ const addBoardClass ="flex gap-2 items-center px-3 py-2 w-full text-sm rounded-lg bg-zinc-200 bg-opacity-30";
+
 const [data, setData] = useState(initialData);
 const [isModalOpen, setIsModalOpen] = useState(false); // 모달 열림 상태 관리
 const [isNewColumnAdded, setIsNewColumnAdded] = useState(false);
+const [isEditTitle, setIsEditTitle] = useState(false);
 
 const columnsRef = useRef(null); // 컬럼을 감싸는 DOM 요소 참조
+
 const handleAddColumn = () => {
  if (!isNewColumnAdded) {
    setIsNewColumnAdded(true);
  }
 };
-const [isEditTitle, setIsEditTitle] = useState(false);
 
 const handleEditTitle = () => {
  setIsEditTitle(!isEditTitle);
@@ -242,7 +243,7 @@ const updateColumnTasks = (columns, columnIndex, taskId, updatedTask) => {
   const handleTaskUpsert = async (task, columnIndex) => {
     try { // task.id가 존재하면 PUT 요청, 그렇지 않으면 POST 요청
       const method = task.id ? 'put' : 'post';
-      
+      console.log(task);
       const res = await axiosInstance({ method, url:'/api/project/task', data: task });
       
       setData((prevData) => {
@@ -272,14 +273,18 @@ const updateColumnTasks = (columns, columnIndex, taskId, updatedTask) => {
     }
   };
 
-  const handleDeleteCol = (colId) => {
+  const handleDeleteCol = async(colId) => {
+    await axiosInstance.delete(`/api/project/column/${colId}`);
     setData((prevData) => {
+
+      
       const updatedColumns = prevData.columns.filter((col) => col.id !== colId);
       return { ...prevData, columns: updatedColumns };
     });
   };
 
-  const handleDeleteTask = (taskId, columnIndex) => {
+  const handleDeleteTask = async(taskId, columnIndex) => {
+    await axiosInstance.delete(`/api/project/task/${taskId}`);
     setData((prevData) => {
       const updatedColumns = prevData.columns.map((col, idx) => {
         if (idx !== columnIndex) return col;
@@ -326,7 +331,7 @@ const updateColumnTasks = (columns, columnIndex, taskId, updatedTask) => {
     <div id="project-container" className="flex min-h-full">
       {/* 사이드바 */}
       <div className="w-[270px]">
-        <ProjectAside />
+        <ProjectAside setData={setData} />
       </div>
 
       {/* 메인 섹션 */}

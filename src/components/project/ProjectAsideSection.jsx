@@ -2,7 +2,7 @@
 import ProjectAsideItem from "./ProjectAsideItem";
 import { CustomSVG } from "./_CustomSVG";
 
-function ProjectAsideSection({ data, isCompleted, isOpen, toggleSection, activeItemId, onItemClick }) {
+function ProjectAsideSection({ data, isCompleted, isOpen, toggleSection, activeItemId, onItemClick, setIsChanging }) {
   const { title, items } = data;
 
   return (
@@ -17,7 +17,9 @@ function ProjectAsideSection({ data, isCompleted, isOpen, toggleSection, activeI
         >
           <span className="text-sm">{title} ({items.length})</span>
         </h2>
-        <CustomSVG id={isOpen ? "expand-up" : "expand-down"} size={24} />
+        <span className={`transition-transform ease-in-out duration-500 ${isOpen ? "rotate-180" : "rotate-0"}`}>
+          <CustomSVG id="expand-up" size={24} />
+        </span>
       </div>
 
       {/* 아이템 리스트 (토글된 상태에 따라 보여줌) */}
@@ -30,9 +32,12 @@ function ProjectAsideSection({ data, isCompleted, isOpen, toggleSection, activeI
           {items.map((item, index) => (
             <ProjectAsideItem
               key={index}
+              id={item.id}
               title={item.title}
+              isOwner={item.isOwner}
               isActive={item.id === activeItemId} // 선택된 항목만 활성화
               onClick={() => onItemClick(item.id)} // 항목 클릭 시 활성화
+              setIsChanging = {setIsChanging}
             />
           ))}
         </div>
