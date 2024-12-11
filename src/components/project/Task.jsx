@@ -4,6 +4,7 @@ import { CustomSVG } from "./_CustomSVG";
 import { DynamicTaskEditor } from "@/components/project/TaskEdit";
 import { v4 as uuidv4 } from "uuid";
 import clsx from "clsx";
+import { MenuItem } from "./_CustomDropdown";
 
 const getFormattedDueDate = (duedate) => {
 
@@ -26,6 +27,32 @@ const getFormattedDueDate = (duedate) => {
     return `D+${Math.abs(differenceInDays)}`;
   }
 };
+
+function getFormattedRdate(inputTime) {
+  const now = new Date();
+  const inputDate = new Date(inputTime);
+
+  const diffInSeconds = Math.floor((now - inputDate) / 1000);
+  const diffInMinutes = Math.floor(diffInSeconds / 60);
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  const diffInDays = Math.floor(diffInHours / 24);
+
+  if (diffInSeconds < 60) {
+    return `${diffInSeconds}초 전`;
+  } else if (diffInMinutes < 60) {
+    return `${diffInMinutes}분 전`;
+  } else if (diffInHours < 24) {
+    return `${diffInHours}시간 전`;
+  } else {
+    const year = inputDate.getFullYear();
+    const month = String(inputDate.getMonth() + 1).padStart(2, '0');
+    const day = String(inputDate.getDate()).padStart(2, '0');
+    const hours = String(inputDate.getHours()).padStart(2, '0');
+    const minutes = String(inputDate.getMinutes()).padStart(2, '0');
+
+    return `${year}/${month}/${day} ${hours}:${minutes}`;
+  }
+}
 
 const getDateColor = (date) => {
   if (typeof date !== "string") return "";
@@ -51,7 +78,8 @@ const DynamicTask = React.memo(
   duedate,
   subTasks = [],
   tags = [],
-  commentsList = [],
+  comments = [],
+  associate=[],
   columnIndex,
   onAddSubTask,
   onDelete,
@@ -125,6 +153,11 @@ const DynamicTask = React.memo(
     );
   };
   const stopPropagation = (e) => e.stopPropagation();
+  const handledeleteclick = (e) => {
+    stopPropagation(e);
+    
+    onDelete();
+  }
 
   const renderedSubTasks = useMemo(() => {
     return (nowSubTasks||[]).map((subTask, index) => (
@@ -166,9 +199,10 @@ const DynamicTask = React.memo(
             priority,
             status,
             duedate,
-            subTasks: nowSubTasks,
+            subTasks: [...nowSubTasks],
             tags,
-            commentsList,
+            comments,
+            associate,
           }}
           columnIndex={columnIndex}
           onSave={(updatedTask) => {
@@ -269,7 +303,7 @@ const DynamicTask = React.memo(
                     </div>
                   ) : (
                     <button
-                      className="flex items-center justify-center gap-1.5 py-1.5 mt-2 text-sm rounded-lg bg-gray-600/10 text-gray-600/60"
+                      className="flex items-center justify-center gap-1.5 py-1.5 mt-2 text-sm rounded-lg border border-gray-600/40 text-gray-600/60"
                       onClick={(e) => {
                         stopPropagation(e);
                         setShowInput(true);
@@ -305,7 +339,25 @@ const DynamicTask = React.memo(
                     ))}
                   </section>
                 )}
-
+                
+                {/* 작업자 */}
+                {(associate||[]).length>0 && (
+                  <section
+                    className="flex flex-wrap items-center space-x-2 gap-2 mt-1.5 text-sm text-black/50"
+                    aria-labelledby="associate"
+                  >
+                      작업자
+                    {/* 프로필 사진 표시 */}
+                    <div className="relative flex items-center">
+                      {associate.map((asso, index) => (
+                        <img key={asso.id} src={asso.img||"/images/document-folder-profile.png"} alt={asso.name}
+                          className="w-8 h-8 rounded-full border-2 border-white -ml-3 first:ml-0"
+                          style={{zIndex: associate.length - index,}}
+                        />
+                      ))}
+                    </div>
+                  </section>
+                )}
                 {/* 마감일 및 코멘트 */}
                 <section
                   className="flex flex-wrap gap-2 mt-1.5 text-sm text-gray-600/60"
@@ -325,12 +377,12 @@ const DynamicTask = React.memo(
                   )}
                   <div
                     className="flex items-center gap-1.5"
-                    aria-label={`의견 ${commentsList.length}개`}
+                    aria-label={`의견 ${comments.length}개`}
                   >
                     <CustomSVG id="comment" />
-                    <span>의견 {commentsList.length}</span>
+                    <span>의견 {comments.length}</span>
                   </div>
-                  {commentsList.map((comment) => (
+                  {comments.map((comment) => (
                     <article
                       className="flex gap-1.5 items-start w-[232px] text-sm"
                       key={comment.id}
@@ -342,14 +394,14 @@ const DynamicTask = React.memo(
                         className="w-5 h-5 rounded-full"
                       />
                       <div className="flex-1">
-                        <span className="text-gray-600">{comment.user}</span>
-                        <time className="text-gray-600"> {comment.rdate}</time>
+                        <span className="text-gray-600">{comment.user_id}</span>
+                        <time className="text-gray-600"> {getFormattedRdate(comment.rdate)}</time>
                         <p>{comment.content}</p>
                       </div>
                     </article>
                   ))}
                   <form
-                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gray-600/10"
+                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gray-600/5 w-full"
                     aria-label="의견 작성하기"
                   >
                     <CustomSVG id="reply" />
@@ -359,6 +411,9 @@ const DynamicTask = React.memo(
                       className="w-full bg-transparent outline-none"
                       aria-label="의견 입력란"
                     />
+                    <button className="bg-gray-600/40 rounded-3xl p-[2px] pl-1 pb-1">
+                      <CustomSVG id="send" size={20} color="#FFFFFF"/>
+                    </button>
                   </form>
                 </section>
 
@@ -380,16 +435,16 @@ const DynamicTask = React.memo(
                   >
                     수정
                   </button>
-                  <button
-                    className="px-6 py-1 border rounded-lg border-slate-500/50"
-                    onClick={(e) => {
-                      stopPropagation(e);
-                      onDelete();
-                    }}
+                  <MenuItem
+                    className=""
+                    border={'1 px-6 py-1 rounded-lg border-slate-500/50'}
+                    onClick={(e)=>handledeleteclick(e)}
+                    confirm={true}
+                    tooltip={'삭제 후엔 되돌릴 수 없습니다. 정말로 삭제하시겠습니까?'}
                     aria-label="작업 삭제"
                   >
                     삭제
-                  </button>
+                  </MenuItem>
                 </section>
               </div>
             ) : (
@@ -435,8 +490,18 @@ const DynamicTask = React.memo(
                     </div>
                   )}
 
-                  {subTasks || duedate || commentsList ? (
+                  {associate||subTasks || duedate || comments ? (
                     <div className="flex flex-wrap gap-2 items-start pt-3 w-full text-xs leading-none">
+                      {(associate||[]).length>0 && (
+                        <div className="relative flex items-center">
+                        {associate.map((asso, index) => (
+                          <img key={asso.id} src={asso.img||"/images/document-folder-profile.png"} alt={asso.name}
+                            className="w-6 h-6 rounded-full border-2 border-white -ml-2 first:ml-0"
+                            style={{zIndex: associate.length - index,}}
+                          />
+                        ))}
+                      </div>
+                      )}
                       {(subTasks||[]).length>0 && (
                         <div className="flex gap-1 items-center whitespace-nowrap">
                           <CustomSVG id="add-checkbox" size="18" />
@@ -455,11 +520,11 @@ const DynamicTask = React.memo(
                         </div>
                       )}
 
-                      {(commentsList||[]).length>0 && (
+                      {(comments||[]).length>0 && (
                         <div className="flex gap-1 items-center whitespace-nowrap">
                           <CustomSVG id="comment" size="18" />
                           <div className="self-stretch my-auto text-ellipsis">
-                            {(commentsList||[]).length}
+                            {(comments||[]).length}
                           </div>
                         </div>
                       )}

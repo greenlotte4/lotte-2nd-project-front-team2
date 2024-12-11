@@ -17,7 +17,7 @@ export const MenuItem = ({ onClick, children, tooltip, confirm, pointColor, bord
 
     if (confirmReady) {
       // 두 번째 클릭: 삭제 요청
-      onClick();
+      onClick(e);
       setConfirmReady(false);
       setShowTooltip(false); // 툴팁 닫기
       clearTimeout(tooltipTimer.current);
@@ -74,22 +74,22 @@ export const MenuItem = ({ onClick, children, tooltip, confirm, pointColor, bord
     <div className="relative" ref={itemRef}>
       <div
         role="menuitem"
-        className={`relative flex items-center p-2 cursor-pointer text-sm text-center transition-all duration-150 group
-          border-${border} ${
+        className={`relative flex items-center p-2 cursor-pointer text-sm text-center transition-all duration-150 overflow-hidden group
+          ${border} ${
             confirmReady
               ? `text-white bg-${pointColor} font-semibold`
-              : `hover:bg-gray-200 ${border && "border-slate-500/50"}`
+              : `hover:bg-gray-200`
           }`}
         onClick={confirm ? handleClick : onClick}
       >
         {/* 배경 슬라이드 효과 */}
         <span
-          className={`absolute inset-0 bg-gradient-to-r from-blue-500 to-blue-700 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left`}
+          className={`absolute inset-0 bg-${pointColor} transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left`}
           aria-hidden="true"
         ></span>
   
         {/* 텍스트와 아이콘 */}
-        <span className="relative z-10 flex items-center space-x-2">
+        <span className="relative z-10 flex items-center space-x-2 group-hover:text-white">
           {children}
           {icon ? confirmReady && <CustomSVG id={icon} color="currentColor" /> : null}
         </span>

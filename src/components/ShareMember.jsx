@@ -5,11 +5,10 @@ import { CustomSVG } from "./project/_CustomSVG";
 const ShareMember = ({ members = [], maxNum="3", listName="참여자", children , isShareOpen, setIsShareOpen}) => {
   
   const [isMembersDropdownOpen, setIsMembersDropdownOpen] = useState(false); // 참가자 드롭다운 상태
+  const [tooltip, setTooltip] = useState({ visible: false, name: "", x: 0, y: 0 });
 
   const toggleShare = () => {setIsShareOpen((prev) => !prev);};
   const toggleMembersDropdown = () => {setIsMembersDropdownOpen((prev) => !prev);};
-
-  const [tooltip, setTooltip] = useState({ visible: false, name: "", x: 0, y: 0 });
 
   const handleMouseEnter = (e, index, name) => {
     let x= 120;

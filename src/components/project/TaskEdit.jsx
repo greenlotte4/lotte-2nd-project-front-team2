@@ -1,6 +1,7 @@
 /* eslint-disable react/prop-types */
 import { useEffect, useRef, useState } from "react";
 import { CustomSVG } from "./_CustomSVG";
+import { comment } from "postcss";
 
 export function DynamicTaskEditor({
   mode,
@@ -20,7 +21,9 @@ export function DynamicTaskEditor({
     duedate: taskToEdit?.duedate||"",
     tags: taskToEdit?.tags||[],
     subTasks:taskToEdit?.subTasks||[],
+    comments:taskToEdit?.comments||[],
     status: taskToEdit?.status||1,
+    associate: taskToEdit?.associate||[],
   });
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [newTag, setNewTag] = useState("");
@@ -300,8 +303,9 @@ export function DynamicTaskEditor({
               type="submit"
               className="flex grow shrink justify-center items-start font-medium tracking-wide leading-6 uppercase whitespace-nowrap text-zinc-700 w-[214px]"
               aria-label="Submit task"
+              onClick={handleSubmit}
             >
-              <span className="flex overflow-hidden flex-col justify-center items-center rounded-lg border border-solid border-zinc-700 border-opacity-50">
+              <span className="flex overflow-hidden flex-col justify-center items-center rounded-lg border border-solid border-zinc-700/50">
                 <span className="overflow-hidden px-6 py-1 max-md:px-5">
                   {mode === "edit" ? "수정" : "저장"}
                 </span>
