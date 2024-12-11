@@ -2,10 +2,13 @@ import { useEffect, useState, useCallback } from 'react';
 import { Client } from '@stomp/stompjs';
 import axiosInstance from '@/services/axios.jsx';
 
-const useWebSocketProgress = ({ folderId, userId}) => {
+const useWebSocketProgress = ({ initialDestination, initialMessage, initialFolderId, initialUserId}) => {
+    const [destination, setDestination] = useState(initialDestination);
+    const [sendMessage, setSendMessage] = useState(initialMessage);
+    const [folderId, setFolderId] =  useState(initialFolderId);
+    const [userId,setUserId] = useState(initialUserId);
     const [isConnected, setIsConnected] = useState(false);
     const [progress, setProgress] = useState(0);
-    const [collaborators, setCollaborators] = useState([]);
     const [stompClient, setStompClient] = useState(null);
 
     const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
@@ -30,7 +33,7 @@ const useWebSocketProgress = ({ folderId, userId}) => {
             onConnect: () => {
                 console.log('Editor WebSocket connected');
                 setIsConnected(true);
-                subscribeToEditorTopics(client);
+                subscribeToTopics(client);
             },
             onStompError: (frame) => {
                 console.log("STOMP Error:", frame);
@@ -40,39 +43,22 @@ const useWebSocketProgress = ({ folderId, userId}) => {
     }, [wsUrl]);
     
 
-    const subscribeToEditorTopics = (client) => {
-        // 진행률 내용 구독
+    const subscribeToTopics = (client) => {
+        // 진행률 구독
         client.subscribe(`/topic/progress/uploads/${userId}`, (message) => {
             try {
-                const response = JSON.parse(message.body);
-                console.log('Received page update:', response);
-                setProgress(response.content);
+                const progress = parseInt(message.body, 10); // Parse integer progress
+                if (!isNaN(progress)) {
+                    console.log('Received upload progress:', progress);
+                    setProgress(progress); // Update the progress state
+                } else {
+                    console.warn('Invalid progress data received:', message.body);
+                }
             } catch (error) {
-                console.error("Failed to parse progress message:", error);
+                console.error('Failed to process progress message:', error);
             }
         });
-
-        // 협업자 상태 구독
-        client.subscribe(`/topic/page/${folderId}/collaborators`, (message) => {
-            try {
-                const response = JSON.parse(message.body);
-                console.log('Collaborators update:', response);
-                setCollaborators(response.collaborators);
-            } catch (error) {
-                console.error("Failed to parse collaborators message:", error);
-            }
-        });
-
-        // 사용자별 알림 구독
-        client.subscribe(`/topic/page/user/${userId}`, (message) => {
-            try {
-                const response = JSON.parse(message.body);
-                console.log('User notification:', response);
-                // 알림 처리 로직 추가
-            } catch (error) {
-                console.error("Failed to parse user message:", error);
-            }
-        });
+    
     };
 
     useEffect(() => {
@@ -90,7 +76,7 @@ const useWebSocketProgress = ({ folderId, userId}) => {
     }, [stompClient, initializeStompClient]);
 
     // 에디터 내용 변경사항 전송
-    const sendMessage = useCallback((destination, body) => {
+    const ProgresssendMessage = useCallback((destination, body) => {
         if (isConnected && stompClient) {
             stompClient.publish({
                 destination,
@@ -101,13 +87,28 @@ const useWebSocketProgress = ({ folderId, userId}) => {
             console.error('WebSocket is not connected');
         }
     }, [stompClient, isConnected]);
+
+
+    useEffect(() => {
+        if (stompClient && isConnected) {
+            subscribeToTopics(stompClient);
+        }
+    }, [folderId, userId, isConnected, stompClient]);
+
+    const updateFolderId = (newFolderId) =>{
+        setFolderId(newFolderId);
+    }
+    const updateUserId = (newUserId)=>{
+        setUserId(newUserId);
+    }
     
 
     return {
         isConnected,
         progress,
-        collaborators,
         sendMessage,
+        updateUserId,
+        updateFolderId,
         initializeStompClient
     };
 };

@@ -18,7 +18,6 @@ const RenameModal = ({
   const [isLoading, setIsLoading] = useState(false);
   const queryClient = useQueryClient(); // Access query client
 
-  console.log(id);
 
   if (!isOpen) return null;
   

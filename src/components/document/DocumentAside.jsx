@@ -34,13 +34,23 @@ export default function DocumentAside({onStorageInfo}){
 
     const [trashAlert,setTrashAlert] = useState(false);
     const handleCloseTrashAlert = () => setTrashAlert(false);
+    const user = useUserStore((state)=>state.user);
 
 
   // React Query를 사용하여 폴더 데이터 가져오기
-    const { data: folderResponse = { folderDtoList: [], uid: "",size: 0 }, isLoading, isError } = useQuery({
+    const { data: folderResponse = { folderDtoList: [], uid: "" }, isLoading, isError } = useQuery({
         queryKey: ["driveList", location.pathname],
         queryFn: async () => {
             const response = await axiosInstance.get("/api/drive/folders");
+            return response.data; // 백엔드의 데이터 구조 반환
+        },
+        staleTime: 300000, // 데이터 신선 유지 시간 (5분)+
+    });
+
+    const { data: size , isDataLoading, isDataError } = useQuery({
+        queryKey: ["driveSize", user.uid],
+        queryFn: async () => {
+            const response = await axiosInstance.get("/api/drive/size");
             return response.data; // 백엔드의 데이터 구조 반환
         },
         staleTime: 300000, // 데이터 신선 유지 시간 (5분)+
@@ -58,7 +68,6 @@ export default function DocumentAside({onStorageInfo}){
         },
     });
 
-    const user = useUserStore((state) => state.user);
     console.log("Current user:", user.grade);
     // 폴더 필터링 (공유 및 개인)
     const sharedFolders = folderResponse?.folderDtoList?.filter((folder) => folder.isShared === 1) || [];
@@ -66,8 +75,6 @@ export default function DocumentAside({onStorageInfo}){
     const setStorageInfo = useStorageStore((state) => state.setStorageInfo);
 
  
-
-    const size = folderResponse?.size || 0; // 기본값 0
     const userGrade = user?.grade || 1;    // 기본값 1
     let maxSize = 0;
         if (userGrade === 1 || userGrade  === null) {
@@ -79,7 +86,6 @@ export default function DocumentAside({onStorageInfo}){
         }
 
     useEffect(() => {
-        
           // KB 단위의 size를 Byte로 변환
          const sizeInBytes = size * 1024;
     
@@ -96,7 +102,7 @@ export default function DocumentAside({onStorageInfo}){
             currentRemainingSize,
         });
 
-    }, [size, usedSize]); // `size`와 `userGrade`가 변경될 때 계산
+    }, [size]); // `size`와 `userGrade`가 변경될 때 계산
    
 
     const togglePinnedSection = () => {
@@ -204,13 +210,13 @@ export default function DocumentAside({onStorageInfo}){
     };
 
         // 로딩 상태 처리
-    if (isLoading) {
-        return <div>Loading folders...</div>;
-    }
-
-    if (isError) {
-        return <div>Error loading folders.</div>;
-    }
+        if (isLoading || isDataLoading) {
+            return <div>Loading data...</div>;
+        }
+        
+        if (isError || isDataError) {
+            return <div>Error loading data.</div>;
+        }
 
    
         

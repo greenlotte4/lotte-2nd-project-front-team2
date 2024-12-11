@@ -18,6 +18,8 @@ export default function ContextMenu({
     onDetailToggle,
     downloadHandler,
     type,
+    onShare,
+    selectedFolder
 }) {
     const contextMenuRef = useRef(null);
     const renameModalRef = useRef(null); // RenameModal의 레퍼런스
@@ -74,6 +76,7 @@ export default function ContextMenu({
     const handelRestore = (folder) =>{
 
     }
+   
 
   
 
@@ -131,7 +134,7 @@ export default function ContextMenu({
             label: '공유',
             icon: FaShareAlt,
             color: 'text-purple-500',
-            onClick: (folder) => console.log(`공유: ${folder.name}`),
+            onClick: () =>{ onShare("folder",folder);},
         },
         {
             id: 'info',

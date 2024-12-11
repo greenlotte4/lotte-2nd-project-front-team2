@@ -10,37 +10,29 @@ import useWebSocketProgress from '../util/useWebSocketProgress';
 
 const MyDropzone = ({ 
   folderId ,
-  maxOrder, 
+  fileMaxOrder, 
+  folderMaxOrder,  
   uid, 
   onUploadProgress,
   onUploadStart, 
   onUploadComplete ,
   triggerAlert,  
-  folderMaxOrder,
-  fileMaxOrder,
+  
 }) => {
   const [uploadedFiles, setUploadedFiles] = useState([]); // 업로드된 파일 목록
   const [isUploading, setIsUploading] = useState(false); // 업로드 중 상태
   const [isPopupVisible, setIsPopupVisible] = useState(false); // 팝업 상태
   const queryClient = useQueryClient();
   const storageInfo = useStorageStore((state) => state.storageInfo);
-  const [progress, setProgress] = useState(0);
-
+  const [uploadProgress,setUploadProgress]= useState(0);
+  const [alert,setAlert] =useState(false); 
  
-  const { isConnected, messages } = useWebSocketProgress({
-    topics: [`/topic/progress/uploads/${uid}`],
-    userId: uid,
-});
+  const { stompClient, isConnected, updateUserId, updateFolderId, messages, progress } = useWebSocketProgress({});
 
-  useEffect(() => {
-    console.log('Messages:', messages); // 모든 메시지 로그 확인
-    const progress = messages[`/topic/progress/uploads/${uid}`];
-    if (progress) {
-        console.log('Upload Progress:', progress);
-        setProgress(progress);
-    }
-  }, [messages, uid]);
-
+  useEffect(()=>{
+    setUploadProgress(progress);
+    onUploadProgress(progress);
+  },[messages,progress])
 
 
 
@@ -83,28 +75,16 @@ const MyDropzone = ({
     console.log("FormData before sending:", formData); // FormData 확인
 
     setIsUploading(true); // 업로드 중 상태로 설정
+    updateUserId(uid);
+    updateFolderId(folderId);
     try {
       const response = await axiosInstance.post(`/api/drive/upload/${folderId}`, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
-        },
-        onUploadProgress: (progressEvent) => {
-          if (progressEvent.total > 0) {
-            const percentCompleted = Math.round(
-              (progressEvent.loaded / progressEvent.total) * 100
-            );
-            onUploadProgress(percentCompleted); // 진행률 업데이트
-          } else {
-            console.warn("총 파일 크기를 알 수 없습니다.");
-            onUploadProgress(0); // 0%로 초기화
-          }
-        },
+        }
       });
       queryClient.invalidateQueries(['folderContents']);
       onUploadComplete();
-     
-      console.log('알럿상태',alert);
-
       console.log("업로드 성공:", response.data);
 
       // 업로드 성공 시 파일 목록 업데이트
@@ -179,7 +159,7 @@ const MyDropzone = ({
       {/* 업로드 중 메시지 */}
       {isUploading && (
         <div className="mt-4 text-center text-blue-600">
-          <p>업로드 진행률: {progress}%</p>
+          <p>업로드중..... </p>
         </div>
       )}
 
@@ -217,6 +197,7 @@ const MyDropzone = ({
         onConfirm={() => setAlert({ isVisible: false })}
       />
     )}
+    
     </>
   );
 };

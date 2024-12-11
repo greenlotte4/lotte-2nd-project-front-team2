@@ -23,7 +23,6 @@ export default function FileUploads({ isOpen, onClose, folderId, fileMaxOrder, f
   const handleUploadComplete = () => {
     setIsUploadInProgress(false);
     setUploadProgress(null); // 초기화
-    onClose(); // 업로드 완료 후 모달 닫기
 
   };
 

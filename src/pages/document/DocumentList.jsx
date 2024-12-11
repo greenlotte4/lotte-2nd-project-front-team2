@@ -17,6 +17,10 @@ import ContextFileMenu from '../../components/document/ContextFileMenu';
 import CustomAlert from '../../components/document/CustomAlert';
 import MyDropzone from '../../components/DropZone';
 import useStorageStore from '../../store/useStorageStore';
+import ShareMember from "@/components/ShareMember";
+import { AddProjectModal } from '../../components/project/_Modal';
+import { AddDocumentModal } from '../../components/document/addDocumentModal';
+import DriveShareModal from '../../components/document/documentShareMenu';
 
 export default function DocumentList() {
     const [viewType, setViewType] = useState('box'); // Default to 'box'
@@ -26,6 +30,8 @@ export default function DocumentList() {
     const [newFolderName, setNewFolderName] = useState(''); // 새로운 폴더 이름
     const [isRenameModalOpen, setIsRenameModalOpen] = useState(false); // 모달 열림 상태
     const [isFavorite,setIsFavorite] = useState(0);
+    const [shareMenu,setShareMenu] = useState(false);
+    const [saveCoworker,setSaveCoworker] = useState([]);
 
     const location = useLocation();
     const user = useUserStore((state) => state.user);
@@ -78,6 +84,23 @@ export default function DocumentList() {
         setSelectedFile(null);
       };
 
+    const handleShare = (type,selected)=>{
+        if (type === "folder") {
+            setSelectedFolder(selected); // 폴더 선택 상태 업데이트
+            setSelectedFile(null); // 파일 선택 초기화
+        } else if (type === "file") {
+            setSelectedFile(selected); // 파일 선택 상태 업데이트
+            setSelectedFolder(null); // 폴더 선택 초기화
+        }
+        setIsModalOpen(true);
+    }
+
+    const handleModalClose = () => {
+        setIsModalOpen(false);
+        setSelectedFolder(null);
+        setSelectedFile(null);
+    };
+
 
     const [menuState, setMenuState] = useState({
         isMenuOpen: false,
@@ -113,7 +136,8 @@ export default function DocumentList() {
         staleTime: 300000, // 데이터가 5분 동안 신선하다고 간주
     });
 
-
+      // 폴더 및 파일 데이터 가져오기
+    
 
     // 폴더 이름 변경 Mutation
     const renameFolderMutation = useMutation({
@@ -238,8 +262,7 @@ export default function DocumentList() {
 
 
     //선택 삭제
-    const [selectedFolders,setSelectedFolders] = useState([]);
-    const [selectedFiles,setSelectedFiles] = useState([]);
+
     const [selectedItems, setSelectedItems] = useState({
         folders: [],
         files: [],
@@ -466,6 +489,9 @@ const handleCloseFileMenu = () => {
 
   
 
+    const parentFolder = (data?.parentFolder || []);
+    console.log(parentFolder);
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
 
     const subFolders = (data?.subFolders || [])
@@ -593,6 +619,7 @@ const handleCloseFileMenu = () => {
         }
     };
 
+  
 
 
     
@@ -632,6 +659,7 @@ const handleCloseFileMenu = () => {
                         />
                     </>
                 )}
+             
             </section>
             <section className="flex justify-between mt-[22px] mb-6">
                 <div className="flex gap-4 mx-[15px] w-[98%] items-center">
@@ -829,9 +857,10 @@ const handleCloseFileMenu = () => {
                     folderName={contextMenu.folderName}
                     folderId={contextMenu.folderId}
                     path={contextMenu.path}
+                    onShare={handleShare}
                     onDetailToggle={() => handleDetailToggle(contextMenu.folder)} // 상세 정보 토글 함수 전달
                     downloadHandler={() => zipDownloadHandler(contextMenu.folder)}
-
+                    selectedFolder = {setSelectedFolder}
                 />
               <ContextFileMenu
                     visible={contextFileMenu.visible}
@@ -892,6 +921,16 @@ const handleCloseFileMenu = () => {
                         </div>
                     </Modal>
                 )}
+                   <DriveShareModal
+                    isModalOpen={isModalOpen}
+                    setIsModalOpen={setIsModalOpen}
+                    selectedFolder={selectedFolder}
+                    selectedFile={selectedFile}
+                    company={user.company}
+                    user={user}
+                    name={selectedFolder?.name || selectedFile?.name} // 선택된 폴더나 파일 이름 전달
+                    >
+                    </DriveShareModal>
 
 
                    

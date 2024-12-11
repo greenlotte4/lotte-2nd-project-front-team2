@@ -3,6 +3,7 @@ import CustomAlert from '../Alert';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import axiosInstance from '@/services/axios.jsx'
 import { CustomSVG } from '../project/_CustomSVG';
+import { CheckCircle, Filter, Search, UserPlus, Users, X } from 'lucide-react';
 export default function GetAddressModal({isOpen, onClose, selectedUsers, setSelectedUsers, cancleSelectedUsersHandler}) {
 
     const [customAlert, setCustomAlert] = useState(false);
@@ -167,156 +168,180 @@ export default function GetAddressModal({isOpen, onClose, selectedUsers, setSele
     }
     if(!isOpen) return null;
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-      <CustomAlert 
-        type={customAlertType} message={customAlertMessage} isOpen={customAlert}
-      />
-        <div className="bg-white rounded-2xl shadow-lg w-[800px] min-h-[800px] max-h-[800px] overflow-scroll scrollbar-none">
-        
-            <div className="display-flex mb-8 py-3.5 px-12 bg-white border-b rounded-t-2xl z-10 sticky top-0">
-                <span className="text-xl font-bold">주소록</span>
-                <button 
+    <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-[999] p-4">
+    <CustomAlert 
+        type={customAlertType} 
+        message={customAlertMessage} 
+        isOpen={customAlert}
+    />
+    
+    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl h-[90vh] flex flex-col">
+        {/* Header */}
+        <div className="flex justify-between items-center p-6 border-b">
+            <h2 className="text-2xl font-bold text-gray-800 flex items-center">
+                <Users className="mr-3 text-purple-600" size={28} />
+                주소록
+            </h2>
+            <button 
                 onClick={onClose}
-                className="text-xl float-right display-block font-bold text-gray-600 hover:text-gray-900"
-                >
-                <CustomSVG id="close" color='currentColor' />
-                </button>
+                className="text-gray-500 hover:text-gray-800 transition-colors"
+            >
+                <X size={28} />
+            </button>
+        </div>
+
+        {/* Content Area */}
+        <div className="grid grid-cols-3 gap-6 p-6 h-full overflow-hidden">
+            {/* Groups Column */}
+            <div className="border rounded-lg p-4 bg-gray-50">
+                <div className="flex items-center mb-4 border-b pb-2">
+                    <Filter className="mr-2 text-gray-500" />
+                    <h3 className="text-lg font-semibold">팀 / 부서</h3>
+                    <span className="ml-2 text-sm text-gray-500">
+                        ({allGroups ? allGroups.pages[0].totalElements : 0})
+                    </span>
+                </div>
+                
+                <div className="relative mb-4">
+                    <input 
+                        value={allGroupsKeyword} 
+                        onChange={(e)=>setAllGroupsKeyword(e.target.value)} 
+                        placeholder='부서 검색'
+                        className="w-full p-2 pl-8 border rounded-md focus:ring-2 focus:ring-purple-200"
+                    />
+                    <Search className="absolute left-2 top-3 text-gray-400" size={20} />
+                </div>
+
+                <ul className="space-y-2 max-h-[400px] overflow-y-auto">
+                    <li 
+                        onClick={resetGroup} 
+                        className="px-3 py-2 rounded-md hover:bg-purple-100 cursor-pointer transition-colors"
+                    >
+                        전체 부서
+                    </li>
+                    {allGroups && allGroups.pages[0]?.groups?.map((group, index) => (
+                        <li 
+                            key={index} 
+                            onClick={(e)=>selectGroup(e,group.id)}
+                            className="px-3 py-2 rounded-md hover:bg-purple-100 cursor-pointer transition-colors flex justify-between items-center"
+                        >
+                            <div>
+                                <span className="font-medium">{group.name}</span>
+                                <span className="text-sm text-gray-500 ml-2">({group.cnt})</span>
+                            </div>
+                        </li>
+                    ))}
+                </ul>
             </div>
-            <div className='mx-12'>
-                <div className='flex gap-[20px] flex-col mb-8 min-h-[200px] max-h[200px]'>
-                    <div className='flex justify-between border-b pb-[13px]'>
-                        <p>팀 / 부서 ({allGroups ? allGroups.pages[0].totalElements : 0})</p>
-                        <input value={allGroupsKeyword} onChange={(e)=>setAllGroupsKeyword(e.target.value)} placeholder='검색'/>
-                    </div>
-                    <ul className='max-h-[150px] overflow-scroll scrollbar-none'>
-                        <li onClick={resetGroup} style={{backgroundColor: 'white'}} className='sticky top-0 px-[10px] mb-[10px] hover:text-purple-500 cursor-pointer'>전체</li>
-                        {allGroups && allGroups.pages[0] && allGroups.pages[0].groups && allGroups.pages[0].groups.length > 0 ? (
-                        allGroups.pages[0].groups.map((group,index) => (
-                            <li className='' key={index}>
-                                <div className='flex justify-between px-[10px]'>
-                                    <div className='flex'>
-                                        <div className='flex flex-col'>
-                                            <div onClick={(e)=>selectGroup(e,group.id)} className='flex w-[200px] cursor-pointer hover:text-purple-500'>
-                                                <div className='mr-[10px]'>{group.name}</div>
-                                                <div className='text-gray-400'>({group.cnt})</div>
-                                            </div>
-                                        </div>
-                                        
+
+            {/* Users Column */}
+            <div className="border rounded-lg p-4 bg-gray-50">
+                <div className="flex items-center mb-4 border-b pb-2">
+                    <UserPlus className="mr-2 text-gray-500" />
+                    <h3 className="text-lg font-semibold">
+                        {selectedGroupId !== 0 ? '선택된 부서' : '전체 멤버'}
+                    </h3>
+                    <span className="ml-2 text-sm text-gray-500">
+                        ({allUsers ? allUsers.pages[0].totalElements : 0})
+                    </span>
+                </div>
+                
+                <div className="relative mb-4">
+                    <input 
+                        value={allUsersKeyword} 
+                        onChange={(e)=>setAllUsersKeyword(e.target.value)} 
+                        placeholder='멤버 검색'
+                        className="w-full p-2 pl-8 border rounded-md focus:ring-2 focus:ring-purple-200"
+                    />
+                    <Search className="absolute left-2 top-3 text-gray-400" size={20} />
+                </div>
+
+                <ul className="space-y-2 max-h-[400px] overflow-y-auto">
+                    {allUsers && allUsers.pages[0]?.users?.map((user, index) => (
+                        <li 
+                            key={index} 
+                            onClick={(e)=>selectedUsersHandler(e,user)}
+                            className="px-3 py-2 rounded-md hover:bg-purple-100 cursor-pointer transition-colors"
+                        >
+                            <div className="flex items-center">
+                                <img 
+                                    src='/images/admin-profile.png' 
+                                    alt={user.name}
+                                    className="w-10 h-10 rounded-full mr-4"
+                                />
+                                <div>
+                                    <div className="flex items-center">
+                                        <span className="font-medium mr-2">{user.name}</span>
+                                        <span className="text-sm text-gray-500">{user.level}</span>
                                     </div>
-                                    <div className='flex items-center'>
-                                        <button className='text-[20px] text-gray-400'>
-                                        <CustomSVG id="close" color='currentColor'/></button>
+                                    <div className="text-sm text-gray-500">{user.email}</div>
+                                    <div className="text-xs text-gray-400">{user.group}</div>
+                                </div>
+                            </div>
+                        </li>
+                    ))}
+                </ul>
+            </div>
+
+            {/* Selected Users Column */}
+            <div className="border rounded-lg p-4 bg-gray-50">
+                <div className="flex items-center mb-4 border-b pb-2">
+                    <CheckCircle className="mr-2 text-green-500" />
+                    <h3 className="text-lg font-semibold">참여자 목록</h3>
+                    <span className="ml-2 text-sm text-gray-500">
+                        ({selectedUsers?.length || 0})
+                    </span>
+                </div>
+
+                <ul className="space-y-2 max-h-[400px] overflow-y-auto">
+                    {selectedUsers?.length > 0 ? (
+                        selectedUsers.map(user => (
+                            <li 
+                                key={user.id} 
+                                className="px-3 py-2 rounded-md bg-white shadow-sm flex justify-between items-center"
+                            >
+                                <div className="flex items-center">
+                                    <img 
+                                        src='/images/admin-profile.png' 
+                                        alt={user.name}
+                                        className="w-10 h-10 rounded-full mr-4"
+                                    />
+                                    <div>
+                                        <div className="flex items-center">
+                                            <span className="font-medium mr-2">{user.name}</span>
+                                            <span className="text-sm text-gray-500">{user.level}</span>
+                                        </div>
+                                        <div className="text-sm text-gray-500">{user.email}</div>
                                     </div>
                                 </div>
-                            </li>  
+                                <button 
+                                    onClick={(e)=>cancleSelectedUsersHandler(e,user)} 
+                                    className="text-red-500 hover:text-red-700"
+                                >
+                                    <X />
+                                </button>
+                            </li>
                         ))
-                        ) : (
-                            <li>로딩중입니다...</li> 
-                        )}
-                        {hasNextPageAllGroups && (
-                        <div ref={lastGroupRef} className='text-center mt-4'>
-                            {isFetchingNextPageAllGroups ? 'Loading more...' : 'Load more'}
+                    ) : (
+                        <div className="text-center text-gray-500 py-4">
+                            초대할 멤버를 선택해주세요
                         </div>
-                        )}
-                    </ul>
-                </div>
-                <div className='flex gap-[20px] flex-col mb-8 min-h-[250px] max-h[250px]'>
-                    <div className='flex justify-between border-b pb-[13px]'>
-                        {
-                            (selectedGroupId != 0)
-                            ?
-                            (
-                                <>
-                                <p>팀 / 부서 ({allUsers ? allUsers.pages[0].totalElements : 0})</p>
-                                <input value={allUsersKeyword} onChange={(e)=>setAllUsersKeyword(e.target.value)} placeholder='검색'/>
-                                </>
-                            )
-                            :
-                            (
-                                <>
-                                <p>전체 ({allUsers ? allUsers.pages[0].totalElements : 0})</p>
-                                <input value={allUsersKeyword} onChange={(e)=>setAllUsersKeyword(e.target.value)} placeholder='검색'/>        
-                                </>
-                            )
-                        }
-                    </div>
-                    <ul className='max-h-[200px] min-h-[200px] overflow-scroll scrollbar-none'>
-                        {allUsers && allUsers.pages[0] && allUsers.pages[0].users && allUsers.pages[0].users.length > 0 ? (
-                        allUsers.pages[0].users.map((user,index) => (
-                            <li onClick={(e)=>selectedUsersHandler(e,user)} className='cursor-pointer hover:bg-purple-200' key={index}>
-                                <div className='flex justify-between px-[10px]'>
-                                    <div className='flex'>
-                                        <img src='/images/admin-profile.png' className='w-[50px] h-[50px] mr-[10px]'></img>
-                                        <div className='flex flex-col'>
-                                            <div className='flex w-[200px]'>
-                                                <div className='mr-[10px]'>{user.name}</div>
-                                                <div className='text-gray-400'>{user.level}</div>
-                                            </div>
-                                            <div className='w-[150px] mr-[30px] text-gray-400 text-[12px]'>{user.email}</div>
-                                        </div>
-                                        <div className='flex items-center w-[200px]'>
-                                            {user.group}
-                                        </div>
-                                    </div>
-                                </div>
-                            </li>  
-                        ))
-                        ) : 
-                        (
-                            <li>로딩중입니다...</li> 
-                        )}
-                        {hasNextPageAllUsers && (
-                        <div ref={lastUserRef} className='text-center mt-4'>
-                            {isFetchingNextPageAllUsers ? 'Loading more...' : 'Load more'}
-                        </div>
-                        )}
-                    </ul>
-                    
-                </div>
-                <div className="flex gap-8 mb-4 justify-start max-h-[200px] overflow-scroll scrollbar-none">
-                    <span className="w-[100px] h-[40px] sticky top-0">참여자목록</span>
-                    <div>
-                        <ul>
-                        {
-                            (!(Array.isArray(selectedUsers) && selectedUsers.length >0))
-                            ?
-                            (
-                                <li>초대할 멤버를 선택해주세요...</li>
-                            )
-                            : selectedUsers.map(user => {
-                                return (
-                                    <li className='cursor-pointer hover:bg-purple-200' key={user.id}>
-                                        <div className='flex justify-between px-[10px]'>
-                                            <div className='flex'>
-                                                <img src='/images/admin-profile.png' className='w-[50px] h-[50px] mr-[10px]'></img>
-                                                <div className='flex flex-col'>
-                                                    <div className='flex w-[200px]'>
-                                                        <div className='mr-[10px]'>{user.name}</div>
-                                                        <div className='text-gray-400'>{user.level}</div>
-                                                    </div>
-                                                    <div className='w-[150px] mr-[30px] text-gray-400 text-[12px]'>{user.email}</div>
-                                                </div>
-                                                <div className='flex items-center w-[200px]'>
-                                                    {user.group}
-                                                </div>
-                                            </div>
-                                            <div className='flex items-center'>
-                                                <button onClick={(e)=>cancleSelectedUsersHandler(e,user)} className='text-[20px] text-gray-400 font-bold'>X</button>
-                                            </div>
-                                        </div>
-                                    </li>
-                                )
-                            })
-                            
-                        }
-                        </ul>
-                    </div>
-                </div>
-                <div className="flex justify-end mb-12">
-                    <button onClick={completePostAddress} className="bg-purple px-6 py-4 text-xs rounded-md white">등록하기</button>
-                </div>
+                    )}
+                </ul>
             </div>
         </div>
+
+        {/* Footer */}
+        <div className="border-t p-6 flex justify-end">
+            <button 
+                onClick={completePostAddress} 
+                className="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition-colors flex items-center"
+            >
+                <UserPlus className="mr-2" />
+                멤버 초대
+            </button>
+        </div>
     </div>
+</div>
   )
 }
