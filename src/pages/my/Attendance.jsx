@@ -1,21 +1,57 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import '@/pages/my/My.scss'
 import MyAside from '../../components/my/MyAside'
 import axiosInstance from '@/services/axios.jsx'
 import { useQueries, useQuery } from '@tanstack/react-query';
 import useUserStore from '../../store/useUserStore';
 import AttendanceChart from '../../components/my/AttendanceChart';
+import CustomAlert from '../../components/Alert';
 
 export default function MyAttendance() {
 
   const user = useUserStore((state)=> state.user);
   const [custom, setCustom] = useState({ startDate: '', endDate: '' });
+  const [selectPeriod, setSelectPeriod] = useState('');
+  const [searchResult, setSearchResult] = useState([]); 
+
+    
+  const [alert, setAlert] = useState({message : '', type: '', isOpen: false, onClose: false})
+  const closeAlert = () =>{
+    setAlert({ message: '', type: '', isOpen: false, onClose: false });
+  }
 
   const customInpHandler = (e) => {
     const { name, value } = e.target;
     console.log(name, value);
     setCustom({ ...custom, [name]: value }); // 오타 수정
     console.log(custom);
+  };
+  const searchHandler = async (e) => {
+    e.preventDefault();
+    console.log("검색 핸들러 "+JSON.stringify(custom));
+    try{
+      const response = await axiosInstance.post('/api/attendance/searchDate', custom);
+      console.log(response.data);
+      setSearchResult(response.data);
+    }catch(err){
+      console.log(err);
+      setAlert({message: `${err.response.data}`,type: 'warning',isOpen: true,onClose: false,})
+    }
+  }
+  const selectHandler = (e) => {
+    const value = e.target.value;
+    setSelectPeriod(value);  // 상태 업데이트
+    console.log("기간 선택 : "+selectPeriod)
+    fetchDataForPeriod(value);
+  };
+  const fetchDataForPeriod = async (period) => {
+    try {
+      const response = await axiosInstance.get(`/api/attendance/week?type=${period}`);
+      console.log(response.data);
+      setSearchResult(response.data); // 데이터를 업데이트
+    } catch (err) {
+      console.log(err);
+    }
   };
 
   const todayAttendanceAPI = async () => {
@@ -34,6 +70,8 @@ export default function MyAttendance() {
     queryFn: todayAttendanceAPI,  // 데이터를 가져오는 함수
     initialData: {}, 
     enabled: true,
+    refetchOnWindowFocus: false, 
+    // staleTime: 5 * 60 * 1000,
   });
 
   const {data: weekData, isError: weekError, isLoading: weekLoading } = useQuery({
@@ -41,6 +79,7 @@ export default function MyAttendance() {
     queryFn: weekAttendanceAPI,
     initialData: [],
     enabled: true,
+    refetchOnWindowFocus: false, 
   })
 
 
@@ -55,6 +94,12 @@ export default function MyAttendance() {
   
   return (
     <div id='my-attendance-container'>
+      <CustomAlert
+              type={alert.type}
+              message={alert.message}
+              isOpen={alert.isOpen}
+              onClose={closeAlert}
+      />
       <MyAside/>
       <section className='my-attendance-main'>
         <article className='py-[30px] px-[50px] w-full'>
@@ -106,14 +151,14 @@ export default function MyAttendance() {
                 <h2 className='text-gray-500 ml-10'>Search Filters</h2>
                 <div className='border flex justify-between rounded-lg h-[40px] w-[250px]'>
                   <div className='flex justify-center items-center border-r w-2/5 font-light'>기간</div>
-                  <select className='w-3/5 rounded-lg search-sel indent-4'>
-                    <option value="" className='search-sel'>최근 1주</option>
-                    <option value="" className='search-sel'>최근 2주</option>
-                    <option value="" className='search-sel'>최근 1개월</option>
+                  <select name='selectPeriod' onChange={selectHandler} className='w-3/5 rounded-lg search-sel indent-4'>
+                    <option value="0" name="selectPeriod" className='search-sel'>최근 1주</option>
+                    <option value="1" name="selectPeriod" className='search-sel'>최근 2주</option>
+                    <option value="2" name="selectPeriod" className='search-sel'>최근 1개월</option>
                   </select>
                 </div>
               </div>
-              <div className=''>
+              <div>
                 <h2 className='text-gray-500 ml-10 text-sm'>기간 범위 설정</h2>
                 <div className='flex items-center justify-between border rounded-lg pr-2 w-[500px]'>
                   <div className='flex'>
@@ -129,7 +174,8 @@ export default function MyAttendance() {
               </div>
               <div className='flex items-end'>
                 <label className='flex items-center mr-[20px] text-sm'><input type="checkbox" className='mr-1'/>초과근무 포함</label>
-                <button className='bg-indigo-500 flex justify-around items-center h-[40px] rounded-lg w-[120px] px-5 text-white'>
+                <button onClick={searchHandler} 
+                className='bg-indigo-500 flex justify-around items-center h-[40px] rounded-lg w-[120px] px-5 text-white'>
                   <span>검색</span>
                   <img className='' src="/images/white-my-btn-arrow.png" alt="allow" />
                 </button>
@@ -138,7 +184,7 @@ export default function MyAttendance() {
           </div>
           <div className='att-graph mt-[20px] p-[10px]'>
             <AttendanceChart
-              data= {Array.isArray(weekData) ? weekData : []}
+              data={searchResult.length > 0 ? searchResult : weekData}
             />
           </div>
         </article>

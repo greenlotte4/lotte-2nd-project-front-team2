@@ -1,12 +1,37 @@
 import { useQuery } from '@tanstack/react-query';
-import { reverse } from 'lodash';
-import React, { useState } from 'react';
+import React from 'react';
 import Chart from 'react-apexcharts';
+import useUserStore from '../../store/useUserStore';
 
 const WorkTimeline = ({data}) => {
 
+  const user = useUserStore((state)=> state.user);
+  
+  const weekAttendanceAPI = async () => {
+    const resp = await axiosInstance.get('/api/attendance/week');
+    console.log("주간  근태 "+JSON.stringify(resp.data))
+    return resp.data;
+  }
+  const {data: weekData, isError: weekError, isLoading: weekLoading } = useQuery({
+    queryKey: [`${user.uid}+week`],
+    queryFn: weekAttendanceAPI,
+    initialData: [],
+    enabled: true,
+    refetchOnWindowFocus: false, 
+  })
+
+  if(weekLoading){
+    return <p className='h-full flex items-center justify-center'>로딩 중입니다.</p>;
+  }
+
+
+  if ((!Array.isArray(data) || data.length === 0) && !weekData.length) {
+    return <p className='h-full flex items-center justify-center'>근태 기록 데이터가 없습니다.</p>;
+  }
+
   console.log('차트 컴포넌트 내부 프랍 '+JSON.stringify(data));
-  const work = data.slice().reverse()
+  const displayData = data.length > 0 ? data : weekData;
+  const work = displayData.slice().reverse();
 
   const fixDate = '2024-11-18T'; 
   console.log('차트 리버스 데이터 '+JSON.stringify(work))
@@ -19,7 +44,6 @@ const WorkTimeline = ({data}) => {
     ],
     fillColor: `#818CF8` // 데이터마다 같은 색상 적용
   }));
-
 
   const options = {
     chart: {
