@@ -1,104 +1,23 @@
+import { useQuery } from '@tanstack/react-query';
+import { reverse } from 'lodash';
 import React, { useState } from 'react';
 import Chart from 'react-apexcharts';
 
-const WorkTimeline = () => {
-  const date = '2024-11-18T'; 
-  // const [color, setColor] = useState("");
-  // if(type === 'working'){
-  //   setColor("#818CF8")
-  // }else{
-  //   setColor("#ddd")
-  // }
-  // 데이터 설정
-  const testData = [
-      {
-        date: '2024/11/18',
-        start: '08:55:00',
-        end:   `18:00:00`,
-        color: '#818CF8'
-      },
-      {
-        date: '2024/11/18',
-        start: '18:00:00',
-        end:   `19:05:00`,
-        color: '#ddd'
-      },
-      {
-        date: '2024/11/19',
-        start: '08:30:00',
-        end:   `18:00:00`,
-        color: '#818CF8'
-      },
-      {
-        date: '2024/11/19',
-        start: '18:00:00',
-        end:   `18:30:00`,
-        color: '#ddd'
-      },
-      {
-        date: '2024/11/20',
-        start: '08:55:00',
-        end:   `18:00:00`,
-        color: '#818CF8'
-      },
-      {
-        date: '2024/11/20',
-        start: '18:00:00',
-        end:   `18:22:00`,
-        color: '#ddd'
-      },
-      {
-        date: '2024/11/21',
-        start: '08:56:00',
-        end:   `18:00:00`,
-        color: '#818CF8'
-      },
-      {
-        date: '2024/11/22',
-        start: '08:27:30',
-        end:   `18:00:00`,
-        color: '#818CF8'
-      },
-      {
-        date: '2024/11/22',
-        start: '18:00:00',
-        end:   `18:30:00`,
-        color: '#ddd'
-      },
-      {
-        date: '2024/11/23',
-        start: '08:48:00',
-        end:   `18:00:00`,
-        color: '#818CF8'
-      },
-      {
-        date: '2024/11/24',
-        start: '08:55:00',
-        end:   `18:00:00`,
-        color: '#818CF8'
-      },
-      {
-        date: '2024/11/25',
-        start: '08:55:00',
-        end:   `18:00:00`,
-        color: '#818CF8'
-      },
-      {
-        date: '2024/11/25',
-        start: '18:00:00',
-        end:   `22:33:00`,
-        color: '#ddd'
-      },
-      
-  ];
+const WorkTimeline = ({data}) => {
 
-  const chartData = testData.map((entry) => ({
+  console.log('차트 컴포넌트 내부 프랍 '+JSON.stringify(data));
+  const work = data.slice().reverse()
+
+  const fixDate = '2024-11-18T'; 
+  console.log('차트 리버스 데이터 '+JSON.stringify(work))
+
+  const chartData = work.map((entry) => ({
     x: entry.date,
     y: [
-      new Date(`2024-11-18T${entry.start}`).getTime(),
-      new Date(`2024-11-18T${entry.end}`).getTime()
+      new Date(`${fixDate + entry.checkInTime}`).getTime(),
+      new Date(`${fixDate + entry.checkOutTime}`).getTime()
     ],
-    fillColor: `${entry.color}` // 데이터마다 같은 색상 적용
+    fillColor: `#818CF8` // 데이터마다 같은 색상 적용
   }));
 
 
@@ -121,7 +40,7 @@ const WorkTimeline = () => {
     xaxis: {
       type: 'datetime',
       min: new Date('2024-11-18T08:00:00').getTime(), // X축 시작 시간 (08:00)
-      max: new Date('2024-11-18T22:00:00').getTime(), // X축 끝 시간 (19:00)
+      max: new Date('2024-11-18T23:00:00').getTime(), // X축 끝 시간 (19:00)
       labels: {
         format: 'HH:mm', // 시간만 표시
         datetimeUTC: false // 현지 시간 사용

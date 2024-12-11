@@ -1,34 +1,57 @@
-import React from 'react'
+import React, { useState } from 'react'
 import '@/pages/my/My.scss'
 import MyAside from '../../components/my/MyAside'
-import AttendanceChart from '../../components/my/AttendanceChart'
 import axiosInstance from '@/services/axios.jsx'
-import { useQuery } from '@tanstack/react-query';
+import { useQueries, useQuery } from '@tanstack/react-query';
 import useUserStore from '../../store/useUserStore';
+import AttendanceChart from '../../components/my/AttendanceChart';
 
 export default function MyAttendance() {
 
   const user = useUserStore((state)=> state.user);
+  const [custom, setCustom] = useState({ startDate: '', endDate: '' });
+
+  const customInpHandler = (e) => {
+    const { name, value } = e.target;
+    console.log(name, value);
+    setCustom({ ...custom, [name]: value }); // 오타 수정
+    console.log(custom);
+  };
+
   const todayAttendanceAPI = async () => {
     const resp = await axiosInstance.get('/api/attendance/today');
     console.log("오늘 근태 "+JSON.stringify(resp.data))
     return resp.data;
   }
+  const weekAttendanceAPI = async () => {
+    const resp = await axiosInstance.get('/api/attendance/week');
+    console.log("주간  근태 "+JSON.stringify(resp.data))
+    return resp.data;
+  }
   
-  const { data, error, isLoading, isError } = useQuery({
+  const {data: todayData, isError: todayError, isLoading: todayLoading } = useQuery({
     queryKey: [`${user.uid}`],  // 캐싱에 사용할 키
     queryFn: todayAttendanceAPI,  // 데이터를 가져오는 함수
-    staleTime: 1000 * 60 * 5,  // 5분 동안 데이터가 신선하다고 간주
-    cacheTime: 1000 * 60 * 60, // 10분 후에 캐시가 만료되도록 설정
+    initialData: {}, 
+    enabled: true,
   });
 
-  if (isLoading) {
+  const {data: weekData, isError: weekError, isLoading: weekLoading } = useQuery({
+    queryKey: [`${user.uid}+week`],
+    queryFn: weekAttendanceAPI,
+    initialData: [],
+    enabled: true,
+  })
+
+
+  if (todayLoading) {
     return <div>로딩 중...</div>;
   }
 
-  if (isError) {
+  if (todayError) {
     return <div>Error: {error.message}</div>;
   }
+  
   
   return (
     <div id='my-attendance-container'>
@@ -42,13 +65,13 @@ export default function MyAttendance() {
                   <div className='checktime flex flex-col w-[80px]'>
                     <span className='text-md w-full h-full text-center'>출근</span>
                     <span className='text-lg w-full h-full text-center text-gray-600 font-light mt-2'>
-                    {data.checkInTime}</span>
+                    {todayData.checkInTime}</span>
                   </div>
                   <img src='/images/arrowRight.png' alt='allow' className='icon-size-25'></img>
                   <div className='checktime flex flex-col w-[80px]'>
                     <span className='text-md w-full h-full text-center'>퇴근</span>
                     <span className='text-lg w-full h-full text-center text-gray-600 font-light mt-2'>
-                    {data.checkOutTime}</span>
+                    {todayData.checkOutTime}</span>
                   </div>
                 </div>
             </li>
@@ -77,25 +100,30 @@ export default function MyAttendance() {
         </article>
         <article className='attend-arti py-[30px] px-[50px]'>
           <h2>출퇴근현황</h2>
-          <div className='att-search mt-10 py-[10px] px-[30px]'>
-            <h2 className='text-gray-500 ml-10'>Search Filters</h2>
-            <div className='flex justify-between'>
-              <div className='flex justify-between items-end w-[770px]'>
+          <div className='att-search mt-10 py-[13px] px-[30px]'>
+            <div className='flex justify-between items-end'>
+              <div className='flex flex-col'>
+                <h2 className='text-gray-500 ml-10'>Search Filters</h2>
                 <div className='border flex justify-between rounded-lg h-[40px] w-[250px]'>
                   <div className='flex justify-center items-center border-r w-2/5 font-light'>기간</div>
                   <select className='w-3/5 rounded-lg search-sel indent-4'>
-                    <option value="" className='search-sel'>1주</option>
-                    <option value="" className='search-sel'>2주</option>
-                    <option value="" className='search-sel'>1개월</option>
+                    <option value="" className='search-sel'>최근 1주</option>
+                    <option value="" className='search-sel'>최근 2주</option>
+                    <option value="" className='search-sel'>최근 1개월</option>
                   </select>
                 </div>
+              </div>
+              <div className=''>
+                <h2 className='text-gray-500 ml-10 text-sm'>기간 범위 설정</h2>
                 <div className='flex items-center justify-between border rounded-lg pr-2 w-[500px]'>
                   <div className='flex'>
-                    <input type="date" className="indent-2 font-light rounded-lg h-[40px] w-[200px]" />
+                    <input value={custom.startDate} name='startDate' onChange={customInpHandler}
+                    type="date" className="indent-2 font-light rounded-lg h-[40px] w-[200px]" />
                   </div>
                   -
                   <div className='flex'>
-                    <input type="date" className="indent-2 font-light rounded-lg h-[40px] w-[200px]" />
+                    <input value={custom.endDate} name='endDate' onChange={customInpHandler}
+                    type="date" className="indent-2 font-light rounded-lg h-[40px] w-[200px]" />
                   </div>
                 </div>
               </div>
@@ -109,7 +137,9 @@ export default function MyAttendance() {
             </div>
           </div>
           <div className='att-graph mt-[20px] p-[10px]'>
-            <AttendanceChart/>
+            <AttendanceChart
+              data= {Array.isArray(weekData) ? weekData : []}
+            />
           </div>
         </article>
       </section>
