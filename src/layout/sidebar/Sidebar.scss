@@ -111,7 +111,7 @@ $sidebar-bg: #ffffff;
 
     /* 축소 상태에서 .bg-blue-100 줄이기 */
     .sidebar-links li.bg-blue-100 {
-        width: 80px; /* 축소 상태 너비 */
+        width: 61px; /* 축소 상태 너비 */
         overflow: hidden; /* 텍스트 및 콘텐츠 숨기기 */
         transition: opacity 0.5s ease, transform 0.5s ease;
 
@@ -123,7 +123,7 @@ $sidebar-bg: #ffffff;
       flex-direction: column;
       gap: 40px;
       margin-top: 20px;
-      margin-left: 20px;
+      margin-left: 10px;
   
       .sidebar-links {
         display: flex;
@@ -145,7 +145,7 @@ $sidebar-bg: #ffffff;
             width: 30px; /* 이미지 고정 크기 */
             height: 30px; /* 이미지 고정 크기 */
             position: absolute; /* 텍스트와 관계없이 고정 위치 */
-            left: 10px; /* 항상 왼쪽으로 고정 */
+            left: 15px; /* 항상 왼쪽으로 고정 */
             transition: opacity 0.3s ease, transform 0.3s ease;
           }
   
@@ -192,6 +192,7 @@ $sidebar-bg: #ffffff;
     align-items: center; 
     padding: 10px;
     cursor: pointer;
+    border-radius: 10px;
   
     img {
         width: 30px; /* 이미지 고정 크기 */

@@ -69,7 +69,7 @@ export default function MyMain() {
               </div>
             </div>
           </div>
-          <div className='profile'>
+          <div className='profile border'>
             <div className='myinfo border relative h-[450px] p-[20px] mr-10'>
               <h2 className='text-lg mb-2 ml-2 text-gray-500 my-sub-title'>나의 프로필</h2>
               <div >
@@ -77,7 +77,7 @@ export default function MyMain() {
                   <tbody>
                     <tr className='my-tr'>
                       <th className='my-th'>이름  </th>
-                      <td className='my-td'>{userData.name}</td>
+                      <td className='my-td'>{userData.name!=null?userData.name:''}</td>
                     </tr>
                     <tr className='my-tr'>
                       <th className='my-th'>회사명 </th>
@@ -89,15 +89,15 @@ export default function MyMain() {
                     </tr>
                     <tr className='my-tr'>
                       <th className='my-th'>직급 </th>
-                      <td className='my-td'>{userData.level}</td>
+                      <td className='my-td'>{userData.level!=null?userData.level:''}</td>
                     </tr>
                     <tr className='my-tr'>
                       <th className='my-th'>이메일 </th>
-                      <td className='my-td'>{userData.email}</td>
+                      <td className='my-td'>{userData.email!=null?userData.email:''}</td>
                     </tr>
                     <tr className='my-tr'>
                       <th className='my-th'>전화번호 </th>
-                      <td className='my-td'>{userData.hp}</td>
+                      <td className='my-td'>{userData.hp!=null?userData.hp:''}</td>
                     </tr>
                     <tr className='my-tr'>
                       <th className='my-th'>국가 </th>

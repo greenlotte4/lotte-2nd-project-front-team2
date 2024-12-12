@@ -2,10 +2,14 @@ import React, { useState } from 'react'
 import '@/pages/my/My.scss'
 import { Link, useNavigate } from 'react-router-dom'
 import { MyModal } from '@/components/my/Modal';
+import axiosInstance from '@/services/axios.jsx'
 
 export default function MyModify() {
     const navigate = useNavigate();
     const [deactive , setDeactive] = useState(0);
+    const [file, setFile] = useState(null); // 선택한 파일 상태
+    const [uploadStatus, setUploadStatus] = useState(null); // 업로드 결과 상태
+
     
     const handleCheckboxChange = (event) => {
         setDeactive(event.target.checked ? 1 : 0); // 체크 상태에 따라 값 설정
@@ -14,7 +18,45 @@ export default function MyModify() {
         event.preventDefault();
         navigate("/my")
     }
-    
+  
+    // 파일 선택 핸들러
+    const handleFileChange = (event) => {
+        const selectedFile = event.target.files[0];
+        setFile(selectedFile);
+    };
+
+    // 프로필 업로드 핸들러
+    const profileUploadHandler = async (event) => {
+        event.preventDefault();
+        if (!file) {
+            alert('업로드할 파일을 선택하세요.');
+            return;
+        }
+        console.log("파일 전송 전 "+file);
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const response = await axiosInstance.post('/api/my/profile', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+                withCredentials: true, // 인증 정보 포함
+            });
+            console.log(response.data);
+            if (response.status === 200) {
+                setUploadStatus('success');
+                // alert('프로필 이미지가 성공적으로 업로드되었습니다.');
+            } else {
+                setUploadStatus('error');
+                // alert('업로드 중 오류가 발생했습니다.');
+            }
+        } catch (error) {
+            setUploadStatus('error');
+            console.error('업로드 실패:', error);
+            // alert('업로드 중 오류가 발생했습니다.');
+        }
+    };
     
     const [pass, setPass] = useState(false);
     const modifyPass = (event) => {
@@ -27,20 +69,25 @@ export default function MyModify() {
 
   return <>
     <div id='my-modify-container'>
-        <section className='my-modify1'>
+        <section className='my-modify1 border'>
             {/* <h2 className='text-2xl font-light'>My profile</h2> */}
             <form className='my-modify-form'>
                 <div className='upload-photo flex items-center'>
                     <img className='user-img' src="/images/user_face_icon.png" alt="user-face" />
                     <div className='relative top-5 left-10'>
                         <input type="text" className='my-nick-inp mb-10 font-light text-gray-600' value="yeonwha****" />
+                        <input type="file" id='file' 
+                            onChange={handleFileChange}
+                            // className='hidden-inp'
+                            />
                         <div className='flex'>
                             <label for="file" className='mr-10'>
                                 <div  className='rounded-md h-[40px] flex items-center justify-center bg-indigo-500 text-white w-[185px]'>
                                     새 프로필 업로드
                                 </div>
                             </label>
-                            <input type="file" id='file' className='hidden-inp'/>
+                            <button onClick={profileUploadHandler}
+                            className='rounded-md h-[40px] flex items-center justify-center border border-indigo-500 text-indigo-700 w-[150px]'>프로필 등록</button>
                             <button className='btn-profile border border-red-400 text-red-400'>RESET</button>
                         </div>
                         <span className='text-sm text-gray-400 font-light'>JPG, GIF 혹은 PNG 등록 가능, 10MB 지원</span>
@@ -119,7 +166,7 @@ export default function MyModify() {
             </form>
         </section>
         <section className='my-modify2'>
-            <article className='my-del-account flex flex-col justify-between'>
+            <article className='my-del-account flex flex-col justify-between border'>
                 <h2 className='sub-title text-lg'>Delete Account</h2>
                 <div className='flex flex-col justify-start h-full'>
                     <label><input type="checkbox" className='mt-[30px] mr-10' onChange={handleCheckboxChange}/> 계정을 비활성화하고 싶습니다.</label>
@@ -135,7 +182,7 @@ export default function MyModify() {
                 </div>
                 <button className='btn-profile border text-gray-500 w-full'>계정 비활성화</button>
             </article>
-            <article className='my-social'>
+            <article className='my-social border'>
                 <h2 className='sub-title text-lg'>Social Account</h2>
                 <span className='text-sm text-gray-500'>Plantry와 소셜 계정을 연동할 수 있습니다.</span>
                 <ul className='mt-[30px]'>

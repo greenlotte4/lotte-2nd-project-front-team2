@@ -28,7 +28,7 @@ export default function MyPayment(){
         <div id='my-payment-container'>
           <MyAside/>
           <section className='my-payment-main'>
-            <article className="payment-arti1">
+            <article className="payment-arti1 border">
                 <div className="flex justify-between ">
                     <h2 className="text-xl">등록된 결제정보</h2>
                     <button onClick={addCard} className="bg-indigo-500 text-white btn-my">
@@ -87,7 +87,7 @@ export default function MyPayment(){
                     </li>
                 </ul>
             </article>
-            <article className="payment-arti2">
+            <article className="payment-arti2 border">
                 <div className='current-plan relative p-[20px]  h-[450px] '>
                     <h2 className='text-lg text-gray-600 my-sub-title'>나의 구독정보</h2>
                     <div className='flex justify-between items-start  mt-[30px]'>

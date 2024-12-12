@@ -137,7 +137,7 @@ export default function Home() {
               isOpen={alert.isOpen}
               onClose={closeAlert}
             />
-          <article className='home-top-left'>
+          <article className='home-top-left border'>
             <h2 className='text-2xl'>Project</h2>
             <div className='w-full h-full flex justify-around'>
               <div className='home-project'>
@@ -209,7 +209,7 @@ export default function Home() {
             </div>
           </article>
           <article className='home-top-right'>
-            <div className='home-my flex'>
+            <div className='home-my flex border'>
               <div className='my-left flex flex-col justify-between'>
                 <div>
                   <p className='gray'>welcome Yeonhwa Park</p>
@@ -224,7 +224,7 @@ export default function Home() {
                 <img src={adminProfile}/>
               </div>
             </div>
-            <div className='home-commute'>
+            <div className='home-commute border'>
               <div className='flex flex-col items-center h-[80px] mt-1'>
                 <span className='' ref={dateRef}></span>
                 <p  className='flex items-end' ref={timeRef}></p>
@@ -254,7 +254,7 @@ export default function Home() {
           </article>
         </section>
         <section className='home-index-bot'>
-          <div className='home-bot'>
+          <div className='home-bot border'>
             <h2 className='text-2xl mb-10'>Notice</h2>
             <div className='border rounded-lg flex flex-col py-2 px-5 mt-1'>
               <div className='flex justify-between'>
@@ -279,7 +279,7 @@ export default function Home() {
             </div>
             <button className='btn-home float-right mt-[20px]'>전체보기<img className='ml-2' src="/images/home-my-btn-arrow.png" alt="allow" /></button>
           </div>
-          <div className='home-bot'>
+          <div className='home-bot border'>
             <h2 className='text-2xl mb-10'>Schedule</h2>
             <div>
               <p>오늘 <span>(2024.11.18)</span></p>
@@ -300,7 +300,7 @@ export default function Home() {
               </div>
             </div>
           </div>
-          <div className='home-bot'>
+          <div className='home-bot border'>
             <h2 className='text-2xl'>Calendar</h2>
           </div>
         </section>
