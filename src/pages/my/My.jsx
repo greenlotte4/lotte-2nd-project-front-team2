@@ -3,6 +3,9 @@ import '@/pages/my/My.scss'
 import MyAside from '@/components/my/MyAside.jsx';
 import { useNavigate, useParams } from "react-router-dom";
 import { MyPlanModal } from '../../components/my/PlanModal';
+import axiosInstance from '@/services/axios.jsx'
+import { useQuery } from '@tanstack/react-query';
+import useUserStore from '../../store/useUserStore';
 
 
 export default function MyMain() {
@@ -11,6 +14,7 @@ export default function MyMain() {
   const navigate = useNavigate();
   const [progress, setProgress] = useState(65)
   const [menuActive, setMenuActive] = useState("")
+  const user = useUserStore(state => state.user);
 
   useEffect(() => {
     if (params.page) {
@@ -19,7 +23,18 @@ export default function MyMain() {
       setMenuActive("")
     }
   }, [params.page]);
-  
+
+  const getUserAPI = async () => {
+    const resp = await axiosInstance.get('/api/my/user');
+    console.log("유저 데이터 조회 "+JSON.stringify(resp.data));
+    return resp.data;
+  }
+
+  const { data: userData, isError: userError, isLoading: userLoading } = useQuery({
+    queryKey: [`${user.uid}`],
+    queryFn: getUserAPI,
+  })
+
   const paymentHandler = (event) => {
     event.preventDefault();
     navigate("/my/payment")
@@ -50,7 +65,7 @@ export default function MyMain() {
             <div className='flex flex-col ml-[40px]'>
               <h3 className='text-lg mb-3 font-light text-gray-500'>yeonwha****</h3>
               <div className='speech-bubble drop-shadow-lg py-[20px] px-[40px] flex items-center'>
-                <span>안녕하세요. 개발팀 박연화입니다.<br/> 어쩌고</span>
+                <span>안녕하세요. 개발팀 박연화입니다.</span>
               </div>
             </div>
           </div>
@@ -62,35 +77,35 @@ export default function MyMain() {
                   <tbody>
                     <tr className='my-tr'>
                       <th className='my-th'>이름  </th>
-                      <td className='my-td'>박연화</td>
+                      <td className='my-td'>{userData.name}</td>
                     </tr>
                     <tr className='my-tr'>
                       <th className='my-th'>회사명 </th>
-                      <td className='my-td'>Plantry</td>
+                      <td className='my-td'>{userData.companyName!=null?userData.companyName:''}</td>
                     </tr>
                     <tr className='my-tr'>
                       <th className='my-th'>부서 </th>
-                      <td className='my-td'>개발팀</td>
+                      <td className='my-td'>{userData.department!=null?userData.department:'등록된 부서가 없습니다.'}</td>
                     </tr>
                     <tr className='my-tr'>
                       <th className='my-th'>직급 </th>
-                      <td className='my-td'>박연화</td>
+                      <td className='my-td'>{userData.level}</td>
                     </tr>
                     <tr className='my-tr'>
                       <th className='my-th'>이메일 </th>
-                      <td className='my-td'>ppyyf@naver.com</td>
+                      <td className='my-td'>{userData.email}</td>
                     </tr>
                     <tr className='my-tr'>
                       <th className='my-th'>전화번호 </th>
-                      <td className='my-td'>010-1234-1234</td>
+                      <td className='my-td'>{userData.hp}</td>
                     </tr>
                     <tr className='my-tr'>
-                      <th className='my-th'>국가/지역 </th>
-                      <td className='my-td'>대한민국 / 부산</td>
+                      <th className='my-th'>국가 </th>
+                      <td className='my-td'>{userData.country!=null?userData.country:''}</td>
                     </tr>
                     <tr className='my-tr'>
                       <th className='my-th'>주소 </th>
-                      <td className='my-td'> 없음</td>
+                      <td className='my-td'> {userData.addr1!=null?userData.addr1+userData.addr2:''}</td>
                     </tr>
                   </tbody>
                 </table>

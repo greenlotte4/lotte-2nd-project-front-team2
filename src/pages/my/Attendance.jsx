@@ -59,12 +59,6 @@ export default function MyAttendance() {
     console.log("오늘 근태 "+JSON.stringify(resp.data))
     return resp.data;
   }
-  const weekAttendanceAPI = async () => {
-    const resp = await axiosInstance.get('/api/attendance/week');
-    console.log("주간  근태 "+JSON.stringify(resp.data))
-    return resp.data;
-  }
-  
   const {data: todayData, isError: todayError, isLoading: todayLoading } = useQuery({
     queryKey: [`${user.uid}`],  // 캐싱에 사용할 키
     queryFn: todayAttendanceAPI,  // 데이터를 가져오는 함수
@@ -74,6 +68,11 @@ export default function MyAttendance() {
     // staleTime: 5 * 60 * 1000,
   });
 
+  const weekAttendanceAPI = async () => {
+    const resp = await axiosInstance.get('/api/attendance/week');
+    console.log("주간  근태 "+JSON.stringify(resp.data))
+    return resp.data;
+  }
   const {data: weekData, isError: weekError, isLoading: weekLoading } = useQuery({
     queryKey: [`${user.uid}+week`],
     queryFn: weekAttendanceAPI,
@@ -82,12 +81,22 @@ export default function MyAttendance() {
     refetchOnWindowFocus: false, 
   })
 
-
-  if (todayLoading) {
+  const myAttAPI = async () => {
+    const resp = await axiosInstance.get('/api/attendance/myAttendance');
+    console.log("월간 근태 기록 "+JSON.stringify(resp.data))
+    return resp.data;
+  }
+  const {data: myAttData, isError: attError, isLoading: attLoading } = useQuery({
+    queryKey: [`${user.uid}+myAtt`],
+    queryFn: myAttAPI,
+    initialData: {},
+  })
+  
+  if (todayLoading||attLoading) {
     return <div>로딩 중...</div>;
   }
 
-  if (todayError) {
+  if (todayError||attError) {
     return <div>Error: {error.message}</div>;
   }
   
@@ -121,23 +130,23 @@ export default function MyAttendance() {
                 </div>
             </li>
             <li className='flex flex-col border border-indigo-200 px-[20px] py-[10px] w-1/4'>
-              <h3 className='text-sm'>연차일수</h3>
+              <h3 className='text-sm'>보유한 연차</h3>
               <div className='w-full mt-[30px] flex justify-center items-end'>
-                <span className=' text-3xl text-gray-700'>15</span>
+                <span className=' text-3xl text-gray-700'>{myAttData.annualVacation}</span>
                 <span className='ml-2 text-sm'>일</span>
               </div>
             </li>
             <li className='flex flex-col border border-indigo-200 px-[20px] py-[10px] w-1/4'>
-              <h3 className='text-sm'>초과근무</h3>
+              <h3 className='text-sm'>이번 달 출근</h3>
               <div className='w-full mt-[30px] flex justify-center items-end'>
-                <span className=' text-3xl text-gray-700'>20</span>
-                <span className='ml-2 text-sm'>시간</span>
+                <span className=' text-3xl text-gray-700'>{myAttData.workDays}</span>
+                <span className='ml-2 text-sm'>일</span>
               </div>
             </li>
             <li className='flex flex-col border border-indigo-200 px-[20px] py-[10px] w-1/4 rounded-r-xl'>
               <h3 className='text-sm'>출근누락</h3>
               <div className='w-full mt-[30px] flex justify-center items-end'>
-                <span className=' text-3xl text-gray-700'>1</span>
+                <span className=' text-3xl text-gray-700'>{myAttData.absenceDays}</span>
                 <span className='ml-2 text-sm'>회</span>
               </div>
             </li>
@@ -185,6 +194,7 @@ export default function MyAttendance() {
           <div className='att-graph mt-[20px] p-[10px]'>
             <AttendanceChart
               data={searchResult.length > 0 ? searchResult : weekData}
+              isLoading={weekLoading}
             />
           </div>
         </article>
