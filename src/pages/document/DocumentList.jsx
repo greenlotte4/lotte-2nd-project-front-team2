@@ -449,7 +449,7 @@ const handleCloseFileMenu = () => {
                 link.click();
                 document.body.removeChild(link);
             } else {
-                console.error('zip 파��� 생성 실패:', response.data);
+                console.error('zip 파일 생성 실패:', response.data);
             }
         } catch (error) {
             console.error('zip 파일 생성 업데이트 중 오류 발생:', error);
@@ -492,6 +492,8 @@ const handleCloseFileMenu = () => {
     const parentFolder = (data?.parentFolder || []);
     console.log(parentFolder);
     const [isModalOpen, setIsModalOpen] = useState(false);
+
+    const [isShareModalOpen,setIsShareModalOpen] = useState(false);
 
 
     const subFolders = (data?.subFolders || [])
@@ -638,29 +640,49 @@ const handleCloseFileMenu = () => {
                     border: isDragging ? '2px dashed #0066cc' : 'none',
                     backgroundColor: isDragging ? '#f0f8ff' : 'transparent',
                 }}>
-           <section className="flex gap-4 items-center">
-                {editing ? (
-                    <input
-                        className="text-2xl ml-4 mt-4 border-b-2 border-gray-400 outline-none"
-                        value={newFolderName}
-                        onChange={(e) => setNewFolderName(e.target.value)}
-                        onBlur={handleRename}
-                        onKeyDown={handleKeyDown}
-                        autoFocus
-                    />
-                ) : (
-                    <>
-                        <span className="text-[25px] ml-[25px]">{location.state?.folderName}</span>
-                        <img
-                            className="w-6  h-6 cursor-pointer"
-                            src="/images/document-pen.png"
-                            alt="Rename"
-                            onClick={() => setEditing(true)}
+            <section className="flex gap-4 items-center">
+                    {editing ? (
+                        <input
+                            className="text-2xl ml-4 mt-4 border-b-2 border-gray-400 outline-none"
+                            value={newFolderName}
+                            onChange={(e) => setNewFolderName(e.target.value)}
+                            onBlur={handleRename}
+                            onKeyDown={handleKeyDown}
+                            autoFocus
                         />
-                    </>
-                )}
-             
-            </section>
+                    ) : (
+                        <>
+                            <span className="text-[25px] ml-[25px]">{location.state?.folderName}</span>
+                            <img
+                                className="w-6  h-6 cursor-pointer"
+                                src="/images/document-pen.png"
+                                alt="Rename"
+                                onClick={() => setEditing(true)}
+                            />
+                        </>
+                    )}
+
+                    <ShareMember
+                         listName="작업자"
+                         isShareOpen={isShareModalOpen}
+                         setIsShareOpen={setIsShareModalOpen}
+                       
+                    >
+                        <DriveShareModal
+                            isModalOpen={isModalOpen}
+                            setIsModalOpen={setIsModalOpen}
+                            selectedFolder={selectedFolder}
+                            selectedFile={selectedFile}
+                            company={user.company}
+                            user={user}
+                            id={selectedFolder?.id || selectedFile?.id}
+                            type={selectedFolder?.type || selectedFile?.type}
+                            name={selectedFolder?.name || selectedFile?.name} // 선택된 폴더나 파일 이름 전달
+                            >
+                        </DriveShareModal>
+                    </ShareMember>
+                
+                </section>
             <section className="flex justify-between mt-[22px] mb-6">
                 <div className="flex gap-4 mx-[15px] w-[98%] items-center">
                     <CustomSearch width1="20" width2="80" />
@@ -928,6 +950,8 @@ const handleCloseFileMenu = () => {
                     selectedFile={selectedFile}
                     company={user.company}
                     user={user}
+                    id={selectedFolder?.id || selectedFile?.id}
+                    type={selectedFolder?.type || selectedFile?.type}
                     name={selectedFolder?.name || selectedFile?.name} // 선택된 폴더나 파일 이름 전달
                     >
                     </DriveShareModal>

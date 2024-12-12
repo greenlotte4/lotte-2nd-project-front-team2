@@ -18,6 +18,7 @@ import axiosInstance from '../../services/axios';
 import ContextMenu from '../../components/document/ContextMenu';
 import NewFolder from '../../components/document/NewFolder';
 import NewDrive from '../../components/document/NewDrive';
+import DriveShareModal from '../../components/document/documentShareMenu';
 
 
 export default function Document() {
@@ -36,6 +37,19 @@ export default function Document() {
 
     const [isDetailVisible, setIsDetailVisible] = useState(false); // 상세 정보 표시 상태 추가
     const [selectedFolder, setSelectedFolder] = useState(null); // 선택된 폴더 정보 상태 추가
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const user = useUserStore((state)=> state.user);
+
+    const handleShare = (type,selected)=>{
+        setSelectedFolder(selected); // 폴더 선택 상태 업데이트
+        setIsModalOpen(true);
+    }
+
+    const handleModalClose = () => {
+        setIsModalOpen(false);
+        setSelectedFolder(null);
+    };
+
 
     const handleDetailToggle = (folder) => {
         console.log("handleDetailToggle",folder)
@@ -269,6 +283,8 @@ export default function Document() {
     };
 
     
+
+    
     
     
 
@@ -406,9 +422,22 @@ export default function Document() {
                     folderName={contextMenu.folderName}
                     folderId={contextMenu.folderId}
                     path={contextMenu.path}
+                    onShare={handleShare}
                     onDetailToggle={() => handleDetailToggle(contextMenu.folder)} // 상세 정보 토글 함수 전달
+                    selectedFolder = {setSelectedFolder}
 
                 />
+                 <DriveShareModal
+                    isModalOpen={isModalOpen}
+                    setIsModalOpen={setIsModalOpen}
+                    selectedFolder={selectedFolder}
+                    company={user.company}
+                    user={user}
+                    id={selectedFolder?.id }
+                    type={"folder"}
+                    name={selectedFolder?.name} // 선택된 폴더나 파일 이름 전달
+                    >
+                </DriveShareModal>
                
             </DocumentLayout>
     )

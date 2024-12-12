@@ -34,9 +34,11 @@ const SHARE_TYPES = {
 const DriveShareModal = ({
   isModalOpen,
   setIsModalOpen,
+  selectedFolder,
   selected,
   name,
-  Id,
+  id,
+  type,
   company // 새로 추가된 prop
 }) => {
   const [shareLink, setShareLink] = useState("");
@@ -52,7 +54,6 @@ const DriveShareModal = ({
   const [selectedGroupId, setSelectedGroupId] = useState();
   const [isAlert, setIsAlert] = useState(false);
   const [isNoneAlert, setIsNoneAlert] = useState(false);
-
   const user = useUserStore((state) => state.user);
 
   const [sharedEntities, setSharedEntities] = useState({
@@ -246,100 +247,65 @@ const DriveShareModal = ({
     setEditingUser(null);
   };
 
-  const handleShare = async () => {
-    const payload = {
-      emails: selectedUsers.map((user) => user.email),
-      uids: sharedUsers,
-      departments: selectedDepartments
-    };
 
-    try {
-      await axiosInstance.post("/api/share", payload);
-      alert("공유 완료");
-      setSelectedUsers([]); // 이메일 목록 초기화
-    } catch (error) {
-      console.error("공유 실패", error);
-    }
-  };
-
-  const fetchShareUser = async (payload) => {
-    try {
-      const response = await axiosInstance.post(
-        `/api/drive/share/personal`,
-        payload
-      );
-      return response.data;
-    } catch (err) {
-      console.error("Users fetching error:", err);
-      return null;
-    }
-  };
-
-  const fetchSelectedUser = async (payload) => {
-    try {
-      const response = await axiosInstance.post(
-        `/api/drive/share/depart`,
-        payload
-      );
-      return response.data;
-    } catch (err) {
-      console.error("Users fetching error:", err);
-      return null;
-    }
-  };
-
-  const fetchDepartUser = async (payload) => {
-    const payloadJson = JSON.stringify(payload);
-
-    try {
-      const response = await axiosInstance.post( `/api/share/departments`,  payloadJson,{
-        headers: {
-          "Content-Type": "application/json", // JSON 데이터임을 명시
-        }   
-    });
-      return response.data;
-    } catch (err) {
-      console.error("Users fetching error:", err);
-      return null;
-    }
-  };
   const noneUserHandler = () => {
     setIsNoneAlert(false);
     setIsAlert(false);
   };
 
-  const shareHandler = () => {
+  const shareHandler = async () => {
+
+    const payload = {
+      type: shareType === SHARE_TYPES.INDIVIDUAL ? "personal" : "department",
+      users: [],
+      departments: [],
+    };
+
+
     if (shareType === SHARE_TYPES.INDIVIDUAL) {
       if (sharedUsers.length === 0) {
         setIsNoneAlert(true);
         return null;
       }
-      const payload = sharedUsers;
-      console.log("payload!!!", payload);
-      fetchShareUser(payload);
-
+      payload.users = sharedUsers.map((user) => ({
+        id: user.email,
+        permission: user.permission,
+      }));
+    
     } else if (shareType === SHARE_TYPES.DEPARTMENTALL) {
-      if (selectedUsers.length === 0) {
+      // Department sharing logic
+      if (Object.keys(selectedDepartments).length === 0 && Object.values(selectedUsers).length === 0) {
         setIsNoneAlert(true);
         return null;
       }
-
-      if (selectedDepartments.length === 0) {
-        setIsNoneAlert(true);
-        return null;
-      }
-
-      if (selectedUsers.length !==  0) {
-        console.log("여기야??");
-        fetchSelectedUser(selectedUsers);
-      }
-
-      if (selectedDepartments.length !== 0) {
-        fetchDepartUser(selectedDepartments);
-      }
+      // Include department IDs and permissions
+      payload.departments = Object.values(selectedDepartments).map((dept) => ({
+        id: dept.id,
+        permission: dept.permission,
+      }));
+      payload.users =Object.values(selectedUsers).map((user) => ({
+        id: user.id,
+        permission: user.permission || PERMISSIONS.READING,
+      }));
+  
     }
+  
+    console.log("Payload to be sent:", payload);
+  
+    // Send the payload to the backend
+    const response = await axiosInstance.post(`/api/share/drive/${type}/${id}`, payload)
+      console.log("공유결과!!!",response.data);
+      if(response.data === "success" ){
+        setIsAlert(false);
+        setIsModalOpen(false);
+        setSelectedUsers([]); // Clear selected users
+        setSelectedDepartments({}); // Clear selected departments
+      }else{
 
-    return null;
+        alert("공유 실패");
+
+      }
+      
   };
 
   // handleDepartmentShare 함수 수정
