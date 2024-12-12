@@ -21,83 +21,84 @@ export default function PageView({pageId, userId}){
     const [content, setContent] = useState(null);
     const [title, setTitle] = useState("");
 
-    useEffect(() => {
-      // 권한 정보 가져오기
-      const fetchPermission = async () => {
-        try {
-          const response = await axiosInstance.get(`/api/page/${pageId}/permission/${userId}`);
-          // setRole(response.data.role);
-          setRole("WRITE");
-        } catch (error) {
-          console.error("Failed to fetch permission:", error);
-        }
-      };
+    // useEffect(() => {
+    //   // 권한 정보 가져오기
+    //   const fetchPermission = async () => {
+    //     try {
+    //       const response = await axiosInstance.get(`/api/page/${pageId}/permission/${userId}`);
+    //       console.log(response.data)
+    //       // setRole(response.data.role);
+    //       setRole("WRITE");
+    //     } catch (error) {
+    //       console.error("Failed to fetch permission:", error);
+    //     }
+    //   };
   
-      fetchPermission();
-    }, [pageId, userId]);
+    //   fetchPermission();
+    // }, [pageId, userId]);
 
    
 
-      const toggleDropdown = () => {
-        setIsDropdownOpen((prev) => !prev); // 현재 상태 반전
-      };
+    //   const toggleDropdown = () => {
+    //     setIsDropdownOpen((prev) => !prev); // 현재 상태 반전
+    //   };
 
-       // DB에서 페이지 데이터를 가져오는 함수
-        useEffect(() => {
-            async function fetchPageData() {
-            try {
-                setLoading(true);
-                // const response = await fetch("/api/pages/1"); // 페이지 ID에 따라 API 요청
-                // const data = await response.json();
-                // setPageData(data); // 페이지 데이터를 상태에 저장
-                // setTitle(data.title); // 제목 상태 설정
-                // setContent(data.content); // 에디터 내용 설정
-                // setSharingUsers(data.sharingUsers || []); // 공유 사용자 상태 설정
+    //    // DB에서 페이지 데이터를 가져오는 함수
+    //     useEffect(() => {
+    //         async function fetchPageData() {
+    //         try {
+    //             setLoading(true);
+    //             // const response = await fetch("/api/pages/1"); // 페이지 ID에 따라 API 요청
+    //             // const data = await response.json();
+    //             // setPageData(data); // 페이지 데이터를 상태에 저장
+    //             // setTitle(data.title); // 제목 상태 설정
+    //             // setContent(data.content); // 에디터 내용 설정
+    //             // setSharingUsers(data.sharingUsers || []); // 공유 사용자 상태 설정
 
-                 // 임의 데이터
-                const mockData = {
-                    id: 1,
-                    title: "Sample Page Title",
-                    content: "This is some sample content for the editor.",
-                    files: ["document1.pdf", "image1.png"],
-                    sharingUsers: ["alice@example.com", "bob@example.com"],
-                    teamMembers :  [
-                        { name: 'Member 1', avatar: '/images/dumy-profile.png' },
-                        { name: 'Member 2', avatar: '/images/dumy-profile.png' },
-                        { name: 'Member 3', avatar: '/images/dumy-profile.png' },
-                        { name: 'Member 3', avatar: '/images/dumy-profile.png' },
-                        { name: 'Member 3', avatar: '/images/dumy-profile.png' },
-                        { name: 'Member 3', avatar: '/images/dumy-profile.png' },
-                        { name: 'Member 3', avatar: '/images/dumy-profile.png' },
-                        { name: 'Member 3', avatar: '/images/dumy-profile.png' },
-                        { name: 'Member 3', avatar: '/images/dumy-profile.png' },
-                        { name: 'Member 3', avatar: '/images/dumy-profile.png' },
+    //              // 임의 데이터
+    //             const mockData = {
+    //                 id: 1,
+    //                 title: "Sample Page Title",
+    //                 content: "This is some sample content for the editor.",
+    //                 files: ["document1.pdf", "image1.png"],
+    //                 sharingUsers: ["alice@example.com", "bob@example.com"],
+    //                 teamMembers :  [
+    //                     { name: 'Member 1', avatar: '/images/dumy-profile.png' },
+    //                     { name: 'Member 2', avatar: '/images/dumy-profile.png' },
+    //                     { name: 'Member 3', avatar: '/images/dumy-profile.png' },
+    //                     { name: 'Member 3', avatar: '/images/dumy-profile.png' },
+    //                     { name: 'Member 3', avatar: '/images/dumy-profile.png' },
+    //                     { name: 'Member 3', avatar: '/images/dumy-profile.png' },
+    //                     { name: 'Member 3', avatar: '/images/dumy-profile.png' },
+    //                     { name: 'Member 3', avatar: '/images/dumy-profile.png' },
+    //                     { name: 'Member 3', avatar: '/images/dumy-profile.png' },
+    //                     { name: 'Member 3', avatar: '/images/dumy-profile.png' },
                       
-                    ],
-                };
+    //                 ],
+    //             };
                 
-                setPageData(mockData); // 페이지 데이터를 상태에 저장
-                setTitle(mockData.title); // 제목 상태 설정
-                setContent(mockData.content); // 에디터 내용 설정
-                setSharingUsers(mockData.sharingUsers); // 공유 사용자 상태 설정
-                setTeamMembers(mockData.teamMembers);
-            } catch (err) {
-                setError("페이지 데이터를 불러오는 중 오류가 발생했습니다.");
-            } finally {
-                setLoading(false);
-            }
-            }
+    //             setPageData(mockData); // 페이지 데이터를 상태에 저장
+    //             setTitle(mockData.title); // 제목 상태 설정
+    //             setContent(mockData.content); // 에디터 내용 설정
+    //             setSharingUsers(mockData.sharingUsers); // 공유 사용자 상태 설정
+    //             setTeamMembers(mockData.teamMembers);
+    //         } catch (err) {
+    //             setError("페이지 데이터를 불러오는 중 오류가 발생했습니다.");
+    //         } finally {
+    //             setLoading(false);
+    //         }
+    //         }
 
-            fetchPageData();
+    //         fetchPageData();
 
-              // 초기 스크롤 위치 설정
-            if (scrollContainerRef.current) {
-                scrollContainerRef.current.scrollLeft = 0;
-            }
-        }, []);
+    //           // 초기 스크롤 위치 설정
+    //         if (scrollContainerRef.current) {
+    //             scrollContainerRef.current.scrollLeft = 0;
+    //         }
+    //     }, []);
         
-          if (loading) return <div>Loading...</div>;
-          if (error) return <div>{error}</div>;
+    //       if (loading) return <div>Loading...</div>;
+    //       if (error) return <div>{error}</div>;
 
            // 스크롤 이동 함수
         const scrollHorizontally = (direction) => {

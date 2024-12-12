@@ -2,15 +2,15 @@ import { useEffect, useState, useCallback } from 'react';
 import { Client } from '@stomp/stompjs';
 import axiosInstance from '@/services/axios.jsx';
 
-const alertWebSocket = ({ initialDestination, initialMessage, initialCalendarId, initialUserId }) => {
+const usePageSocket = ({ initialDestination, initialMessage}) => {
     const [destination, setDestination] = useState(initialDestination);
     const [sendMessage, setSendMessage] = useState(initialMessage);
     const [isConnected, setIsConnected] = useState(false);
     const [receiveMessage, setReceiveMessage] = useState([]);
-    const [userId, setUserId] = useState(initialUserId);
+    const [pageId, setPageId] = useState();
 
     const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
-    const wsUrl = "ws://" + apiBaseUrl.replace("http://", "") + "/ws-alert";
+    const wsUrl = "ws://" + apiBaseUrl.replace("http://", "") + "/ws-page";
 
     const [stompClient, setStompClient] = useState(null);
 
@@ -27,9 +27,11 @@ const alertWebSocket = ({ initialDestination, initialMessage, initialCalendarId,
             brokerURL: wsUrl,
             connectHeaders: headers,
             debug: function (str) {
-                console.log(str)
+                // console.log(str)
             },
+            reconnectDelay: 5000,
             onConnect: () => {
+                console.log('WebSocket connected');
                 setIsConnected(true);
                 updateSubscriptions(client);
             },
@@ -41,26 +43,21 @@ const alertWebSocket = ({ initialDestination, initialMessage, initialCalendarId,
     }, [wsUrl]);
 
     const updateSubscriptions = (client) => {
-        if (userId) {
-            client.unsubscribe("/topic/alert")
-            client.subscribe(`/topic/alert`, (message) => {
+        if (pageId) {
+            client.unsubscribe(`/topic/page/${pageId}`);
+        }
+    
+        if (pageId) {
+            client.subscribe(`/topic/page/${pageId}`, (message) => {
                 try {
                     const response = JSON.parse(message.body);
-                    console.log(userId)
-                    const filteredResponses = response.filter(item => {
-                        // userIds 배열이 존재하고, userId가 포함되어 있는지 확인
-                        const userIdsArray = item.userIds;
-                        return userIdsArray && userIdsArray.includes(userId.toString());
-                    });
-                    
-                    // 결과 출력
-
-                    setReceiveMessage(filteredResponses);
+                    setReceiveMessage(response);
                 } catch (error) {
                     console.error("Failed to parse user message:", error);
                 }
             });
         }
+
         if (destination && sendMessage) {
             client.publish({
                 destination,
@@ -87,8 +84,7 @@ const alertWebSocket = ({ initialDestination, initialMessage, initialCalendarId,
         if (stompClient && isConnected) {
             updateSubscriptions(stompClient);
         }
-    }, [userId, isConnected, stompClient]);
-
+    }, [ pageId, isConnected, stompClient]);
 
     const sendWebSocketMessage = useCallback((message, path) => {
         if (isConnected && stompClient) {
@@ -101,9 +97,11 @@ const alertWebSocket = ({ initialDestination, initialMessage, initialCalendarId,
         }
     }, [stompClient, isConnected]);
 
-    const updateUserId = (newId) => {
-        setUserId(newId);
+
+    const updatePageId = (newIds) => {
+        setPageId(newIds);
     };
+
 
     return {
         stompClient,
@@ -112,9 +110,9 @@ const alertWebSocket = ({ initialDestination, initialMessage, initialCalendarId,
         isConnected,
         receiveMessage,
         sendWebSocketMessage,
-        updateUserId,
+        updatePageId,
         initializeStompClient
     };
 };
 
-export default alertWebSocket;
+export default usePageSocket;

@@ -23,6 +23,7 @@ import { UnreadCountContext } from "../../components/message/UnreadCountContext"
 
 export default function Message({ selectedRoomId, setSelectedRoomId }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [profile, setProfile] = useState(false);
   const [option, setOption] = useState(2);
   const [search, setSearch] = useState(false);
@@ -184,6 +185,7 @@ export default function Message({ selectedRoomId, setSelectedRoomId }) {
 
     const fetchChatRooms = async () => {
       try {
+        setIsLoading(true);
         const response = await axiosInstance.get(`/api/message/room/${uid}`);
         console.log(response);
 
@@ -213,6 +215,7 @@ export default function Message({ selectedRoomId, setSelectedRoomId }) {
           console.log("초기 채팅방 로드 : ", roomsWithUnread);
 
           setRoomData(roomsWithUnread);
+          setIsLoading(false);
         }
       } catch (error) {
         console.error("채팅방 호출 오류:", error);
@@ -251,15 +254,34 @@ export default function Message({ selectedRoomId, setSelectedRoomId }) {
   const isInitialLoadRef = useRef(true); // 초기 로드 플래그
   const inputRef = useRef(null);
 
-  const { unreadCounts, lastMessages } = useContext(UnreadCountContext);
+  const {
+    unreadCounts,
+    setUnreadCounts,
+    lastMessages,
+    setLastMessages,
+    lastTimeStamp,
+    setLastTimeStamp,
+  } = useContext(UnreadCountContext);
 
   useEffect(() => {
-    setRoomData((data) => {});
+    setRoomData((prevRoomData) =>
+      prevRoomData.map((room) => ({
+        ...room,
+        unreadCount: unreadCounts[room.id] ?? room.unreadCount,
+        lastMessage: lastMessages[room.id] ?? room.lastMessage,
+        lastTimeStamp: lastTimeStamp[room.id] ?? room.lastTimeStamp,
+      }))
+    );
   }, [unreadCounts, lastMessages]);
 
   const { mutate } = useMutation({
     mutationFn: async (inputText) => {
       if (inputText.trim() === "") return null;
+
+      const timestamp = new Date();
+      const utcTimestamp = new Date(
+        timestamp.getTime() - timestamp.getTimezoneOffset() * 60000
+      );
 
       const newMessage = {
         roomId: selectedRoomId,
@@ -267,8 +289,9 @@ export default function Message({ selectedRoomId, setSelectedRoomId }) {
         type: "MESSAGE",
         content: inputText,
         sender: uid,
-        timeStamp: new Date(),
+        timeStamp: utcTimestamp,
       };
+      console.log("newMessage : ", newMessage);
 
       try {
         const resp = await axiosInstance.post(
@@ -365,8 +388,18 @@ export default function Message({ selectedRoomId, setSelectedRoomId }) {
           console.error("Error fetching room info:", error);
         });
 
-      fetchUnreadCount();
-      markAsRead();
+      // 읽음 처리 후 언리드 카운트 가져오기
+      markAsRead()
+        .then(() => {
+          console.log("markAsRead completed.");
+          return fetchUnreadCount();
+        })
+        .then(() => {
+          console.log("fetchUnreadCount completed.");
+        })
+        .catch((error) => {
+          console.error("Mark as read or fetch unread count failed:", error);
+        });
     }
   }, [selectedRoomId]);
 
@@ -467,11 +500,16 @@ export default function Message({ selectedRoomId, setSelectedRoomId }) {
   const markAsRead = async () => {
     if (!selectedRoomId || !uid) return;
     try {
-      const readTimestamp = new Date().toISOString().slice(0, 19); // "2023-10-04T17:45:30"
-      await axiosInstance.post("/api/message/markAsRead", null, {
-        params: { uid, chatRoomId: selectedRoomId, readTimestamp },
-      });
-      setUnreadCount(0); // 읽음 상태 업데이트
+      const data = {
+        sender: uid,
+        roomId: selectedRoomId,
+      };
+      await axiosInstance.post("/api/message/markAsRead", data);
+      setRoomData((prevData) =>
+        prevData.map((room) =>
+          room.id === selectedRoomId ? { ...room, unreadCount: 0 } : room
+        )
+      );
     } catch (error) {
       console.error("읽음 상태 업데이트 실패:", error);
     }
@@ -524,6 +562,7 @@ export default function Message({ selectedRoomId, setSelectedRoomId }) {
         <div className="list frequent">
           <h3>즐겨찾기</h3>
           <div className="rooms">
+            {isLoading ? <div>Loading...</div> : null}
             {roomData && roomData.length > 0
               ? roomData
                   .filter((room) => room.chatRoomFavorite === 1)
@@ -551,11 +590,13 @@ export default function Message({ selectedRoomId, setSelectedRoomId }) {
                           />
                         </div>
                         <div className="preview">
-                          <span>반갑습니다</span>
+                          <span>{room.lastMessage}</span>
                         </div>
                       </div>
                       <div className="date_unRead">
-                        <span className="date">2024.11.20</span>
+                        <span className="date">
+                          {formatTime(room.lastTimeStamp)}
+                        </span>
                         <div className="unReadCnt">
                           <span>{room.unreadCount}</span>
                         </div>
@@ -569,6 +610,7 @@ export default function Message({ selectedRoomId, setSelectedRoomId }) {
         <div className="list">
           <h3>대화방</h3>
           <div className="rooms">
+            {isLoading ? <div>Loading...</div> : null}
             {roomData && roomData.length > 0
               ? roomData
                   .filter((room) => room.chatRoomFavorite === 0)
@@ -596,11 +638,11 @@ export default function Message({ selectedRoomId, setSelectedRoomId }) {
                           />
                         </div>
                         <div className="preview">
-                          <span>반갑습니다</span>
+                          <span>{room.lastMessage}</span>
                         </div>
                       </div>
                       <div className="date_unRead">
-                        <span>2024.11.20</span>
+                        <span>{formatTime(room.lastTimeStamp)}</span>
                         <div className="unReadCnt">
                           <span>{room.chatRoomReadCnt}</span>
                         </div>
@@ -768,6 +810,22 @@ export default function Message({ selectedRoomId, setSelectedRoomId }) {
               보내기
             </button>
           </div>
+          {chatContainerRef.current &&
+          chatContainerRef.current.scrollTop !=
+            chatContainerRef.current.scrollHeight ? (
+            <img
+              src="/images/arrow-down.png"
+              className="scrollDownBtn"
+              onClick={() => {
+                // 마지막 메시지 요소를 부드럽게 스크롤
+                const lastMessage = chatContainerRef.current.lastElementChild;
+                lastMessage?.scrollIntoView({
+                  behavior: "smooth",
+                  block: "end",
+                });
+              }}
+            />
+          ) : null}
           {unreadCount > 0 && (
             <div className="unread-count">
               {unreadCount}개의 읽지 않은 메시지가 있습니다.

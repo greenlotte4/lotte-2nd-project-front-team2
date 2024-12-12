@@ -37,7 +37,7 @@ $sidebar-bg: #ffffff;
 
 .content {
   flex: 1; /* Footer 위의 콘텐츠가 남은 공간을 모두 차지 */
-  background-color: #f1f1f8;
+  background-color: white;
   padding: 20px;
   padding-top: 10px;
   box-sizing: border-box;
@@ -59,7 +59,8 @@ $sidebar-bg: #ffffff;
 
 .header {
   transition: all 0.5s ease; /* 부드러운 전환 */
-  
+  background-color: white;
+  overflow: visible;
   .side-header {
     background-color: white;
     transition: all 0.5s ease;
@@ -92,4 +93,13 @@ $sidebar-bg: #ffffff;
   }
 
   
+}
+
+.alarms {
+  .read {
+    color: black;
+  }
+  .unread {
+    color: rgba($color: black, $alpha: 0.6);
+  }
 }

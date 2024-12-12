@@ -10,6 +10,7 @@ export const UnreadCountContext = createContext();
 export const UnreadCountProvider = ({ children }) => {
   const [unreadCounts, setUnreadCounts] = useState({});
   const [lastMessages, setLastMessages] = useState({});
+  const [lastTimeStamp, setLastTimeStamp] = useState({});
   const [selectedRoomId, setSelectedRoomId] = useState();
   const [messageList, setMessageList] = useState([]);
 
@@ -56,10 +57,15 @@ export const UnreadCountProvider = ({ children }) => {
                   ...prevCounts,
                   [data.chatRoomId]: data.unreadCount,
                 }));
+                console.log("전파 받은 안읽은 수 : ", data.unreadCount);
               } else if (data.type === "lastMessage") {
                 setLastMessages((prevMessages) => ({
                   ...prevMessages,
                   [data.chatRoomId]: data.lastMessage,
+                }));
+                setLastTimeStamp((prevTimeStamp) => ({
+                  ...prevTimeStamp,
+                  [data.chatRoomId]: data.lastTimeStamp,
                 }));
               }
             }
@@ -118,6 +124,8 @@ export const UnreadCountProvider = ({ children }) => {
         lastMessages,
         setLastMessages,
         isConnected,
+        lastTimeStamp,
+        setLastTimeStamp,
       }}
     >
       {children}
