@@ -1,5 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom"; // 페이지 이동을 위한 useNavigate 추가
+import axios from 'axios';
+
+const API_BASE_URL = 'http://13.124.94.213:8080';  // 백엔드 서버 주소
 
 export default function ProductServicesWrite() {
   const [formData, setFormData] = useState({
@@ -26,35 +29,35 @@ export default function ProductServicesWrite() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    const productServiceData = {
+        email: formData.email,
+        title: formData.title,
+        name: formData.name,
+        productName: formData.productName,
+        productType: formData.productType,
+        serviceType: formData.serviceType,
+        purchaseDate: formData.purchaseDate,
+        content: formData.content
+    };
+    
     try {
-      const response = await fetch('http://localhost:8080/api/send-product-service', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData)
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        alert(data.message);
-        setFormData({
-          productName: "",
-          productType: "",
-          serviceType: "",
-          purchaseDate: "",
-          title: "",
-          content: "",
-          email: "",
-          name: "",
-        });
-      } else {
-        throw new Error(data.message);
-      }
+        const response = await axios.post(
+            `${API_BASE_URL}/api/send-product-service`, 
+            productServiceData,
+            {
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                withCredentials: true
+            }
+        );
+        
+        if (response.status === 200) {
+            alert('문의가 성공적으로 전송되었습니다.');
+        }
     } catch (error) {
-      console.error('문의 전송 실패:', error);
-      alert('문의 전송에 실패했습니다. 다시 시도해주세요.');
+        console.error('문의 전송 실패:', error);
+        alert('문의 전송에 실패했습니다.');
     }
   };
 

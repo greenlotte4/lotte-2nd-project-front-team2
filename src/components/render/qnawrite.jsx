@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom"; // 페이지 이동을 위한 useNavigate 추가
-import axios from 'axios';  // axios import 추가
+import axios from 'axios';
+
+const API_BASE_URL = 'http://13.124.94.213:8080';  // 백엔드 서버 주소
 
 export default function QNAWrite() {
   const [formData, setFormData] = useState({
@@ -16,53 +18,40 @@ export default function QNAWrite() {
   const navigate = useNavigate(); // 페이지 이동을 위한 useNavigate 훅
 
   const handleChange = (e) => {
-    const { name, value, files } = e.target;
+    const { name, value } = e.target;
     setFormData({
       ...formData,
-      [name]: name === 'attachments' ? files[0] : value,
+      [name]: value,
     });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // FormData 객체 생성
-    const formDataToSend = new FormData();
-    formDataToSend.append('title', formData.title);
-    formDataToSend.append('name', formData.name);
-    formDataToSend.append('email', formData.email);
-    formDataToSend.append('category', formData.category);
-    formDataToSend.append('priority', formData.priority);
-    formDataToSend.append('content', formData.content);
+    const qnaData = {
+        email: formData.email,
+        title: formData.title,
+        name: formData.name,
+        category: formData.category,
+        priority: formData.priority,
+        content: formData.content,
+        attachments: formData.attachments
+    };
     
-    // 파일이 있는 경우에만 추가
-    if (formData.attachments) {
-        formDataToSend.append('attachments', formData.attachments);
-    }
-
     try {
         const response = await axios.post(
-            'http://localhost:8080/api/send-qna', 
-            formDataToSend,
+            `${API_BASE_URL}/api/send-qna`, 
+            qnaData,
             {
                 headers: {
-                    'Content-Type': 'multipart/form-data',
+                    'Content-Type': 'application/json'
                 },
+                withCredentials: true
             }
         );
         
         if (response.status === 200) {
             alert('문의가 성공적으로 전송되었습니다.');
-            // 폼 초기화
-            setFormData({
-                category: "",
-                priority: "",
-                title: "",
-                content: "",
-                email: "",
-                name: "",
-                attachments: "",
-            });
         }
     } catch (error) {
         console.error('문의 전송 실패:', error);

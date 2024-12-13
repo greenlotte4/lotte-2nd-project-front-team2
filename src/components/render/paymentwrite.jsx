@@ -1,11 +1,16 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom"; // 페이지 이동을 위한 useNavigate 추가
+import axios from 'axios';  // axios import 추가
+
+const API_BASE_URL = 'http://13.124.94.213:8080';  // 백엔드 서버 주소
 
 export default function PaymentWrite() {
   const [formData, setFormData] = useState({
     orderNumber: "",
     paymentMethod: "",
     paymentAmount: "",
+    paymentDate: "",    // paymentDate 추가
+    inquiryType: "",    // inquiryType 추가
     title: "",
     content: "",
     email: "",
@@ -25,34 +30,36 @@ export default function PaymentWrite() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    const paymentData = {
+        email: formData.email,
+        title: formData.title,
+        name: formData.name,
+        orderNumber: formData.orderNumber,
+        paymentAmount: formData.paymentAmount,
+        paymentMethod: formData.paymentMethod,
+        paymentDate: formData.paymentDate,
+        inquiryType: formData.inquiryType,
+        content: formData.content
+    };
+    
     try {
-      const response = await fetch('http://localhost:8080/api/send-payment', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData)
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        alert(data.message);
-        setFormData({
-          orderNumber: "",
-          paymentMethod: "",
-          paymentAmount: "",
-          title: "",
-          content: "",
-          email: "",
-          name: "",
-        });
-      } else {
-        throw new Error(data.message);
-      }
+        const response = await axios.post(
+            `${API_BASE_URL}/api/send-payment`, 
+            paymentData,
+            {
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                withCredentials: true
+            }
+        );
+        
+        if (response.status === 200) {
+            alert('문의가 성공적으로 전송되었습니다.');
+        }
     } catch (error) {
-      console.error('문의 전송 실패:', error);
-      alert('문의 전송에 실패했습니다. 다시 시도해주세요.');
+        console.error('문의 전송 실패:', error);
+        alert('문의 전송에 실패했습니다.');
     }
   };
 
@@ -173,6 +180,33 @@ export default function PaymentWrite() {
                   placeholder="Enter payment amount"
                   required
                 />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Payment Date</label>
+                <input
+                  type="date"
+                  name="paymentDate"
+                  value={formData.paymentDate}
+                  onChange={handleChange}
+                  className="w-full p-4 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                  placeholder="Enter payment date"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Inquiry Type</label>
+                <select
+                  name="inquiryType"
+                  value={formData.inquiryType}
+                  onChange={handleChange}
+                  className="w-full p-4 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                  required
+                >
+                  <option value="">Select inquiry type</option>
+                  <option value="refund">Refund</option>
+                  <option value="chargeback">Chargeback</option>
+                  <option value="other">Other</option>
+                </select>
               </div>
               <div>
                 <label className="block text-sm font-medium mb-2">Inquiry Title</label>
