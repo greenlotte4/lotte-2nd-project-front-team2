@@ -86,14 +86,14 @@ export default function Register() {
  
   // 각 페이지의 검증 상태를 관리
   const [validation1, setValidation1] = useState({
-    email: false,
-    uid: false,
-    pwd: false,
+    email: true,
+    uid: true,
+    pwd: true,
   });
   const [validation2, setValidation2] = useState({
-    firstName: false,
-    lastName: false,
-    hp: false,
+    firstName: true,
+    lastName: true,
+    hp: true,
   });
   //3페이지는 플랜별로 검증 상태 관리
   const [validationEnterprise, setValidationEnterprise] = useState({

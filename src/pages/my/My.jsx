@@ -58,7 +58,6 @@ export default function MyMain() {
       setPlan(false)
   }
 
-    const test = 'http://3.35.170.26:90/profileImg/bdf33032-4941-4edf-a7a6-3497f3735f63.png'
   return (
     <div id='my-main-container'>
       <MyAside />

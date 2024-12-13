@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query';
 import '@/pages/my/My.scss'
 import { Link, useNavigate } from 'react-router-dom'
@@ -88,7 +88,7 @@ export default function MyModify() {
             // alert('업로드 중 오류가 발생했습니다.');
         }
     };
-    
+
     const [pass, setPass] = useState(false);
     const modifyPass = (event) => {
         event.preventDefault();
@@ -97,6 +97,17 @@ export default function MyModify() {
     const passClose = () => {
         setPass(false)
     }
+
+    const [emailAddr, emailDomain] = userData?.email?.split("@") || ["", ""]; // 이메일 초기값 분리
+    const [selectedDomain, setSelectedDomain] = useState("");
+
+    useEffect(() => {
+        setSelectedDomain(`@${emailDomain}`);
+    }, [emailDomain])
+
+    const handleDomainChange = (event) => {
+        setSelectedDomain(event.target.value);
+    };
 
   return <>
     <div id='my-modify-container'>
@@ -151,34 +162,37 @@ export default function MyModify() {
                     <tbody>
                         <tr>
                             <td className='flex mt-10'>
-                                <div className='flex flex-col w-1/2'>
-                                    <span className='text-xs text-gray-500 ml-10'>성</span>
+                                <div className='flex flex-col w-full'>
+                                    <span className='text-xs bg-white relative top-2 text-center w-[29px] text-gray-500 ml-10'>이름</span>
                                     <input type="text" className='border my-modify-input'
                                     value={userData?.name || ''}
                                     />
                                 </div>
-                                <div className='flex flex-col w-1/2'>
-                                    <span className='text-xs text-gray-500 ml-10'>이름</span>
+                                {/* <div className='flex flex-col w-1/2'>
+                                    <span className='text-xs bg-white relative top-2 border text-center w-[50px] text-gray-500 ml-10'>이름</span>
                                     <input type="text" className='border my-modify-input'
                                     value={userData?.name || ''}
                                      />
-                                </div>
+                                </div> */}
                             </td>
                         </tr>
                         <tr>
                             <td className='flex mt-10'>
                                 <div className='flex flex-col w-full'>
-                                    <span className='text-xs text-gray-500 ml-10'>이메일</span>
+                                    <span className='text-xs bg-white relative top-2 text-center w-[45px] text-gray-500 ml-10'>이메일</span>
                                     <div className='flex '>
                                         <input type="text" className='border my-modify-input w-1/2'
-                                        value={userData?.email || ''}
+                                        value={userData!=null?emailAddr:''}
                                         />
                                         {/* <span className='h-full text-gray-500 text-2xl mr-10'>@</span>                             */}
-                                        <select className='my-modify-select text-gray-500 w-1/2'>
+                                        <select 
+                                        value={`selectedDomain`}
+                                        onChange={handleDomainChange}
+                                        className='my-modify-select text-gray-500 w-1/2'>
                                             <option className='text-gray-500' value="">직접 입력</option>
-                                            <option className='text-gray-500' value="">@ naver.com</option>
-                                            <option className='text-gray-500' value="">@ gmail.com</option>
-                                            <option className='text-gray-500' value="">@ daum.net</option>
+                                            <option className='text-gray-500' value="@naver.com">@ naver.com</option>
+                                            <option className='text-gray-500' value="@gamil.com">@ gmail.com</option>
+                                            <option className='text-gray-500' value="@daum.net">@ daum.net</option>
                                         </select>
                                     </div>
                                 </div>
@@ -187,7 +201,7 @@ export default function MyModify() {
                         <tr>
                             <td className='flex mt-10'>
                                 <div className='flex flex-col w-full'>
-                                    <span className='text-xs text-gray-500 ml-10'>전화번호</span>
+                                    <span className='text-xs bg-white relative top-2 text-center w-[50px] text-gray-500 ml-10'>전화번호</span>
                                     <div className='flex items-center'>
                                         <input type="text" className='border w-full my-modify-input' 
                                         value={userData?.hp || ''}
@@ -205,12 +219,12 @@ export default function MyModify() {
                         <tr>
                             <td className='flex mt-10'>
                                 <div className='flex flex-col w-1/2'>
-                                    <span className='text-xs text-gray-500 ml-10'>주소지</span>
+                                    <span className='text-xs bg-white relative top-2 text-center w-[43px] text-gray-500 ml-10'>주소지</span>
                                     <input type="text" className='border my-modify-input' 
                                     value={userData?.addr1 || ''}/>
                                 </div>
                                 <div className='flex flex-col w-1/2'>
-                                    <span className='text-xs text-gray-500 ml-10'>상세주소</span>
+                                    <span className='text-xs bg-white relative top-2 text-center w-[50px] text-gray-500 ml-10'>상세주소</span>
                                     <input type="text" className='border my-modify-input'
                                     value={userData?.addr2 || ''} />
                                 </div>
@@ -219,7 +233,7 @@ export default function MyModify() {
                         <tr>
                             <td className='flex mt-10'>
                                 <div className='flex flex-col w-full'>
-                                    <span className='text-xs text-gray-500 ml-10'>국가</span>
+                                    <span className='text-xs bg-white relative top-2 text-center w-[28px] text-gray-500 ml-10'>국가</span>
                                     <input type="text" className='border my-modify-input' 
                                     value={userData?.country || ''}
                                     />
@@ -243,7 +257,7 @@ export default function MyModify() {
                     <label><input type="checkbox" className='mt-[30px] mr-10' onChange={handleCheckboxChange}/> 계정을 비활성화하고 싶습니다.</label>
                     {deactive===1&& 
                     <div className='mt-[30px]'>
-                        <span className='text-xs ml-10'>먼저 비밀번호를 확인하셔야 합니다.</span>
+                        <span className='text-xs text-center w-[50px] ml-10'>먼저 비밀번호를 확인하셔야 합니다.</span>
                         <div className='flex items-center '>
                             <input type="password" className='delete-inp mr-10' />
                             <button className='btn-delete bg-indigo-500 text-white' >확인</button>
