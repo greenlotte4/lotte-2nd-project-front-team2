@@ -12,6 +12,7 @@ const useChatWebSocket = ({
   chatContainerRef,
   shouldScrollToBottomRef,
   uid,
+  markAsRead,
 }) => {
   const [members, setmembers] = useState(initialMembers || []);
   const [isConnected, setIsConnected] = useState(false);
@@ -67,6 +68,7 @@ const useChatWebSocket = ({
             try {
               const response = JSON.parse(message.body);
               setMessageList((prev) => [...prev, response]);
+              markAsRead();
               shouldScrollToBottomRef.current = true;
             } catch (error) {
               console.error("Failed to parse message:", error);

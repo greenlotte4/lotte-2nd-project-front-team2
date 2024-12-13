@@ -11,7 +11,7 @@ export const UnreadCountProvider = ({ children }) => {
   const [unreadCounts, setUnreadCounts] = useState({});
   const [lastMessages, setLastMessages] = useState({});
   const [lastTimeStamp, setLastTimeStamp] = useState({});
-  const [selectedRoomId, setSelectedRoomId] = useState();
+  const [selectedRoomId, setSelectedRoomId] = useState(null);
   const [messageList, setMessageList] = useState([]);
 
   const [isConnected, setIsConnected] = useState(false);
@@ -19,6 +19,12 @@ export const UnreadCountProvider = ({ children }) => {
 
   const subscriptionRef = useRef(null);
   const shouldScrollToBottomRef = useRef(true);
+  const selectedRoomIdRef = useRef(selectedRoomId); // Ref 생성
+
+  // selectedRoomId가 변경될 때 Ref 업데이트
+  useEffect(() => {
+    selectedRoomIdRef.current = selectedRoomId;
+  }, [selectedRoomId]);
 
   const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
 
@@ -51,8 +57,17 @@ export const UnreadCountProvider = ({ children }) => {
           client.subscribe(`/topic/notifications/${uid}`, (message) => {
             if (message.body) {
               const data = JSON.parse(message.body);
+              console.log(
+                "현재 방ID : " +
+                  selectedRoomIdRef.current +
+                  "받은 방ID : " +
+                  data.chatRoomId
+              );
 
-              if (data.type === "unreadCount") {
+              if (
+                data.type === "unreadCount" &&
+                data.chatRoomId !== selectedRoomIdRef.current
+              ) {
                 setUnreadCounts((prevCounts) => ({
                   ...prevCounts,
                   [data.chatRoomId]: data.unreadCount,
@@ -126,6 +141,8 @@ export const UnreadCountProvider = ({ children }) => {
         isConnected,
         lastTimeStamp,
         setLastTimeStamp,
+        selectedRoomId,
+        setSelectedRoomId,
       }}
     >
       {children}

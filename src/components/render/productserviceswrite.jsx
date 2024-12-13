@@ -23,9 +23,39 @@ export default function ProductServicesWrite() {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Product & Service Inquiry Submitted:", formData);
+    
+    try {
+      const response = await fetch('http://localhost:8080/api/send-product-service', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        alert(data.message);
+        setFormData({
+          productName: "",
+          productType: "",
+          serviceType: "",
+          purchaseDate: "",
+          title: "",
+          content: "",
+          email: "",
+          name: "",
+        });
+      } else {
+        throw new Error(data.message);
+      }
+    } catch (error) {
+      console.error('문의 전송 실패:', error);
+      alert('문의 전송에 실패했습니다. 다시 시도해주세요.');
+    }
   };
 
   const menus = [

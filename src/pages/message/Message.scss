@@ -203,6 +203,10 @@
 
   .preview {
     font-size: 10px;
+    width: 130px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .date_unRead {
@@ -214,7 +218,7 @@
     align-items: flex-end;
     & > span {
       font-size: 12px;
-      width: 55px;
+      width: 60px;
       text-align: right;
     }
   }
@@ -391,7 +395,7 @@
 
   .my-messages_readTime {
     display: flex;
-    flex-direction: column;
+    flex-direction: row-reverse;
     align-items: flex-end;
   }
 
@@ -408,7 +412,7 @@
 
   .readTime {
     font-size: 10px;
-    margin: 0 10px;
+    margin: 0 10px 10px 10px;
     color: rgb(151, 151, 151);
   }
 
@@ -435,8 +439,8 @@
 
   .others-messages_readTime {
     display: flex;
-    flex-direction: column;
-    align-items: flex-start;
+    flex-direction: row;
+    align-items: flex-end;
   }
 
   .others-message {

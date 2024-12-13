@@ -78,8 +78,6 @@ function App() {
   const [isToken, setIsToken] = useState(false);
   const queryClient = useQueryClient();
 
-  const [selectedRoomId, setSelectedRoomId] = useState("");
-
   // 검증 제외 경로
   const excludedRoutesSet = new Set([
     "/",
@@ -164,17 +162,17 @@ function App() {
   const postAlarm = useMutation({
     mutationFn: async () => {
       try {
-        const resp = await axiosInstance.post("/api/alarm",receiveMessage[0])
-        return resp.data
+        const resp = await axiosInstance.post("/api/alarm", receiveMessage[0]);
+        return resp.data;
       } catch (err) {
         return err;
       }
     },
-    onSuccess : (data)=>{
-      queryClient.fetchQuery(['alarm'])
-      queryClient.fetchQuery(['alarm-cnt'])
-    }
-  })
+    onSuccess: (data) => {
+      queryClient.fetchQuery(["alarm"]);
+      queryClient.fetchQuery(["alarm-cnt"]);
+    },
+  });
 
   return (
     <div id="app-container m-0 xl2:mx-auto">
@@ -182,7 +180,7 @@ function App() {
         type={customAlertType}
         message={customAlertMessage}
         isOpen={customAlert}
-        onClose={()=>setCustomAlert(false)}
+        onClose={() => setCustomAlert(false)}
       />
       {/* 채팅 관련 웹소켓 전역적 위치에서 연결 */}
       <UnreadCountProvider>
@@ -204,7 +202,10 @@ function App() {
             <Route path="faq" element={<FAQLayout />}>
               <Route index element={<FAQPage />} />
               <Route path="write/payment" element={<PaymentWrite />} />
-              <Route path="write/cancellation" element={<CancellationReturnWrite />} />
+              <Route
+                path="write/cancellation"
+                element={<CancellationReturnWrite />}
+              />
               <Route path="write/qna" element={<QNAWrite />} />
               <Route path="write/services" element={<ProductServicesWrite />} />
             </Route>
@@ -264,15 +265,7 @@ function App() {
 
           {/* 메신저 */}
           <Route path="/message" element={<Main />}>
-            <Route
-              index
-              element={
-                <Message
-                  selectedRoomId={selectedRoomId}
-                  setSelectedRoomId={setSelectedRoomId}
-                />
-              }
-            />
+            <Route index element={<Message />} />
           </Route>
 
           {/* 문서작업 */}
