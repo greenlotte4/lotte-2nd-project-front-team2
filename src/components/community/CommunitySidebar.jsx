@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import "@/pages/community/Community.scss";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useLocation } from "react-router-dom";
 import axiosInstance from "@/services/axios";
 
 export default function CommunitySidebar({
@@ -13,13 +13,14 @@ export default function CommunitySidebar({
   onUpdateBoard = () => {},
   onNewPost = () => {},
   onNewUserBoard = () => {},
+  onBoardChange = () => {},
 }) {
   const { boardId } = useParams();
+  const location = useLocation();
 
   // State 초기화
   const [boards, setBoards] = useState(initialUserBoards);
   const [departmentBoards, setDepartmentBoards] = useState([]);
-
   const [favoriteIds, setFavoriteIds] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newBoardName, setNewBoardName] = useState("");
@@ -33,6 +34,14 @@ export default function CommunitySidebar({
     departmentBoards: true,
     myBoards: true,
   });
+
+  // URL 변경 감지 및 처리
+  useEffect(() => {
+    const currentBoardId = location.pathname.split("/")[2];
+    if (currentBoardId) {
+      onBoardChange(currentBoardId);
+    }
+  }, [location.pathname, onBoardChange]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -53,18 +62,23 @@ export default function CommunitySidebar({
           axiosInstance.get(`/api/community/favorites/${currentUser.id}`),
         ]);
 
-        console.log("User Boards data:", userBoardsResponse.data);
-        console.log("Department Boards data:", departmentBoardsResponse.data);
-        console.log("Favorites data:", favoritesResponse.data);
+        console.log(
+          "User Boards detail:",
+          userBoardsResponse.data.map((board) => ({
+            id: board.boardId,
+            name: board.boardName,
+          }))
+        );
 
         setBoards(userBoardsResponse?.data || []);
+        console.log("First board ID:", userBoardsResponse?.data?.[0]?.boardId);
+
         setDepartmentBoards(
           Array.isArray(departmentBoardsResponse?.data)
             ? departmentBoardsResponse.data
             : []
         );
 
-        // 서버에서 반환된 데이터로 즐겨찾기 상태 설정
         setFavoriteIds(
           favoritesResponse?.data?.map((fav) => fav.itemId || fav.boardId) || []
         );
@@ -77,7 +91,7 @@ export default function CommunitySidebar({
     };
 
     fetchData();
-  }, [currentUser]);
+  }, [currentUser, boardId]);
 
   const toggleSection = (section) => {
     setSections((prev) => ({
@@ -109,10 +123,13 @@ export default function CommunitySidebar({
     handleCloseModal();
   };
 
+  const handleBoardClick = (board) => {
+    onBoardChange(board.boardId);
+  };
+
   const toggleFavorite = async (boardId) => {
     try {
       if (favoriteIds.includes(boardId)) {
-        // 즐겨찾기 해제 요청
         await axiosInstance.delete("/api/community/favorites", {
           params: {
             userId: currentUser.id,
@@ -120,18 +137,15 @@ export default function CommunitySidebar({
             itemId: boardId,
           },
         });
-        // 상태에서 해당 항목 제거
         setFavoriteIds((prevFavorites) =>
           prevFavorites.filter((id) => id !== boardId)
         );
       } else {
-        // 즐겨찾기 추가 요청
         await axiosInstance.post("/api/community/favorites", {
           userId: currentUser.id,
           itemType: "BOARD",
           itemId: boardId,
         });
-        // 상태에 해당 항목 추가
         setFavoriteIds((prevFavorites) => [...prevFavorites, boardId]);
       }
     } catch (error) {
@@ -146,6 +160,43 @@ export default function CommunitySidebar({
 
   if (loading) return <p>Loading...</p>;
   if (error) return <p>Error: {error}</p>;
+
+  const renderBoardItem = (board, isFavoriteSection = false) => (
+    <div
+      key={board.boardId}
+      className={`flex items-center justify-between px-8 py-1 group ${
+        board.boardId === boardId ? "bg-gray-100" : ""
+      }`}
+    >
+      <img
+        src="/images/document_text.png"
+        alt="icon"
+        className="w-5 h-5 mr-2"
+      />
+      <Link
+        to={`/community/${board.boardId}/list`}
+        state={{ boardData: board }}
+        className="flex-grow hover:underline"
+        onClick={() => handleBoardClick(board)}
+      >
+        {board.boardName || "이름 없음"}
+      </Link>
+      <img
+        src={
+          favoriteIds.includes(board.boardId)
+            ? "/images/star_on.png"
+            : "/images/star_off.png"
+        }
+        alt="star"
+        className={`cursor-pointer ${
+          isFavoriteSection || favoriteIds.includes(board.boardId)
+            ? "opacity-100"
+            : "opacity-0 group-hover:opacity-100"
+        } transition-opacity duration-300`}
+        onClick={() => toggleFavorite(board.boardId)}
+      />
+    </div>
+  );
 
   return (
     <aside className="community-aside overflow-scroll flex flex-col scrollbar-none p-4">
@@ -191,31 +242,7 @@ export default function CommunitySidebar({
               을 선택해서 추가 해주세요.
             </div>
           ) : (
-            favoriteBoards.map((board) => (
-              <div
-                key={board.boardId}
-                className="flex items-center justify-between px-8 py-1 group"
-              >
-                <img
-                  src="/images/document_text.png"
-                  alt="icon"
-                  className="w-5 h-5 mr-2"
-                />
-                {/* Link가 연결되도록 수정 */}
-                <Link
-                  to={`/community/${boardId}/list`}
-                  className="flex-grow hover:underline"
-                >
-                  {board.boardName || "이름 없음"}
-                </Link>
-                <img
-                  src="/images/star_on.png"
-                  alt="star"
-                  className="cursor-pointer"
-                  onClick={() => toggleFavorite(board.boardId)}
-                />
-              </div>
-            ))
+            favoriteBoards.map((board) => renderBoardItem(board, true))
           ))}
       </div>
 
@@ -236,39 +263,15 @@ export default function CommunitySidebar({
           />
         </div>
         {sections.allBoards &&
-          boards.map((board) => (
-            <div
-              key={board.boardId}
-              className="flex items-center justify-between px-8 py-1 group"
-            >
-              <img
-                src="/images/document_text.png"
-                alt="icon"
-                className="w-5 h-5 mr-2"
-              />
-              <Link
-                to={`/community/${boardId}/list`}
-                className="flex-grow hover:underline"
-              >
-                {board.boardName}
-              </Link>
-              <img
-                src={
-                  favoriteIds.includes(board.boardId)
-                    ? "/images/star_on.png"
-                    : "/images/star_off.png"
-                }
-                alt="star"
-                className={`cursor-pointer ${
-                  favoriteIds.includes(board.boardId)
-                    ? "opacity-100"
-                    : "opacity-0 group-hover:opacity-100"
-                } transition-opacity duration-300`}
-                onClick={() => toggleFavorite(board.boardId)}
-              />
+          (boards.length > 0 ? (
+            boards.map((board) => renderBoardItem(board))
+          ) : (
+            <div className="px-4 py-2 text-gray-500">
+              등록된 게시판이 없습니다.
             </div>
           ))}
       </div>
+
       {/* 부서별 게시판 */}
       <div className="mb-6">
         <div
@@ -289,43 +292,7 @@ export default function CommunitySidebar({
         </div>
         {sections.departmentBoards &&
           (Array.isArray(departmentBoards) && departmentBoards.length > 0 ? (
-            departmentBoards.map((board) => (
-              <div
-                key={board.boardId || Math.random()} // 고유 key 설정
-                className="flex items-center justify-between px-8 py-1 group"
-              >
-                <img
-                  src="/images/document_text.png"
-                  alt="icon"
-                  className="w-5 h-5 mr-2"
-                />
-                {board.boardName ? (
-                  <Link
-                    to={`/community/${boardId}/list`}
-                    className="flex-grow hover:underline"
-                  >
-                    {board.boardName}
-                  </Link>
-                ) : (
-                  <p className="flex-grow text-gray-500">이름 없음</p>
-                )}
-
-                <img
-                  src={
-                    favoriteIds.includes(board.boardId)
-                      ? "/images/star_on.png"
-                      : "/images/star_off.png"
-                  }
-                  alt="star"
-                  className={`cursor-pointer ${
-                    favoriteIds.includes(board.boardId)
-                      ? "opacity-100"
-                      : "opacity-0 group-hover:opacity-100"
-                  } transition-opacity duration-300`}
-                  onClick={() => toggleFavorite(board.boardId)}
-                />
-              </div>
-            ))
+            departmentBoards.map((board) => renderBoardItem(board))
           ) : (
             <div className="px-4 py-2 text-gray-500">
               부서별 게시판이 없습니다.
@@ -335,11 +302,8 @@ export default function CommunitySidebar({
 
       {/* 새 게시글 작성 버튼 */}
       <Link
-        to={`/community/${boardId}/write`} // boardId가 undefined일 경우 'default' 사용
+        to={`/community/${boards[0]?.boardId || ""}/write`}
         className="new-user-board-button flex items-center justify-center px-4 py-2 mt-4 space-x-2 w-full min-w-[150px] rounded-md"
-        onClick={() =>
-          console.log("Navigating to write with boardId:", boardId)
-        }
       >
         <img
           src="/images/component.png"
@@ -422,4 +386,5 @@ CommunitySidebar.propTypes = {
   onUpdateBoard: PropTypes.func,
   onNewPost: PropTypes.func,
   onNewUserBoard: PropTypes.func,
+  onBoardChange: PropTypes.func,
 };

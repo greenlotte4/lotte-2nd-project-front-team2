@@ -1,85 +1,219 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { DiscussionEmbed } from "disqus-react";
 import CommunitySidebar from "@/components/community/CommunitySidebar";
 import "@/pages/community/Community.scss";
 import useUserStore from "../../store/useUserStore";
+import axiosInstance from "../../services/axios";
 
 function CommunityView() {
   const navigate = useNavigate();
-  const { boardType, postId } = useParams();
-  const currentUser = useUserStore((state) => state.user); // 사용자 정보 가져오기
+  const { boardType } = useParams();
+  const { boardId, postId } = useParams();
+  const currentUser = useUserStore((state) => state.user);
 
-  // 더미 데이터 (API 연동 시 교체 가능)
-  const dummyData = {
-    id: postId,
-    title: "[안내] 공지사항입니다.",
-    date: "2022.11.30",
-    author: "이상훈",
-    isPinned: true, // 필독 여부
-    pinnedPeriod: "2024.11.20 - 2024.11.20", // 필독 노출 기간
-    content: `안녕하세요, 공지사항 내용입니다.
-G사와 해외의 구매처를 사칭하는 피싱 문자 거래건과 관련하여
-해외발 주문 및 이와 관련된 주요 공지 사항을 알려드립니다.`,
-    attachments: [
-      { name: "파일명1.pdf", url: "/downloads/file1.pdf" },
-      { name: "파일명2.docx", url: "/downloads/file2.docx" },
-    ],
+  const [remarkLoaded, setRemarkLoaded] = useState(false);
+  const remarkRef = useRef(null);
+  const [post, setPost] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // token 상태 관리
+  const [token, setToken] = useState(localStorage.getItem("token"));
+  const [userData, setUserData] = useState(null);
+
+  // 게시글 데이터 가져오기
+  const fetchPost = async () => {
+    setIsLoading(true);
+    try {
+      if (!postId || postId === "undefined") {
+        console.error("잘못된 postId 값:", postId);
+        return;
+      }
+      const response = await axiosInstance.get(
+        `/api/community/view?postId=${postId}&boardId=${boardId}`
+      );
+      setPost(response.data);
+    } catch (error) {
+      console.error("게시글 조회 실패:", error);
+      if (error.response && error.response.status === 500) {
+        alert("서버에서 문제가 발생했습니다. 나중에 다시 시도해주세요.");
+      }
+      setError(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 처음에 게시글 데이터 fetch
+  useEffect(() => {
+    if (postId && boardId) {
+      fetchPost();
+    } else {
+      console.error("잘못된 파라미터: postId 또는 boardId가 없습니다.");
+    }
+  }, [postId, boardId]);
+
+  // 토큰을 가지고 유저 데이터 가져오기
+  useEffect(() => {
+    if (!token) {
+      console.log("로그인 필요");
+      return;
+    }
+
+    // 토큰이 있을 경우 API 요청 보내기
+    fetch("http://localhost:9090/api/v1/user?site=localhost", {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    })
+      .then((response) => {
+        console.log("응답 상태:", response.status);
+        if (!response.ok) {
+          throw new Error(`인증 실패: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then((data) => {
+        setUserData(data); // 유저 데이터를 상태로 저장
+        console.log("받은 데이터:", data);
+      })
+      .catch((error) => {
+        console.error("에러 발생:", error.message);
+      });
+  }, [token]); // token이 바뀔 때마다 실행
+
+  // JWT 디코딩
+  const decodeJWT = (token) => {
+    try {
+      return JSON.parse(atob(token.split(".")[1]));
+    } catch (e) {
+      console.error("JWT 디코딩 실패:", e);
+      return null;
+    }
   };
 
   useEffect(() => {
-    // Remark42 댓글 설정
-    const remark_config = {
-      host: "http://localhost:9090", // Remark42 서버 URL
-      site_id: "localhost:9090", // Docker Compose에서 설정한 SITE 값
-      url: window.location.href, // 현재 페이지 URL
+    if (!token) {
+      console.log("로그인이 필요합니다.");
+      return;
+    }
+
+    let isMounted = true;
+
+    const initRemark = () => {
+      if (!remarkRef.current) return;
+
+      try {
+        const tokenData = decodeJWT(token);
+        console.log("토큰 데이터:", tokenData);
+
+        const cleanToken = token.replace("Bearer ", "");
+
+        window.remark_config = {
+          host: "http://localhost:9090",
+          site_id: "localhost",
+          url: window.location.origin + window.location.pathname,
+          theme: "light",
+          locale: "ko",
+          components: ["embed"],
+          auth: {
+            type: "jwt",
+            token: cleanToken,
+          },
+        };
+
+        let remarkDiv = document.getElementById("remark42");
+        if (!remarkDiv && remarkRef.current) {
+          remarkDiv = document.createElement("div");
+          remarkDiv.id = "remark42";
+          remarkRef.current.appendChild(remarkDiv);
+        }
+
+        const existingScript = document.querySelector(
+          'script[src="http://localhost:9090/web/embed.js"]'
+        );
+        if (existingScript) {
+          existingScript.remove();
+        }
+
+        const script = document.createElement("script");
+        script.src = "http://localhost:9090/web/embed.js";
+        script.async = true;
+
+        script.onload = () => {
+          if (!isMounted) return;
+          if (window.REMARK42 && remarkDiv) {
+            try {
+              window.REMARK42.destroy();
+              window.REMARK42.createInstance({
+                node: remarkDiv,
+                ...window.remark_config,
+              });
+              setRemarkLoaded(true);
+            } catch (error) {
+              console.error("Remark42 인스턴스 생성 실패:", error);
+            }
+          }
+        };
+
+        document.body.appendChild(script);
+      } catch (error) {
+        console.error("Remark42 초기화 에러:", error);
+      }
     };
-    // 스크립트 추가
-    const script = document.createElement("script");
-    script.src = `${remark_config.host}/web/embed.js`;
-    script.defer = true;
-    script.crossOrigin = "anonymous";
+    const timer = setTimeout(initRemark, 1000);
 
-    // 설정을 전역으로 전달
-    window.remark_config = remark_config;
-
-    // 스크립트 삽입
-    document.head.appendChild(script);
-
-    // Cleanup: 컴포넌트가 언마운트될 때 스크립트를 제거
     return () => {
-      document.head.removeChild(script);
+      isMounted = false;
+      clearTimeout(timer);
+      if (window.REMARK42) {
+        window.REMARK42.destroy();
+      }
     };
-  }, [postId]);
+  }, [token, postId]);
+
+  if (isLoading) {
+    return <div>로딩 중...</div>;
+  }
+
+  if (error) {
+    return <div>에러 발생: {error.message}</div>;
+  }
+
+  if (!post) {
+    return <div>게시글을 찾을 수 없습니다.</div>;
+  }
+
+  const handleDownload = (url) => {
+    window.open(url, "_blank");
+  };
 
   return (
     <div id="community-container">
-      {/* 사이드바 */}
-      <CommunitySidebar currentUser={currentUser} />
+      <CommunitySidebar currentUser={currentUser} boardId={boardId} />
 
-      {/* 본문 */}
       <div className="community-view">
-        {dummyData.isPinned && (
-          <div className="pinned-info">
-            필독 노출 기간: {dummyData.pinnedPeriod}
-          </div>
+        {post.isPinned && (
+          <div className="pinned-info">필독 노출 기간: {post.pinnedPeriod}</div>
         )}
         <h2>
-          {dummyData.title}
+          {post.title}
           <span className="view-date">
-            {dummyData.date}
-            <strong className="author">작성자: {dummyData.author}</strong>
+            {new Date(post.createdAt).toISOString().split("T")[0]}
+            <strong className="author">작성자: {post.writer}</strong>
           </span>
         </h2>
 
         <div className="view-content">
-          <p>{dummyData.content}</p>
+          <p>{post.content}</p>
         </div>
-        {dummyData.attachments && dummyData.attachments.length > 0 && (
+        {post.attachments && post.attachments.length > 0 && (
           <div className="view-attachments">
             <h4>첨부파일</h4>
             <ul>
-              {dummyData.attachments.map((attachment, index) => (
+              {post.attachments.map((attachment, index) => (
                 <li key={index}>
                   <button onClick={() => handleDownload(attachment.url)}>
                     {attachment.name}
@@ -110,10 +244,24 @@ G사와 해외의 구매처를 사칭하는 피싱 문자 거래건과 관련하
           </button>
         </div>
 
-        {/* Remark42 댓글 섹션 */}
+        {/* 댓글 섹션 */}
         <div className="comment-section">
           <h3>댓글</h3>
-          <div id="remark42"></div>
+          {!token ? (
+            <div className="login-message text-center py-4 bg-gray-100 rounded">
+              댓글을 작성하려면 로그인이 필요합니다.
+            </div>
+          ) : (
+            <>
+              <div
+                ref={remarkRef}
+                className="comments-section mt-8 p-4 border rounded-lg"
+              />
+              {!remarkLoaded && (
+                <div className="text-center py-4">댓글을 불러오는 중...</div>
+              )}
+            </>
+          )}
         </div>
       </div>
     </div>

@@ -11,6 +11,19 @@ export default defineConfig({
   },
   server: {
     port: 8010,
+    proxy: {
+      "/v1": {
+        target: "http://localhost:9090/api",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/v1/, ""),
+      },
+    },
   },
-
+  build: {
+    rollupOptions: {
+      input: {
+        main: path.resolve(__dirname, "index.html"),
+      },
+    },
+  },
 });

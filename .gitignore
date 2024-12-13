@@ -23,3 +23,6 @@ db.json
 *.njsproj
 *.sln
 *.sw?
+remark42-data/
+var/
+

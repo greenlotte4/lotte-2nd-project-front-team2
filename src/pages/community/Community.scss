@@ -737,7 +737,7 @@
 
     .list-table th:last-child {
       border-top-right-radius: 10px; /* 오른쪽 상단 라운드 */
-      border-bottom-right-radius: 10px; /* 오른쪽 하단 라운드 */
+      border-bottom-right-radius: 10px; /* 오른��� 하단 라운드 */
     }
 
     th {
@@ -922,6 +922,46 @@
 
       &:hover {
         background-color: #e0e0e0;
+      }
+    }
+  }
+
+  .post-header {
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #eee;
+
+    .post-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: #333;
+    }
+
+    .post-metadata {
+      display: flex;
+      gap: 1.5rem;
+      font-size: 0.9rem;
+      color: #666;
+
+      .metadata-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+
+        svg {
+          font-size: 0.9rem;
+          color: #888;
+        }
+
+        &:not(:last-child)::after {
+          content: '';
+          display: block;
+          width: 1px;
+          height: 12px;
+          background-color: #ddd;
+          margin-left: 1.5rem;
+        }
       }
     }
   }

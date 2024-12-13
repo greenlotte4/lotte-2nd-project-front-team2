@@ -4,15 +4,14 @@ import CommunitySidebar from "@/components/community/CommunitySidebar";
 import useUserStore from "../../store/useUserStore";
 import { CKEditor } from "@ckeditor/ckeditor5-react";
 import ClassicEditor from "@ckeditor/ckeditor5-build-classic";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import axiosInstance from "../../services/axios";
 import { useQuery } from "@tanstack/react-query";
 
 function CommunityWrite() {
   const { boardId } = useParams(); // URL에서 boardId 추출
-  console.log("boardId from URL:", boardId); // 콘솔로 확인
   const currentUser = useUserStore((state) => state.user); // 사용자 정보 가져오기
-
+  const navigate = useNavigate(); // 라우팅용 navigate
   const [title, setTitle] = useState(""); // 제목
   const [content, setContent] = useState(""); // 내용
   const [files, setFiles] = useState([]); // 첨부 파일
@@ -25,7 +24,6 @@ function CommunityWrite() {
 
   const handleModalOpen = () => setShowModal(true); // 모달 열기
   const handleModalClose = () => setShowModal(false); // 모달 닫기
-  console.log("boardId from URL:", boardId);
 
   const fetchBoards = async () => {
     const response = await axiosInstance(`/api/community/write`);
@@ -64,20 +62,26 @@ function CommunityWrite() {
     e.preventDefault();
     console.log("handleSubmit에서 boardId:", boardId);
 
-    const postData = {
-      boardId: selectedBoardId,
-      title: title,
-      content: content,
-      files: files,
-      commentOption: isCommentEnabled ? commentOption : "댓글 비활성화",
-      isPinned,
-      fileCount: fileCount,
-      favoritePost: false,
-      isMandatory: isPinned,
-      writer: currentUser.username, // 사용자 이름
-      uid: currentUser?.id,
-    };
-    console.log("전송 데이터 " + JSON.stringify(postData));
+
+  if (selectedBoardId) {
+  const postData = {
+    boardId: selectedBoardId,
+    title: title,
+    content: content,
+    files: files,
+    commentOption: isCommentEnabled ? commentOption : "댓글 비활성화",
+    isPinned,
+    fileCount: fileCount,
+    favoritePost: false,
+    isMandatory: isPinned,
+    writer: currentUser.username, // 사용자 이름
+    uid: currentUser?.id,
+  };
+
+
+  console.log("전송 데이터 " + JSON.stringify(postData));
+
+
 
     try {
       const response = await axiosInstance.post(
@@ -88,13 +92,17 @@ function CommunityWrite() {
         }
       );
       console.log("작성 성공:", response.data);
+
       alert("글 작성이 완료되었습니다!");
+      navigate(`/community/${selectedBoardId}/list`); // 글 작성 후 리스트 페이지로 이동
     } catch (error) {
       console.error("작성 실패:", error);
       alert("글 작성에 실패했습니다. 다시 시도해주세요.");
     }
-  };
-
+  } else {
+    console.error("Board ID is undefined, can't navigate");
+  }
+};
   return (
     <div id="community-container">
       {/* 사이드바 */}
@@ -110,9 +118,15 @@ function CommunityWrite() {
             <div className="select-pinned-wrapper">
               <select
                 value={selectedBoardId}
-                onChange={(e) => setSelectedBoardId(e.target.value)}
+                onChange={(e) => {
+                  setSelectedBoardId(e.target.value);
+                  console.log("Updated selectedBoardId:", e.target.value); // 값 변경 확인
+                }}
                 required
               >
+                <option value="" disabled>
+                  게시판을 선택하세요
+                </option>
                 {data.map((board) => (
                   <option key={board.boardId} value={board.boardId}>
                     {board.boardName}

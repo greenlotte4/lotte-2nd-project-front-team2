@@ -1,0 +1,58 @@
+networks:
+  default:
+    name: app_network
+version: "3.8"
+services:
+  remark42:
+    image: umputun/remark42:latest
+    container_name: remark42
+    restart: always
+    user: "1001:1001"
+    ports:
+      - "9090:8080"
+    environment:
+      - REMARK_URL=http://localhost:9090
+      - SITE=localhost
+      - SECRET=ghdgkq
+
+      # JWT 인증 설정
+      - AUTH_PROVIDERS=jwt,anonymous
+      - AUTH_ENABLED=true
+      - AUTH_JWT_SECRET=vQ9q7lwzGS2M+cjRz+Q5N2Cv3+6s49R7TmQ0gkzHpY2UM5kAzwp4Aaz+q5lX3p0ykAzE7HgFmbFMcmU5CwmfKQ==
+      - AUTH_JWT_ISSUER=sanghun1101088@@!!##
+      - AUTH_JWT_HEADERS=Authorization
+      - AUTH_JWT_CLAIMS_MAP=id:id,name:sub,role:role
+      - AUTH_JWT_COOKIE_NAME=jwt_token # 쿠키를 사용하도록 설정할 수도 있음
+      - AUTH_JWT_AUDIENCE=remark42
+
+      # CORS 설정
+      - CORS_ALLOWED_ORIGINS=http://localhost:8010,http://localhost:9090
+      - CORS_ALLOW_HEADERS=Authorization,Content-Type,X-XSRF-TOKEN
+      - SECURITY_ENABLE_XSRF=false # XSRF 검사 비활성화
+      - CORS_ENABLE=true
+
+      # 관리자 설정 (선택사항)
+      - ADMIN_SHARED_ID=["admin"]
+
+      - DEBUG=true
+
+    volumes:
+      - ./remark42-data:/srv/var
+
+    command: /srv/remark42 server # 이 부분이 중요합니다.
+
+    depends_on:
+      - mongodb
+      - redis
+
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb-container
+    ports:
+      - "27017:27017"
+
+  redis:
+    image: redis:latest
+    container_name: redis-container
+    ports:
+      - "6379:6379"
