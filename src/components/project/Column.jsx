@@ -14,7 +14,6 @@ export const ProjectColumn = ({
   index,
   clearTasks,
   status = "basic",
-  setData,
   onDelete,
   handleTaskUpsert,
 }) => {

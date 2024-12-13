@@ -4,9 +4,9 @@ import { useEffect, useState } from "react";
 import { MenuItem } from "./_CustomDropdown";
 import { CustomSVG } from "./_CustomSVG";
 import axiosInstance from "@/services/axios.jsx";
+import useProjectData from "../../util/useProjectData";
 
 export const ColumnHeader = ({
-  projectId,
   column = [],
   clearTasks,
   setMode,
@@ -106,6 +106,8 @@ export const ColumnHeaderEdit = ({
   onSave,
 }) => {
   const [formData, setFormData] = useState(column);
+  const {sendWebSocketMessage} = useProjectData(projectId);
+  
 
   const text = mode == "new" ? "생성" : "수정";
   const handleChange = (e) => {
@@ -118,12 +120,7 @@ export const ColumnHeaderEdit = ({
 
   // 버튼 클릭 시 처리 함수
   const handleSubmit = async() => {
-    const res = await axiosInstance.post(`/api/project/${projectId}`, formData);
-    console.log(res.data)
-    setColumn((prev) => ({
-      ...prev,
-      ...res.data,
-    }));
+    sendWebSocketMessage(formData, `/app/project/${projectId}/column/added`);
     setMode("basic");
   };
   const handleClose = () => {

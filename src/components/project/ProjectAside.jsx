@@ -1,12 +1,12 @@
 /* eslint-disable react/prop-types */
 import ProjectAsideSection from "./ProjectAsideSection";
 import { CustomSearch } from "../Search";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { AddProjectModal, TemplateSelection } from "./_Modal";
 import { useQuery } from "@tanstack/react-query";
 import axiosInstance from "@/services/axios.jsx";
 
-function ProjectAside({ setData }) {
+function ProjectAside({setProjectId}) {
 
   const [openSections, setOpenSections] = useState({
     waiting: true,
@@ -52,25 +52,12 @@ function ProjectAside({ setData }) {
 
   const count = data?.count;
 
- // 프로젝트 데이터를 가져오는 함수
- const fetchProject = async (id) => {
-  try {
-    const response = await axiosInstance.get(`/api/project/${id}`);
-    return response.data;
-  } catch (err) {
-    return err;
-  }
-};
-
   const handleItemClick = async (id) => {
     setActiveItemId(id); // 클릭된 항목의 ID를 활성화
     try {
-      const projectData = await fetchProject(id); // API 호출
-      console.log(projectData)
-      setData(projectData); // 데이터를 상태로 설정
+      setProjectId(id)
     } catch (err) {
       console.error(err)
-      setData(null); // 기존 데이터 초기화
     }
   };
   const toggleSection = (key) => {

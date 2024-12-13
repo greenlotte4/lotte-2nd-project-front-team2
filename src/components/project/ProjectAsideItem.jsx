@@ -6,6 +6,7 @@ import axiosInstance from "@/services/axios.jsx";
 
 function ProjectAsideItem({ id, title, isActive, onClick, isOwner, setIsChanging }) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  
 
   const toggleDropdown = (e) => {
     e.stopPropagation(); // 클릭 이벤트 전파 방지
@@ -22,8 +23,9 @@ function ProjectAsideItem({ id, title, isActive, onClick, isOwner, setIsChanging
     document.addEventListener("click", handleOutsideClick);
     return () => document.removeEventListener("click", handleOutsideClick);
   }, []);
+  
   const handleDelete = async() => {
-    await axiosInstance.delete(`/api/project/project/${id}`);
+    await axiosInstance.delete(`/api/project/${id}`);
     setIsChanging((prev) => !prev);
   };
 

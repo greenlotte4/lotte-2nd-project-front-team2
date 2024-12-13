@@ -13,7 +13,7 @@ export function DynamicTaskEditor({
   onClose,
   coworkers =[],
 }) {
-  
+   
   const loginUser = useUserStore((state) => state.user)
   const [task, setTask] = useState({
     columnId: columnId,
@@ -87,7 +87,28 @@ export function DynamicTaskEditor({
     setTask((prevTask) => ({ ...prevTask, priority }));
     setIsDropdownOpen(false);
   };
+// 멤버 클릭 핸들러 (토글 방식)
+const handleMemberClick = (member) => {
+  setTask((prev) => {
+    const isSelected = prev.associate.some((user) => user.id === member.id);
+    const updatedCoworkers = isSelected
+      ? prev.associate.filter((user) => user.id !== member.id) // 선택 해제
+      : [...prev.associate, member]; // 선택 추가
 
+    return {
+      ...prev,
+      associate: updatedCoworkers,
+    };
+  });
+};
+
+// 멤버 삭제 핸들러
+const handleDeleteTag = (index) => {
+  setTask((prev) => ({
+    ...prev,
+    associate: prev.associate.filter((_, i) => i !== index),
+  }));
+};
   const priorities = [
     { id: "p0", icon: "p0", label: "P0 - 아주 높음" },
     { id: "p1", icon: "p1", label: "P1 - 높음" },
@@ -186,7 +207,57 @@ export function DynamicTaskEditor({
               aria-label="Task contents"
             />
           </div>
-
+          
+          {/* 작업자 */}
+          <section
+              className="flex flex-wrap items-center space-x-2 gap-2 mt-1.5 text-sm text-black/50"
+              aria-labelledby="associate"
+            >
+                작업자
+              <div className="relative flex items-center">
+                {task.associate.map((user, index) => (
+                  <span
+                    key={user.id}
+                    className="flex items-center flex-shrink-0 gap-[2px] px-2 py-[2px] rounded-2xl bg-indigo-200 bg-opacity-70 text-xs text-indigo-500"
+                  >
+                    <img src={user.img} className="h-[24px]" />
+                    <span className="">{user.name}</span>
+                    <span className="text-indigo-400">({user.group})</span>
+                    <button onClick={() => handleDeleteTag(index)}>
+                      <CustomSVG id="cancel" color="#666CFF" />
+                    </button>
+                  </span>
+                ))}
+                {isAssoOpen && (
+                    <ul
+                      className="absolute mt-1 w-36 py-2 bg-white border rounded shadow-md z-30"
+                      role="listbox"
+                      aria-labelledby="associate-dropdown"
+                    >
+                      {coworkers.map((m) => (
+                                <li
+                                  key={m?.id}
+                                  onClick={() => handleMemberClick(m)}
+                                  className={`rounded-3xl px-3 py-3 flex mt-2 cursor-pointer border border-transparent ${
+                                    task.associate.some((asso) => asso.id === m.id)
+                                      ? "bg-indigo-100 hover:border-indigo-300"
+                                      : "bg-gray-100 hover:border-gray-300"}`}>
+                                  <img
+                                    src={m?.img}
+                                    alt="user-img"
+                                    className="w-[45px] h-[45px]"
+                                  />
+                                  <div className="ml-10 flex flex-col text-left">
+                                    <p className="font-light text-black">
+                                      {m?.name}{m?.id == loginUser.id&&" (본인)"}
+                                    </p>
+                                  </div>
+                                </li>
+                          ))}
+                    </ul>
+                  )}
+              </div>
+            </section>
           {/* 마감일 */}
           <div className={colClassName+' relative'}>
             <CustomSVG id="calendar" />

@@ -9,28 +9,25 @@ import { useEffect, useRef, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import Sortable from "sortablejs";
 import axiosInstance from "@/services/axios.jsx";
-import useWebSocketProject from "/src/util/useWebSocketProjct.jsx"
-import useUserStore from "@/store/useUserStore"
+import useProjectData from "/src/util/useProjectData.jsx"
 
 
 export default function Project() {
  // Tailwind CSS 클래스 묶음
   const addBoardClass ="flex gap-2 items-center px-3 py-2 w-full text-sm rounded-lg bg-zinc-200 bg-opacity-30";
-  const loginUser = useUserStore((state) => state.user)
-  const [data, setData] = useState({id:1});
+
+  const [data, setData] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false); // 모달 열림 상태 관리
   const [isNewColumnAdded, setIsNewColumnAdded] = useState(false);
   const [isEditTitle, setIsEditTitle] = useState(false);
-  const { boardData, sendWebSocketMessage } = useWebSocketProject({
-    projectId: data.id,
-    userId: loginUser.id,
-  });
+  const [projectId, setProjectId] = useState(1);
+  const {boardData, sendWebSocketMessage} = useProjectData(projectId);
   const columnsRef = useRef(null); 
 
   const handleAddColumn = () => {
-  if (!isNewColumnAdded) {
-    setIsNewColumnAdded(true);
-  }
+    if (!isNewColumnAdded) {
+      setIsNewColumnAdded(true);
+    }
   };
   const handleEditTitle = () => {
   setIsEditTitle(!isEditTitle);
@@ -49,12 +46,12 @@ export default function Project() {
   }));
   };
   const updateColumnTasks = (columns, columnIndex, taskId, updatedTask) => {
-  const updatedColumns = [...columns];
-  const column = updatedColumns[columnIndex];
-  column.tasks = column.tasks.map((task) =>
-    task.id === taskId ? updatedTask : task
-  );
-  return updatedColumns;
+    const updatedColumns = [...columns];
+    const column = updatedColumns[columnIndex];
+    column.tasks = column.tasks.map((task) =>
+      task.id === taskId ? updatedTask : task
+    );
+    return updatedColumns;
   };
   const updateColumnOrderInDatabase = async(columns) => {
     await axiosInstance.put("/api/projects/update-column-order",columns);
@@ -87,9 +84,10 @@ export default function Project() {
   }, []);
   useEffect(() => {
     if (boardData) {
-      console.log('Updated Board Data:', boardData); // 상태 업데이트 후 데이터를 출력
+      console.log('Updated Board Data:', [boardData]); // 상태 업데이트 후 데이터를 출력
+      setData(boardData||[])
     }
-  }, [boardData]); 
+  }, [projectId,boardData]); 
   const handleTaskMove = (sourceIndex, destinationIndex, taskId) => {
     setData((prevData) => {
       const sourceColumn = { ...prevData.columns[sourceIndex] };
@@ -118,89 +116,28 @@ export default function Project() {
       ),
     }));
   };
-  const handleTaskUpsert = async (task) => {
-    try { // task.id가 존재하면 PUT 요청, 그렇지 않으면 POST 요청
-      const method = task.id ? 'put' : 'post';
-      console.log(task);
-      const res = await axiosInstance({ method, url:'/api/project/task', data: task });
-      setData((prevData) => {
-        const updatedColumns = prevData.columns.map((col) => {
-          if (col.id !== task.columnId) return col;
-  
-          if (task.id) {
-            // 수정된 태스크 업데이트 (PUT)
-            const updatedTasks = col.tasks.map((existingTask) => {
-              if (existingTask.id === task.id) {
-                return { ...existingTask, ...res.data }; // 서버에서 받은 수정된 데이터로 교체
-              }
-              return existingTask;
-            });
-            return { ...col, tasks: updatedTasks };
-          } else {
-            // 새로운 태스크 추가 (POST)
-            return { ...col, tasks: [...col.tasks, res.data] };
-          }
-        });
-  
-        sendWebSocketMessage('TASK_ADDED',res.data)
-        return { ...prevData, columns: updatedColumns };
-      });
+
+  const handleTaskUpsert = (task) => {
+    try {
+      const msg = task.id>0 ? 'updated' : 'added';
+      console.log("task.id : " + task.id)
+      sendWebSocketMessage(task,`/app/project/${projectId}/task/${msg}`);
     } catch (err) {
       console.error(err);
     }
   };
 
-  const handleDeleteCol = async(colId) => {
-    await axiosInstance.delete(`/api/project/column/${colId}`);
-    setData((prevData) => {
-
-      
-      const updatedColumns = prevData.columns.filter((col) => col.id !== colId);
-      return { ...prevData, columns: updatedColumns };
-    });
+  const handleDeleteCol = (column) => {
+    sendWebSocketMessage(column,`/app/project/${projectId}/column/deleted`);
   };
 
-  const handleDeleteTask = async(taskId, columnIndex) => {
-    await axiosInstance.delete(`/api/project/task/${taskId}`);
-    setData((prevData) => {
-      const updatedColumns = prevData.columns.map((col, idx) => {
-        if (idx !== columnIndex) return col;
-  
-        return {
-          ...col,
-          tasks: col.tasks.filter((task) => task.id !== taskId),
-        };
-      });
-  
-      return { ...prevData, columns: updatedColumns };
-    });
+  const handleDeleteTask = (task) => {
+    sendWebSocketMessage(task,`/app/project/${projectId}/task/deleted`);
   };
 
-  const handleAddSubTask = (columnIndex, taskId, newSubTask) => {
-    if (!newSubTask.trim()) return; // 빈 입력 방지
-  
-    setData((prevData) => {
-      const updatedColumns = prevData.columns.map((col, idx) => {
-        if (idx !== columnIndex) return col;
-  
-        return {
-          ...col,
-          tasks: col.tasks.map((task) => {
-            if (task.id !== taskId) return task;
-  
-            return {
-              ...task,
-              subTasks: [
-                ...(task.subTasks||[]),
-                { id: uuidv4(), isChecked: false, name: newSubTask },
-              ],
-            };
-          }),
-        };
-      });
-  
-      return { ...prevData, columns: updatedColumns };
-    });
+  const handleAddSubTask = (subTask) => {
+    if (!subTask.name.trim()) return; // 빈 입력 방지
+    sendWebSocketMessage(subTask,`/app/project/${projectId}/sub/added`);
   };
   
 
@@ -208,7 +145,7 @@ export default function Project() {
     <div id="project-container" className="flex min-h-full">
       {/* 사이드바 */}
       <div className="w-[270px]">
-        <ProjectAside setData={setData} />
+        <ProjectAside setProjectId={setProjectId}/>
       </div>
 
       {/* 메인 섹션 */}
@@ -224,14 +161,14 @@ export default function Project() {
               <input
                 type="text"
                 className="text-lg text-center text-gray-400 w-fit overflow-visible bg-transparent"
-                value={boardData.title}
+                value={data.title}
                 name="title"
                 onChange={handleChange}
                 autoFocus
               />
             ) : (
               <span className="text-lg text-center text-black">
-                {boardData.title}
+                {data.title}
               </span>
             )}
 
@@ -250,15 +187,15 @@ export default function Project() {
               listName="작업자"
               isShareOpen={isModalOpen}
               setIsShareOpen={setIsModalOpen}
-              members={boardData.coworkers}
+              members={data.coworkers}
             >
               <AddProjectModal
                 isOpen={isModalOpen}
                 onClose={setIsModalOpen}
                 text="작업자 추가"
-                selectedUsers={boardData.coworkers}
+                selectedUsers={data.coworkers}
                 setSelectedUsers={onCoworkerSelect}
-                projectId={boardData.id}
+                projectId={data.id}
               />
             </ShareMember>
           </div>
@@ -266,13 +203,12 @@ export default function Project() {
 
         {/* 프로젝트 컬럼 */}
         <div className="flex gap-5 max-md:flex-col">
-          {boardData?.columns?.map((column, index) => (
+          {data?.columns?.map((column, index) => (
             <ProjectColumn
             key={column.id}
             {...column}
             index={index}
             clearTasks={() => clearTasks(column.id)}
-            setData={setData}
             onDelete={() => handleDeleteCol(column.id)}
             handleTaskUpsert={handleTaskUpsert}
           >
@@ -293,9 +229,8 @@ export default function Project() {
           {/* 새 보드 추가 */}
           {isNewColumnAdded ? (
             <ProjectColumn
-            projectId={boardData.id}
-            index={boardData.columns.length}
-            setData={setIsNewColumnAdded}
+            projectId={data.id}
+            index={data.columns.length}
             status="new"
           />
           ) : (
