@@ -496,25 +496,8 @@ const handleCloseFileMenu = () => {
     const [isShareModalOpen,setIsShareModalOpen] = useState(false);
 
 
-    const subFolders = (data?.subFolders || [])
-    .map((folder) => ({
-        ...folder,
-        type: 'folder',
-        order: folder.order || 0, // 기본값 설정
-    }))
-    .sort((a, b) => (a.order || 0) - (b.order || 0)); // order 기준 정렬
+   
 
-    
-    const files = (data?.files || [])
-    .map((file) => ({
-        ...file,
-        type: 'file', // 파일 타입 추가
-    }));
-
-    const folderMaxOrder = subFolders.length;
-    const fileMaxOrder = files.length;
-
-    console.log("fileMaxorder",fileMaxOrder);
 
     useEffect(() => {
         console.log("isDeleteAlert 상태 변경:", isDeleteAlert);
@@ -621,6 +604,26 @@ const handleCloseFileMenu = () => {
         }
     };
 
+    const subFolders = (data?.subFolders || [])
+    .map((folder) => ({
+        ...folder,
+        type: 'folder',
+        order: folder.order || 0, // 기본값 설정
+    }))
+    .sort((a, b) => (a.order || 0) - (b.order || 0)); // order 기준 정렬
+
+    
+    const files = (data?.files || [])
+    .map((file) => ({
+        ...file,
+        type: 'file', // 파일 타입 추가
+    }));
+
+    const sharedUser = (data?.sharedUser);
+    console.log("공유인원!!",sharedUser);
+
+    const folderMaxOrder = subFolders.length;
+    const fileMaxOrder = files.length;
   
 
 
@@ -640,7 +643,7 @@ const handleCloseFileMenu = () => {
                     border: isDragging ? '2px dashed #0066cc' : 'none',
                     backgroundColor: isDragging ? '#f0f8ff' : 'transparent',
                 }}>
-            <section className="flex gap-4 items-center">
+            <section className="flex gap-4 items-center justify-between">
                     {editing ? (
                         <input
                             className="text-2xl ml-4 mt-4 border-b-2 border-gray-400 outline-none"
@@ -652,21 +655,24 @@ const handleCloseFileMenu = () => {
                         />
                     ) : (
                         <>
-                            <span className="text-[25px] ml-[25px]">{location.state?.folderName}</span>
+                            <div className='flex items-center gap-4 ml-[25px]'>
+                            <span className="text-[25px]">{location.state?.folderName}</span>
                             <img
                                 className="w-6  h-6 cursor-pointer"
                                 src="/images/document-pen.png"
                                 alt="Rename"
                                 onClick={() => setEditing(true)}
                             />
+                            </div>
+
                         </>
                     )}
-
+                    <div>
                     <ShareMember
                          listName="작업자"
-                         isShareOpen={isShareModalOpen}
-                         setIsShareOpen={setIsShareModalOpen}
-                       
+                         isShareOpen={isModalOpen}
+                         setIsShareOpen={setIsModalOpen}
+                         members={sharedUser}
                     >
                         <DriveShareModal
                             isModalOpen={isModalOpen}
@@ -675,14 +681,19 @@ const handleCloseFileMenu = () => {
                             selectedFile={selectedFile}
                             company={user.company}
                             user={user}
-                            id={selectedFolder?.id || selectedFile?.id}
+                            id={selectedFolder?.id || parentFolder?.id}
                             type={selectedFolder?.type || selectedFile?.type}
-                            name={selectedFolder?.name || selectedFile?.name} // 선택된 폴더나 파일 이름 전달
+                            name={selectedFolder?.name || parentFolder?.name} // 선택된 폴더나 파일 이름 전달
+                            sharedMember = {selectedFolder?.sharedUser || selectedFile?.sharedUser || parentFolder?.sharedUser}
+                            sharedDept = {selectedFolder?.sharedDept || selectedFile?.sharedDept || parentFolder?.sharedDept}
                             >
                         </DriveShareModal>
                     </ShareMember>
+                    </div>
+                    
                 
                 </section>
+                
             <section className="flex justify-between mt-[22px] mb-6">
                 <div className="flex gap-4 mx-[15px] w-[98%] items-center">
                     <CustomSearch width1="20" width2="80" />
@@ -950,9 +961,9 @@ const handleCloseFileMenu = () => {
                     selectedFile={selectedFile}
                     company={user.company}
                     user={user}
-                    id={selectedFolder?.id || selectedFile?.id}
-                    type={selectedFolder?.type || selectedFile?.type}
-                    name={selectedFolder?.name || selectedFile?.name} // 선택된 폴더나 파일 이름 전달
+                    id={selectedFolder?.id || selectedFile?.id ||  parentFolder?.id}
+                    type={selectedFolder?.type || selectedFile?.type || "folder"}
+                    name={selectedFolder?.name || selectedFile?.name ||parentFolder?.name} // 선택된 폴더나 파일 이름 전달
                     >
                     </DriveShareModal>
 

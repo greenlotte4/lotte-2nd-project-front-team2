@@ -13,7 +13,7 @@ import {
   UserCheck
 } from "lucide-react";
 import axiosInstance from "../../services/axios";
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import GetAddressModal from "../calendar/GetAddressModal";
 import { multiply } from "lodash";
 import useUserStore from "../../store/useUserStore";
@@ -39,7 +39,9 @@ const DriveShareModal = ({
   name,
   id,
   type,
-  company // 새로 추가된 prop
+  company, // 새로 추가된 prop
+  sharedMember,
+  sharedDept,
 }) => {
   const [shareLink, setShareLink] = useState("");
   const [sharedUsers, setSharedUsers] = useState([]);
@@ -57,8 +59,8 @@ const DriveShareModal = ({
   const user = useUserStore((state) => state.user);
 
   const [sharedEntities, setSharedEntities] = useState({
-    users: [], // 개별 유저
-    departments: [] // 부서
+    users: [sharedMember || null], // 개별 유저
+    departments: [sharedDept || null] // 부서
   });
 
   const [openAddress, setOpenAddress] = useState(false);
@@ -68,6 +70,7 @@ const DriveShareModal = ({
       return prev.filter((selectedUser) => selectedUser.id !== user.id);
     });
   };
+
 
   // 부서 공유 관련 새로운 상태 추가
   const [shareType, setShareType] = useState(SHARE_TYPES.INDIVIDUAL);
@@ -79,8 +82,29 @@ const DriveShareModal = ({
   // 새로운 상태 추가: 부서 직원 목록과 선택된 직원들
   const [departmentEmployees, setDepartmentEmployees] = useState([]);
   const [selectedEmployees, setSelectedEmployees] = useState([]);
-
+  const queryClient = useQueryClient();
   const selectedName = name;
+
+
+  useEffect(() => {
+    if (isModalOpen) {
+      try {
+        const parsedSharedDept = sharedDept ? JSON.parse(sharedDept) : {};
+        const parsedSharedUser = sharedMember ? JSON.parse(sharedMember) : {};
+  
+        // 상태가 비어 있는 경우에만 초기화
+        if (Object.keys(selectedDepartments).length === 0) {
+          setSelectedDepartments(parsedSharedDept);
+        }
+        if (selectedUsers.length === 0) {
+          setSelectedUsers(Object.values(parsedSharedUser));
+        }
+      } catch (error) {
+        console.error("Error parsing shared data:", sharedDept, sharedMember, error);
+      }
+    }
+  }, [isModalOpen, sharedDept, sharedMember]);
+  
 
   const toggleDepartmentList = () => {
     setIsDepartmentListVisible((prev) => !prev); // 표시 여부를 토글
@@ -88,6 +112,9 @@ const DriveShareModal = ({
 
   const onshareCancel = () => {
     setIsAlert(false);
+  };
+  const handleChangeShareType = (type) => {
+    setShareType(type);
   };
 
   const generateShareLink = () => {
@@ -186,9 +213,9 @@ const DriveShareModal = ({
   };
 
   useEffect(() => {
-    console.log("Updated selectedDepartments:", selectedDepartments);
-    console.log("Selected Department Info:", selectedDepartmentInfo);
-  }, [selectedDepartments, selectedDepartmentInfo]);
+    console.log("선택된 부서111:", selectedDepartments);
+    console.log("선택된 사용자1111:", selectedUsers);
+  }, [selectedDepartments, selectedUsers]);
 
   const addEmailToShare = () => {
     if (
@@ -298,6 +325,7 @@ const DriveShareModal = ({
       if(response.data === "success" ){
         setIsAlert(false);
         setIsModalOpen(false);
+        queryClient.invalidateQueries('folderContents',id);
         setSelectedUsers([]); // Clear selected users
         setSelectedDepartments({}); // Clear selected departments
       }else{
@@ -345,7 +373,7 @@ const DriveShareModal = ({
                           type="radio"
                           value={type}
                           checked={shareType === type}
-                          onChange={() => setShareType(type)}
+                          onChange={() => handleChangeShareType(type)}
                           className="w-4 h-4 text-blue-600"
                         />
                         <span className="text-sm font-medium">{type}</span>
@@ -744,80 +772,3 @@ const DriveShareModal = ({
 
 export default DriveShareModal;
 
-{
-  /*  {shareType === SHARE_TYPES.DEPARTMENTPERSONAL && (
-            <div>
-              <div className="flex items-center mb-2">
-                <select
-                  value={selectedDepartment}
-                  onChange={(e) => setSelectedDepartment(e.target.value)}
-                  className="flex-grow p-2 border rounded mr-2"
-                >
-                    {allGroups?.pages
-                      .map((page, pageIndex) =>
-                        page.groups.map((group, groupIndex) => {
-                          const isLastGroup =
-                            pageIndex === allGroups.pages.length - 1 &&
-                            groupIndex === page.groups.length - 1;
-                          return (
-                            <option
-                              key={group.id}
-                              value={group.id}
-                              onClick={()=>groupHandler()}
-                              ref={isLastGroup ? lastGroupRef : null}
-                              className="p-2 border-b"
-                            >
-                              {group.name}
-                            </option>
-                          );
-                        })
-                      )}
-                      {hasNextPageAllGroups && (
-                          <div
-                            onClick={() => fetchNextPageAllGroups()}
-                            className="px-4 py-2 bg-blue-500 text-white rounded"
-                            disabled={isFetchingNextPageAllGroups}
-                          >
-                            {isFetchingNextPageAllGroups ? "로딩 중..." : "더 보기"}
-                          </div>
-                        )}
-
-                </select>
-              </div>
-              {selectedDepartment && (
-                    <div className="border rounded p-2 overflow-auto scrollbar-none border-b ">
-                      <h3 className=" font-semibold mb-3 pb-3 ">{selectedDepartment} 직원 목록</h3>
-                    {allUsers?.pages.map((page) =>
-                        page.users.map((user) => (
-                          <div key={user.id} className="flex items-center p-2 border-b">
-                            <input
-                              type="checkbox"
-                              checked={selectedEmployees.some((emp) => emp.id === user.id)}
-                              onChange={() => toggleEmployeeSelection(user)}
-                            />
-                            <img src={user.img} alt="user-img" className="w-10 h-10 mr-2" />
-                            <div>
-                              <p>{user.name}</p>
-                              <p className="text-sm text-gray-600">{user.email}</p>
-                            </div>
-                          </div>
-                        ))
-                      )}    
-                      <button 
-                        onClick={shareSelectedEmployees}
-                        disabled={selectedEmployees.length === 0}
-                        className="mt-2 bg-blue-500 text-white px-4 py-2 rounded disabled:opacity-50"
-                      >
-                        선택된 직원에게 공유 ({selectedEmployees.length}명)
-                      </button>
-                    
-
-                </div>
-              )} */
-}
-{
-  /* </div> */
-}
-{
-  /* )} */
-}
