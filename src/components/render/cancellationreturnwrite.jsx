@@ -22,9 +22,38 @@ export default function CancellationReturnWrite() {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Cancellation/Return Request Submitted:", formData);
+    
+    try {
+      const response = await fetch('http://localhost:8080/api/send-cancellation', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        alert(data.message);
+        setFormData({
+          orderNumber: "",
+          title: "",
+          content: "",
+          email: "",
+          name: "",
+          returnReason: "",
+          productName: "",
+        });
+      } else {
+        throw new Error(data.message);
+      }
+    } catch (error) {
+      console.error('문의 전송 실패:', error);
+      alert('문의 전송에 실패했습니다. 다시 시도해주세요.');
+    }
   };
 
   const menus = [
