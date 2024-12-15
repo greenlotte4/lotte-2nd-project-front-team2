@@ -7,6 +7,7 @@ import axiosInstance from '@/services/axios.jsx'
 import { useQuery } from '@tanstack/react-query';
 import useUserStore from '../../store/useUserStore';
 
+const profileURL = 'http://3.35.170.26:90/profileImg/';
 
 export default function MyMain() {
 
@@ -74,15 +75,19 @@ export default function MyMain() {
               <div className='w-[200px] h-[200px] bg-white drop-shadow-lg flex items-center justify-center overflow-hidden rounded-full'>
                 <img
                   className='w-full h-full object-cover flex items-center between-center'
-                  src={userData?.profileImgPath ? `http://3.35.170.26:90/profileImg/${userData.profileImgPath}` : '/images/default-profile.png'}
+                  src={userData?.profileImgPath ? `${profileURL}${userData.profileImgPath}` : '/images/default-profile.png'}
                   alt="프로필 이미지" 
                 />
               </div>
             )}
             <div className='flex flex-col ml-[40px]'>
-              <h3 className='text-lg mb-3 font-light text-gray-500'>yeonwha****</h3>
-              <div className='speech-bubble drop-shadow-lg py-[20px] px-[40px] flex items-center'>
-                <span>안녕하세요. 개발팀 박연화입니다.</span>
+              <h3 className='text-lg mb-3 font-light text-gray-500'>
+                {userData?.name||''}
+                ({userData?.levelString||'직급미정'})
+              </h3>
+
+              <div className='speech-bubble border py-[20px] px-[40px] flex items-center'>
+                <span>{userData?.profileMessage||''}</span>
               </div>
             </div>
           </div>
@@ -111,7 +116,7 @@ export default function MyMain() {
                     </tr>
                     <tr className='my-tr'>
                       <th className='my-th'>직급</th>
-                      <td className='my-td'>{userData?.level || ''}</td>
+                      <td className='my-td'>{userData?.levelString || ''}</td>
                     </tr>
                     <tr className='my-tr'>
                       <th className='my-th'>이메일</th>
@@ -162,7 +167,7 @@ export default function MyMain() {
                 <span className='text-sm text-gray-500'>4일 후 만료</span>
               
               </div>
-              <button onClick={upgradePlan} className='btn-profile border border-indigo-500 text-indigo-800 absolute bottom-[20px] right-[193px]'>플랜 업그레이드</button>
+              <button onClick={upgradePlan} className='btn-profile border border-indigo-500 text-indigo-800 absolute bottom-[20px] right-[203px]'>플랜 업그레이드</button>
               <button onClick={paymentHandler} className='btn-profile  bg-indigo-500 text-white absolute bottom-[20px] right-[20px]'>결제정보등록</button>
             </div>
           </div>
