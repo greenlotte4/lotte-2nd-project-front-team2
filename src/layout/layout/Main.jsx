@@ -8,7 +8,7 @@ import _ from "lodash";
 import { useInfiniteQuery, useMutation, useQuery } from '@tanstack/react-query';
 import axiosInstance from '../../services/axios';
 
-
+const profileURL = 'http://3.35.170.26:90/profileImg/';
 export default function Main() {
   const location = useLocation('');
   const [chat, setChat] = useState(false);
@@ -151,7 +151,7 @@ export default function Main() {
   
   useEffect(()=>{
     if(!isLoadingUserName && !isErrorUserName && userName != null){
-      setName(userName)
+      setName(userName?.name);
     }
   },[userName,isLoadingUserName,isErrorUserName])
 
@@ -160,32 +160,38 @@ export default function Main() {
     {location.pathname !== "/user/login" && location.pathname !== "/" && (
       <>
       <header className=''>
-      <div className='header h-[50px] w-[1920px] mx-auto  flex justify-between pt-[10px]'>
-        <div className={`${isCollapsed ? 'collapsed' : 'expanded'} side-header`} >
-          <div className='flex gap-[5px] cursor-pointer hover:opacity-80 ml-[20px]' onClick={()=>navi("/")}>
-            <img src='/images/plantry_logo.png' className='w-[45px] h-[45px]'></img>
-            <div className='flex items-center font-bold text-[24px] font-purple'>PLANTRY</div>
+        <div className='header h-[60px] w-[1920px] mx-auto items-center flex justify-between pt-[10px]'>
+          <div className={`${isCollapsed ? 'collapsed' : 'expanded'} side-header`} >
+            <div className='flex gap-[5px] cursor-pointer hover:opacity-80 ml-[20px]' onClick={()=>navi("/")}>
+              <img src='/images/plantry_logo.png' className='w-[45px] h-[45px]'></img>
+              <div className='flex items-center font-bold text-[24px] font-purple'>PLANTRY</div>
+            </div>
           </div>
-        </div>
-        <div className={`${isCollapsed ? 'collapsed' : 'expanded'} w-full side-content-header flex justify-end items-center px-[30px]`}>
-          <div className='flex justify-end gap-[13px] items-center'>
-            <div><img src='/images/dumy-profile.png' className='w-[45px] h-[45px]'></img></div>
-            {name && 
-              <div className='flex items-center text-[12px]'>
-                {name}님 안녕하세요.
-              </div>
-            }
-            
-            <div>
-              <img src='/images/header-alarm.png' className='w-[30px] h-[30px] opacity-60 cursor-pointer hover:opacity-40' onClick={()=>setAlarm(!alarm)}></img>
-              {cnt != 0 &&
-                <div className='bg-red-400 w-[15px] h-[15px] absolute top-[-3px] right-[30px] text-white flex items-center justify-center rounded-md text-[12px]'>{cnt}</div>
+          <div className={`${isCollapsed ? 'collapsed' : 'expanded'} w-full side-content-header flex justify-end items-center px-[30px]`}>
+            <div className='flex justify-end gap-[13px] items-center'>
+              {name && 
+                <div className='flex items-center text-[12px]'>
+                  {name}님 안녕하세요.
+                </div>
               }
               
+              <div>
+                <img src='/images/header-alarm.png' className='w-[30px] h-[30px] opacity-60 cursor-pointer hover:opacity-40' onClick={()=>setAlarm(!alarm)}></img>
+                {cnt != 0 &&
+                  <div className='bg-red-400 w-[15px] h-[15px] absolute top-[-3px] right-[30px] text-white flex items-center justify-center rounded-md text-[12px]'>{cnt}</div>
+                }
+                
+              </div>
+              <div className='w-[45px] h-[45px] flex items-center justify-center overflow-hidden rounded-full'>
+                <img
+                  className='w-full h-full object-cover flex items-center between-center'
+                  src={userName?.profileImgPath ? `${profileURL}${userName.profileImgPath}` : '/images/default-profile.png'}
+                  alt="프로필 이미지" 
+                />
+              </div>
             </div>
           </div>
         </div>
-      </div>
       </header>
       <div className="main-layout">
         <div className="main-content">

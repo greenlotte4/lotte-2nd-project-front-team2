@@ -146,7 +146,7 @@ export default function Sidebar({ isCollapsed, toggleSidebar }) {
               className={isActive === 3 ? "sidebar-close-btn bg-blue-100" : "sidebar-close-btn"}
             >
               <img style={{ opacity: "0.6" }} src="/images/sidebar-document.png" />
-              {!isCollapsed && <p>문서</p>}
+              {!isCollapsed && <p>드라이브</p>}
             </li>
           </Link>
           <Link to="/calendar">
@@ -189,8 +189,13 @@ export default function Sidebar({ isCollapsed, toggleSidebar }) {
               {!isCollapsed && <p>페이지</p>}
             </li>
           </Link>
+          <Link to="/">
+            <li>
+              <img style={{ opacity: "0.6" }} src="/images/sidebar-cs.png" />
+              {!isCollapsed && <p>고객센터</p>}
+            </li>
+          </Link>
           <li
-            className={isActive === 8 ? "sidebar-close-btn bg-blue-100" : "sidebar-close-btn"}
             onClick={logoutHandler}
           >
             <img style={{ opacity: "0.6" }} src="/images/logout-icon.png" />
@@ -254,6 +259,13 @@ export default function Sidebar({ isCollapsed, toggleSidebar }) {
               {!isCollapsed && <p>외근 관리</p>}
             </li>
           </Link>
+          <li
+            className={isActive === 8 ? "sidebar-close-btn bg-blue-100" : "sidebar-close-btn"}
+            onClick={logoutHandler}
+          >
+            <img style={{ opacity: "0.6" }} src="/images/logout-icon.png" />
+            {!isCollapsed && <p>로그아웃</p>}
+          </li>
         </div>
        )}
       </>

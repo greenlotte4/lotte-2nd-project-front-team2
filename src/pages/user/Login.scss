@@ -284,3 +284,12 @@
     height: 40px;
     border-radius: 8px;        
 }
+
+.alert-container {
+    opacity: 1;
+    transition: opacity 0.3s ease-in-out;
+  }
+  
+.alert-container.fade-out {
+opacity: 0;
+}

@@ -8,6 +8,8 @@ import CustomAlert from '../../components/Alert';
 import { useQuery } from '@tanstack/react-query';
 import useUserStore from '../../store/useUserStore';
 
+const profileURL = 'http://3.35.170.26:90/profileImg/';
+
 export default function Home() {
   const navigate = useNavigate();
   const [progress, setProgress] = useState(80);
@@ -88,6 +90,23 @@ export default function Home() {
     staleTime: 1000 * 60 * 5,  // 5분 동안 데이터가 신선하다고 간주
     cacheTime: 1000 * 60 * 60, // 10분 후에 캐시가 만료되도록 설정
   });
+
+  
+  const getUserAPI = async () => {
+    if (!user?.uid) {
+      throw new Error("유저 정보가 없습니다.");
+    }
+    const resp = await axiosInstance.get('/api/my/user');
+    console.log("유저 데이터 조회 "+JSON.stringify(resp.data));
+    return resp.data;
+  }
+
+  const { data: userData, isError: userError, isLoading: userLoading } = useQuery({
+    queryKey: [`${user.uid}`],
+    queryFn: getUserAPI,
+    enabled: !!user?.uid,
+  })
+
 
   if (isLoading) {
     return <div>로딩 중...</div>;
@@ -215,14 +234,35 @@ export default function Home() {
                   <p className='gray'>welcome Yeonhwa Park</p>
                   <p style={{fontSize:'20px'}}>근무 중</p>
                 </div>
-                <div className='flex'>
-                  <button onClick={(e) => {e.preventDefault(); navigate("/my/approval");}} className='btn-home mr-2'>나의결재현황<img className='ml-2' src="/images/home-my-btn-arrow.png" alt="allow" /></button>
-                  <button onClick={(e) => {e.preventDefault(); navigate("/my/attendance");}} className='btn-home'>출퇴근현황<img className='ml-2' src="/images/home-my-btn-arrow.png" alt="allow" /></button>
+                <span>{userData?.profileMessage||''}</span>
+                <div className='grid grid-cols-2 gap-3 w-full '>
+                  {/* <button onClick={(e) => {e.preventDefault(); navigate("/my/approval");}}
+                    className='btn-home mr-2'
+                    >결재현황
+                    <img className='ml-2' src="/images/home-my-btn-arrow.png" alt="allow" />
+                  </button> */}
+                  <button onClick={(e) => {e.preventDefault(); navigate("/my/attendance");}} 
+                    className='btn-home'
+                    >출퇴근현황
+                    <img className='ml-2' src="/images/home-my-btn-arrow.png" alt="allow" />
+                  </button>
+                  <button onClick={(e) => {e.preventDefault(); navigate("/my");}} 
+                    className='btn-home'
+                    >마이페이지
+                    <img className='ml-2' src="/images/home-my-btn-arrow.png" alt="allow" />
+                  </button>
                 </div>
               </div>
               <div className='my-right'>
-                <img src={adminProfile}/>
+                <div className='w-[150px] h-[150px] bg-white drop-shadow-lg flex items-center justify-center overflow-hidden rounded-full'>
+                  <img
+                    className='w-full h-full object-cover flex items-center between-center'
+                    src={userData?.profileImgPath ? `${profileURL}${userData.profileImgPath}` : '/images/default-profile.png'}
+                    alt="profile-img" 
+                  />
+                </div>
               </div>
+              
             </div>
             <div className='home-commute border'>
               <div className='flex flex-col items-center h-[80px] mt-1'>

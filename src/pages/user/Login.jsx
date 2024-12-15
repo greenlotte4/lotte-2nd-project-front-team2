@@ -28,6 +28,14 @@ export default function Login() {
 
     const setUser = useUserStore((state) => state.setUser); // Zustand의 setUser 가져오기
     const setAccessToken = useAuthStore((state) => state.setAccessToken);
+    const [alertClass, setAlertClass] = useState("");
+    
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Enter') {
+        submitData(); // Enter 키를 누르면 로그인 실행
+      }
+    };
 
     const changeHandler = (e)=>{
       if(e.target.name === 'uid'){
@@ -120,7 +128,24 @@ export default function Login() {
       }
     }, [setUser]);
   
+    useEffect(() => {
+      let timer;
   
+      if (alert) {
+        timer = setTimeout(() => {
+          setAlertClass("fade-out"); // fade-out 클래스 추가
+          setTimeout(() => setAlert(false), 300); // 애니메이션 후 alert 상태 변경
+        }, 500); // 3초 뒤에 애니메이션 시작
+      }
+  
+      return () => clearTimeout(timer); // 타이머 정리
+    }, [alert]);
+
+    // Alert 표시 함수
+    const showAlert = () => {
+      setAlert(true);
+      setAlertClass(""); // fade-out 클래스 제거
+    };
   
     return (
       <div className='login-container'>
@@ -134,9 +159,11 @@ export default function Login() {
           <div className='inp-box'>
             <p className='text-xs inp-font bg-white w-[20px] text-center ml-3 relative top-2'>ID</p>
             <input type="text" name='uid' value={uid} onChange={changeHandler} placeholder='아이디를 입력해주세요.'
+             onKeyDown={handleKeyDown}
             className='border rounded h-[50px] indent-4' />
             <p className='text-xs inp-font bg-white w-[70px] text-center ml-3 relative top-2'>PASSWORD</p>
             <input type="password" name='pwd' value={pwd} onChange={changeHandler} placeholder='비밀번호를 입력해주세요.'
+             onKeyDown={handleKeyDown}
             className='border rounded h-[50px] indent-4' />
             <div className='find-pwd'>
               <p className='text-sm mt-1' onClick={() => navigate("/user/find")}>Forgot password?</p>
@@ -150,12 +177,14 @@ export default function Login() {
           />
   
         {alert && (
-          <CustomAlert
-            type={type}  // 알림의 타입 (success, error, info , basic 등)
-            message={message}
-            onClose={closeAlert}  // onClose는 closeAlert 함수로 전달
-            isOpen={alert}
-          />
+          <div className={`alert-container ${alertClass}`}>
+            <CustomAlert
+              type={type}  // 알림의 타입 (success, error, info , basic 등)
+              message={message}
+              onClose={closeAlert}  // onClose는 closeAlert 함수로 전달
+              isOpen={alert}
+            />
+          </div>
         )}
         {msg &&(
           <CustomMessage 
