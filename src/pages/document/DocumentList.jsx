@@ -136,7 +136,10 @@ export default function DocumentList() {
         staleTime: 300000, // 데이터가 5분 동안 신선하다고 간주
     });
 
-      // 폴더 및 파일 데이터 가져오기
+    const [parsedSharedUsers, setParsedSharedUsers] = useState([]);
+
+
+
     
 
     // 폴더 이름 변경 Mutation
@@ -460,7 +463,6 @@ const handleCloseFileMenu = () => {
     const [isDeleteAlert, setIsDeleteAlertOpen] = useState(false);
 
     const handleDelete = () => {
-        console.log("삭제요청 들어옴 ")
         setIsDeleteAlertOpen(true); // CustomAlert 표시
         handleCloseMenu(); // ContextMenu 닫기
     };
@@ -468,7 +470,6 @@ const handleCloseFileMenu = () => {
     const handleCancel = () => {
         setIsDeleteAlertOpen(false);
     };
-
 
     const handleDeleteConfirm = async() => {
         try {

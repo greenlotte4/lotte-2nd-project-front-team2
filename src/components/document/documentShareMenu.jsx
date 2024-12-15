@@ -28,7 +28,27 @@ const PERMISSIONS = {
 
 const SHARE_TYPES = {
   INDIVIDUAL: "개인",
-  DEPARTMENTALL: "부서"
+  DEPARTMENTALL: "부서",
+  DEPARTMENT:"개별",
+};
+
+const TabButton = ({ active, onClick, icon, label }) => {
+  return (
+    <button
+      onClick={onClick}
+      className={`
+        flex items-center gap-2 px-6 py-3 
+        ${active 
+          ? 'text-purple-600 border-b-2 border-purple-600 bg-purple-50' 
+          : 'text-gray-500 hover:bg-gray-50'
+        }
+        transition-colors
+      `}
+    >
+      {icon}
+      <span className="font-medium">{label}</span>
+    </button>
+  );
 };
 
 const DriveShareModal = ({
@@ -87,23 +107,19 @@ const DriveShareModal = ({
 
 
   useEffect(() => {
-    if (isModalOpen) {
-      try {
-        const parsedSharedDept = sharedDept ? JSON.parse(sharedDept) : {};
-        const parsedSharedUser = sharedMember ? JSON.parse(sharedMember) : {};
-  
-        // 상태가 비어 있는 경우에만 초기화
-        if (Object.keys(selectedDepartments).length === 0) {
-          setSelectedDepartments(parsedSharedDept);
+    if (isModalOpen && (sharedDept || sharedMember)) { // sharedDept 또는 sharedMember가 있는 경우에만 초기화
+        try {
+            const parsedSharedDept = sharedDept ? JSON.parse(sharedDept) : {};
+            const parsedSharedUser = sharedMember ? JSON.parse(sharedMember) : {};
+
+            setSelectedDepartments(parsedSharedDept);
+            setSelectedUsers(Object.values(parsedSharedUser));
+        } catch (error) {
+            console.error("JSON parsing error:", error);
         }
-        if (selectedUsers.length === 0) {
-          setSelectedUsers(Object.values(parsedSharedUser));
-        }
-      } catch (error) {
-        console.error("Error parsing shared data:", sharedDept, sharedMember, error);
-      }
     }
-  }, [isModalOpen, sharedDept, sharedMember]);
+}, [isModalOpen, sharedDept, sharedMember]);
+
   
 
   const toggleDepartmentList = () => {
@@ -234,6 +250,73 @@ const DriveShareModal = ({
     }
   };
 
+
+    // 이메일 공유 처리
+    const handleEmailShare = async (emailData) => {
+      try {
+        const response = await axiosInstance.post('/api/drive/share/email', {
+          id,
+          type,
+          email: emailData.email,
+          permission: emailData.permission
+        });
+  
+        if (response.status === 200) {
+          queryClient.invalidateQueries(['folderContents']);
+          alert('이메일로 공유되었습니다.');
+        }
+      } catch (error) {
+        alert('공유 중 오류가 발생했습니다.');
+      }
+    };
+  
+    // 부서 전체 공유 처리
+    const handleDepartmentShare = async (deptData) => {
+      try {
+        const response = await axiosInstance.post('/api/drive/share/department', {
+          id,
+          type,
+          departmentId: deptData.departmentId,
+          permission: deptData.permission
+        });
+  
+        if (response.status === 200) {
+          queryClient.invalidateQueries(['folderContents']);
+          setSelectedDepartments(prev => ({
+            ...prev,
+            [deptData.departmentId]: { 
+              id: deptData.departmentId, 
+              permission: deptData.permission 
+            }
+          }));
+        }
+      } catch (error) {
+        alert('부서 공유 중 오류가 발생했습니다.');
+      }
+    };
+  
+    // 개별 선택 공유 처리
+    const handleIndividualShare = async (users) => {
+      try {
+        const response = await axiosInstance.post('/api/drive/share/users', {
+          id,
+          type,
+          users: users.map(user => ({
+            userId: user.id,
+            permission: user.permission || '읽기'
+          }))
+        });
+  
+        if (response.status === 200) {
+          queryClient.invalidateQueries(['folderContents']);
+          setSelectedUsers(prev => [...prev, ...users]);
+        }
+      } catch (error) {
+        alert('사용자 공유 중 오류가 발생했습니다.');
+      }
+    };
+  
+
   const removeUser = (emailToRemove) => {
     setSharedUsers(sharedUsers.filter((user) => user.email !== emailToRemove));
   };
@@ -336,10 +419,6 @@ const DriveShareModal = ({
       
   };
 
-  // handleDepartmentShare 함수 수정
-  const handleDepartmentShare = () => {
-    if (selectedDepartments.length === 0) return;
-  };
 
   const copyShareLink = () => {
     navigator.clipboard.writeText(shareLink);
@@ -360,27 +439,31 @@ const DriveShareModal = ({
 
             {/* 본문 영역 */}
             <div className="p-6 space-y-6 overflow-y-auto max-h-[calc(90vh-180px)]">
+              {/* 탭 메뉴 */}
+              <div className="flex border-b">
+                <TabButton
+                  active={shareType === SHARE_TYPES.INDIVIDUAL}
+                  onClick={() => handleChangeShareType(SHARE_TYPES.INDIVIDUAL)}
+                  icon={<Mail className="w-5 h-5" />}
+                  label="이메일로 공유"
+                />
+                <TabButton
+                  active={shareType === SHARE_TYPES.DEPARTMENTALL}
+                  onClick={() => handleChangeShareType(SHARE_TYPES.DEPARTMENTALL)}
+                  icon={<Building2 className="w-5 h-5" />}
+                  label="부서 전체 공유"
+                />
+                <TabButton
+                  active={shareType === SHARE_TYPES.DEPARTMENT}
+                  onClick={() => handleChangeShareType(SHARE_TYPES.DEPARTMENT)}
+                  icon={<Users className="w-5 h-5" />}
+                  label="개별 선택 공유"
+                />
+              </div>
+
               {/* 공유 방식 선택 */}
               {company && (
                 <div className="space-y-4">
-                  <div className="flex items-center gap-4 p-2 bg-gray-50 rounded-lg">
-                    {Object.values(SHARE_TYPES).map((type) => (
-                      <label
-                        key={type}
-                        className="flex items-center gap-2 cursor-pointer"
-                      >
-                        <input
-                          type="radio"
-                          value={type}
-                          checked={shareType === type}
-                          onChange={() => handleChangeShareType(type)}
-                          className="w-4 h-4 text-blue-600"
-                        />
-                        <span className="text-sm font-medium">{type}</span>
-                      </label>
-                    ))}
-                  </div>
-
                   {shareType === SHARE_TYPES.DEPARTMENTALL && (
                     <div className="space-y-4">
                       <div className="border rounded-lg overflow relative">
@@ -408,8 +491,7 @@ const DriveShareModal = ({
                                   <input
                                     type="checkbox"
                                     checked={
-                                      selectedDepartments[group.id] !==
-                                      undefined
+                                      !!selectedDepartments[group.id]
                                     } // 객체의 키 존재 여부 확인
                                     onChange={(e) =>
                                       handleDepartmentSelect(
@@ -487,91 +569,7 @@ const DriveShareModal = ({
                         {Object.keys(selectedDepartments).length}개 부서)
                       </button>
 
-                      <div>
-                        <button
-                          onClick={() => setOpenAddress(true)}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-                        >
-                          개별 공유
-                        </button>
-                      </div>
-
-                      <div>
-                        <ul className="space-y-2 max-h-[150px] overflow-scroll scrollbar-none">
-                          {selectedUsers.map((user) => (
-                            <li
-                              key={user.id}
-                              className="p-3 bg-gray-50 rounded-lg hover:bg-gray-100"
-                            >
-                              <div className="flex justify-between items-center">
-                                <div className="flex items-center gap-3">
-                                  <img
-                                    src="/images/admin-profile.png"
-                                    className="w-10 h-10 rounded-full"
-                                    alt={user.name}
-                                  />
-                                  <div>
-                                    <div className="flex gap-2">
-                                      <span className="font-medium">
-                                        {user.name}
-                                      </span>
-                                      <span className="text-gray-500">
-                                        {user.level}
-                                      </span>
-                                    </div>
-                                    <div className="text-sm text-gray-500">
-                                      {user.email}
-                                    </div>
-                                  </div>
-                                  <div className="text-gray-600">
-                                    {user.group}
-                                  </div>
-                                </div>
-                                <div className="flex gap-2">
-                                  {editingUser?.email === user.email ? (
-                                    <select
-                                      value={user.permission}
-                                      onChange={(e) =>
-                                        updateUserPermission(e.target.value)
-                                      }
-                                      className="mt-1 px-2 py-1 text-sm border border-gray-300 rounded"
-                                      autoFocus
-                                    >
-                                      {Object.values(PERMISSIONS).map(
-                                        (perm) => (
-                                          <option key={perm} value={perm}>
-                                            {perm} 권한
-                                          </option>
-                                        )
-                                      )}
-                                    </select>
-                                  ) : (
-                                    <div className="flex  items-center gap-2">
-                                      <span className="text-sm text-gray-500">
-                                        {user.permission || "읽기"} 권한
-                                      </span>
-                                      <button
-                                        onClick={() => startEditingUser(user)}
-                                        className="text-blue-600 hover:text-blue-700"
-                                      >
-                                        <Edit className="w-4 h-4" />
-                                      </button>
-                                    </div>
-                                  )}
-                                  <button
-                                    onClick={(e) =>
-                                      cancleSelectedUsersHandler(e, user)
-                                    }
-                                    className="text-gray-400 hover:text-gray-600"
-                                  >
-                                    ×
-                                  </button>
-                                </div>
-                              </div>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
+                      
                     </div>
                   )}
                 </div>
@@ -618,6 +616,95 @@ const DriveShareModal = ({
                   </label>
                 </div>
               </div>
+              {shareType === SHARE_TYPES.DEPARTMENT && (<>
+                <div>
+                  <button
+                    onClick={() => setOpenAddress(true)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                  >
+                    개별 공유
+                  </button>
+                </div>
+                    <div>
+                      <ul className="space-y-2 max-h-[150px] overflow-scroll scrollbar-none">
+                        {selectedUsers.map((user) => (
+                          <li
+                            key={user.id}
+                            className="p-3 bg-gray-50 rounded-lg hover:bg-gray-100"
+                          >
+                            <div className="flex justify-between items-center">
+                              <div className="flex items-center gap-3">
+                                <img
+                                  src="/images/admin-profile.png"
+                                  className="w-10 h-10 rounded-full"
+                                  alt={user.name}
+                                />
+                                <div>
+                                  <div className="flex gap-2">
+                                    <span className="font-medium">
+                                      {user.name}
+                                    </span>
+                                    <span className="text-gray-500">
+                                      {user.level}
+                                    </span>
+                                  </div>
+                                  <div className="text-sm text-gray-500">
+                                    {user.email}
+                                  </div>
+                                </div>
+                                <div className="text-gray-600">
+                                  {user.group}
+                                </div>
+                              </div>
+                              <div className="flex gap-2">
+                                {editingUser?.email === user.email ? (
+                                  <select
+                                    value={user.permission}
+                                    onChange={(e) =>
+                                      updateUserPermission(e.target.value)
+                                    }
+                                    className="mt-1 px-2 py-1 text-sm border border-gray-300 rounded"
+                                    autoFocus
+                                  >
+                                    {Object.values(PERMISSIONS).map(
+                                      (perm) => (
+                                        <option key={perm} value={perm}>
+                                          {perm} 권한
+                                        </option>
+                                      )
+                                    )}
+                                  </select>
+                                ) : (
+                                  <div className="flex  items-center gap-2">
+                                    <span className="text-sm text-gray-500">
+                                      {user.permission || "읽기"} 권한
+                                    </span>
+                                    <button
+                                      onClick={() => startEditingUser(user)}
+                                      className="text-blue-600 hover:text-blue-700"
+                                    >
+                                      <Edit className="w-4 h-4" />
+                                    </button>
+                                  </div>
+                                )}
+                                <button
+                                  onClick={(e) =>
+                                    cancleSelectedUsersHandler(e, user)
+                                  }
+                                  className="text-gray-400 hover:text-gray-600"
+                                >
+                                  ×
+                                </button>
+                              </div>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+            
+              
+              
+              </>)}
 
               {/* 개별 공유 섹션 */}
               {shareType === SHARE_TYPES.INDIVIDUAL && (
