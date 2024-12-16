@@ -82,6 +82,7 @@ export const UnreadCountProvider = ({ children }) => {
                   ...prevTimeStamp,
                   [data.chatRoomId]: data.lastTimeStamp,
                 }));
+                console.log("전파 받은 마지막 메시지 및 타임스탬프");
               }
             }
           });

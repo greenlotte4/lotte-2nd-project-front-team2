@@ -10,190 +10,189 @@ import { QueryClient, useMutation, useQuery, useQueryClient } from "@tanstack/re
 import debounce from 'lodash/debounce'; // lodash의 debounce 사용
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import useUserStore from "../../store/useUserStore";
-import usePageSocket from "../../util/usePageSocket";
-
-
+import GetAddressModal from "../calendar/GetAddressModal";
+import ShareMember from "../ShareMember";
+import usePageTitleSocket from "../../util/usePageTitleSocket";
 
 export default function NewPage(){
+    const [openAddress,setOpenAddress] = useState(false);
+    const [selectedUsers, setSelectedUsers] = useState([]);
+    const [receiveData, setReceiveData] = useState(null);
+    const { sendWebSocketMessage, updatePageId, isConnected  } = usePageTitleSocket({ setReceiveData });
     const { pageId } = useParams();
-    const [title, setTitle] = useState(null); // 제목 상태
-    const [selectId, setSelectId] = useState();
-    const [content, setContent] = useState({ blocks: [] });
-    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-    const [isTyping, setIsTyping] = useState(false);
-    const [userId, setUserId] = useState()
-    const timerRef = useRef(null);
-    // const [isType, setIsKeyDown] = useState(false);
-
-    const [selectedEmoji, setSelectedEmoji] = useState(null); // 선택한 이모지 상태
-    const [sharingUsers, setSharingUsers] = useState([]); // 공유 사용자 상태
-    const navigate = useNavigate();
-    const titleRef = useRef(title);
-    const contentRef = useRef(content);
+    const [title, setTitle] = useState(null);
+    const [isTyping,setIsTyping] = useState(false);
+    const userId = useUserStore((state) => state.user?.uid);
+    const timerRef = useRef(null)
     const queryClient = useQueryClient();
-    const user = useUserStore((state) => state.user);
-    
-    const typingTimeout = useRef(null); // 타이머 관리
-    const contentTimeoutRef = useRef(null); // Timeout for content
-
-    const putPageContent = useMutation({
-        mutationFn : async () => {
-            try {
-                const resp = await axiosInstance.put("/api/page/content",{
-                    title : title,
-                    id : selectId
-                })
-                return resp.data
-            } catch (err) {
-                return err
-            }
-        },
-        onSuccess : (data) => {
-          queryClient.invalidateQueries(['page-content'])
-        },
-        onError : (err) => {
-    
-        }
-    })
-
-    useEffect(()=>{
-        if(title!=null&&!isTyping){
-            putPageContent.mutate();
-        }
-    },[title,isTyping])
+    const cancleSelectedUsersHandler = (e,user) => {
+        setSelectedUsers((prev)=>{
+            return prev.filter((selectedUser) => selectedUser.id !== user.id);
+        })
+    }
 
     const isKeyDownHandler = (event) => {
         if (timerRef.current) {
-          clearTimeout(timerRef.current);
+            clearTimeout(timerRef.current);
         }
         timerRef.current = setTimeout(() => {
           setIsTyping(false); // 3초 동안 아무 키도 입력되지 않으면 false로 변경
         }, 1000);
     
         setIsTyping(true); // 키를 입력하면 isTyping을 true로 설정
-      };
+    };
 
-    const {
-        data : pageContentData,
-        isLoading : isLoadingContent,
-        isError : isErrorContent
-    } = useQuery({
-        queryKey : ['page-content',selectId],
-        queryFn : async () => {
+    useEffect(()=>{
+        if(receiveData){
+            if(receiveData.title){
+                queryClient.invalidateQueries(['pageList'])
+                queryClient.invalidateQueries(['page-data',pageId])
+            }
+            if(Array.isArray(receiveData.selectedUsers)&&receiveData.selectedUsers.length>0){
+                queryClient.setQueryData(['page-users',pageId],receiveData.selectedUsers)
+            }
+        }
+        
+    },[receiveData])
+
+    useEffect(()=>{
+        if(Array.isArray(selectedUsers)&&selectedUsers.length>0&&!isLoadingUsersData&&!isErrorUsersData){
+            putUsersMutation.mutate();
+        }
+    },[selectedUsers])
+
+    const putUsersMutation = useMutation({
+        mutationFn : async () => {
             try {
-                const resp = await axiosInstance.get(`/api/page/content?pageId=${selectId}`)
-                console.log(resp.data)
+                const resp = await axiosInstance.put(`/api/page/users?pageId=${pageId}`,selectedUsers)
                 return resp.data
             } catch (err) {
-                return resp
+                return err;
             }
         },
-        enabled : !!selectId,
-        retry : false,
-        cacheTime : 6 * 60 * 1000
+        onSuccess : (data) => {
+            console.log(data)
+            if (isConnected) {
+                sendWebSocketMessage(
+                {selectedUsers,pageId},
+                "/app/page/users"
+                );
+            }
+        },
+        onError : (err) => {
+            
+        }
+    })
+
+    const {
+        data : usersData,
+        isLoading : isLoadingUsersData,
+        isError : isErrorUsersData
+    } = useQuery({
+        queryKey : ['page-users',pageId],
+        queryFn : async () => {
+            try {
+                const resp = await axiosInstance.get(`/api/page/users/${pageId}`)
+                return resp.data
+            } catch (err) {
+                return err;
+            }
+        },
+        enabled : !!pageId
+    })
+
+    const {
+        data : pageTitle ,
+        isLoading : isLoadingTitle,
+        isError : isErrorTitle
+    } = useQuery({
+        queryKey : ['page-title',pageId],
+        queryFn : async () => {
+            try {
+                const resp = await axiosInstance.get(`/api/page/title/${pageId}`)
+                return resp.data
+            } catch (err) {
+                return err;
+            }
+        },
+        enabled : !!pageId
+    })
+
+    const putTitleMutation = useMutation({
+        mutationFn : async () => {
+            try {
+                const resp = await axiosInstance.put(`/api/page/title?pageId=${pageId}&title=${title}`)
+                return resp.data
+            } catch (err) {
+                return err;
+            }
+        },
+        onSuccess : (data) => {
+            if (isConnected) {
+                sendWebSocketMessage(
+                {
+                pageId,
+                },
+                "/app/page/title"
+                );
+              }
+        },
+        onError : (err) => {
+
+        }
     })
 
     useEffect(()=>{
-        if(pageId != null){
-            setSelectId(pageId)
+        if(title!=null&&!isTyping){
+            putTitleMutation.mutate();
+        }
+    },[title,isTyping])
+
+    useEffect(()=>{
+        if(pageId===undefined){
+            return
+        } else if(pageTitle && !isLoadingTitle && !isErrorTitle){
+            setTitle(pageTitle)
             updatePageId(pageId)
-            setUserId(user.id)
         }
-    },[pageId])
+    },[pageTitle])
+
 
     useEffect(()=>{
-        if(!isLoadingContent&&!isErrorContent&&(typeof pageContentData === 'object' && pageContentData !== null)){
-            const jsonData = JSON.parse(pageContentData.content);
-            setTitle(pageContentData.title)
-            setContent(jsonData)
+        if(Array.isArray(usersData)&&usersData.length>0&&!isLoadingUsersData&&!isErrorUsersData){
+            setSelectedUsers(usersData)
         }
-    },[isLoadingContent,isErrorContent,pageContentData])
-
-    const { stompClient, isConnected, receiveMessage , updatePageId } = usePageSocket({});
-
-    useEffect(()=>{
-        if(receiveMessage){
-            if(user.id != receiveMessage.userId){
-                queryClient.invalidateQueries(['page-content'])
-            }   
-        }
-    },[receiveMessage])
-
+    },[usersData])
+    
     return (<>
          <PageLayout>
                 <section className="newPage-main-container w-full h-full bg-white">
-                    {/* Title Input Section */}
-                     {/* 제목 입력 */}
                         <div className="titleHeader flex">
                         <EmojiPickerComponent
-                            selectedEmoji={null}
-                            onEmojiSelect={null} // 부모에서 상태 관리
                         />
-                        {isLoadingContent ? (<p>로딩중...</p>) : isErrorContent ? (<p>에러...</p>) :
-                        (typeof pageContentData === 'object' && pageContentData !== null ) ?
-                        (
-                            <input
-                            type="text"
-                            placeholder="텍스트 제목 입력"
-                            // onKeyDown={null} // Use onKeyDown for Enter key handling
-                            onKeyDown={isKeyDownHandler}
-                            onChange={(e)=>setTitle(e.target.value)} // Continue using onChange for text updates
-                            value={title}
+                        <input
                             className="title-input"
+                            placeholder="이름입력"
+                            value={title}
+                            onKeyDown={isKeyDownHandler}
+                            onChange={(e)=>setTitle(e.target.value)}
                         />
-                        ) : (<p>ㅇㅇㅇ..</p>)}
-                           
-                            <button className="shareBtn" onClick={()=>setIsDropdownOpen(true)}>공유하기</button>
-
+                        <ShareMember 
+                        isShareOpen={openAddress}
+                        setIsShareOpen={setOpenAddress}
+                        members={selectedUsers}
+                        >
+                            
+                        <GetAddressModal 
+                            isOpen={openAddress}
+                            onClose={()=>setOpenAddress(false)}
+                            selectedUsers={selectedUsers}
+                            setSelectedUsers={setSelectedUsers}
+                            cancleSelectedUsersHandler={cancleSelectedUsersHandler}
+                        />
+                        </ShareMember>
                         </div>
-                        
-
-                        {/* 파일 및 속성 관리 */}
-                        {/* <FileManager /> */}
-
-                        {/* 텍스트 에디터 */}
-                        {isLoadingContent ? (<p>로딩중...</p>) : isErrorContent ? (<p>에러...</p>) :
-                        (typeof pageContentData === 'object' && pageContentData !== null ) ?
-                        (
-                        <Editor 
-                        title={title}
-                        content={JSON.parse(pageContentData.content)}
-                        setContent={setContent} // Pass the timeout-based handler
-                        onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                                e.preventDefault();
-                            }
-                        }}
-                        pageId={pageId}
-                        selectId={selectId}
-                        userId={userId}
-                        />
-                        ) : (<p>ㅇㅇㅇ..</p>)
-                        }
-                        
-                        
-
-                    
-                    
-                  
-                    {/* Dropdown Menu */}
-                      {/*   <div className="dropdown-menu">
-                            <input
-                            type="text"
-                            placeholder="새 항목 검색 또는 추가"
-                            className="dropdown-input"
-                            />
-                            <ul className="dropdown-list">
-                            <li>텍스트</li>
-                            <li>숫자</li>
-                            <li>선택</li>
-                            <li>파일</li>
-                            <li>상태</li>
-                            <li>날짜</li>
-                            </ul>
-                        </div> */}
-
-
+                        <Editor ></Editor>
                 </section>
         </PageLayout>
 

@@ -15,30 +15,6 @@ export default function PageIndex(){
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
     const [dropdownStates, setDropdownStates] = useState({});
-    
-
-
-    /* const [teamMembers, setTeamMembers] = useState([]);
-    const [relatedProject, setRelatedProject] = useState("");
-
-    // Example: Fetch data from your API
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                // Replace '/api/page-data' with your actual API endpoint
-                const response = await fetch("/api/page-data");
-                const data = await response.json();
-
-                // Assume the response includes "teamMembers" and "relatedProject"
-                setTeamMembers(data.teamMembers);
-                setRelatedProject(data.relatedProject);
-            } catch (error) {
-                console.error("Error fetching data:", error);
-            }
-        };
-
-        fetchData();
-    }, []); // Runs once on component mount */
 
     const teamMembers = [
         { name: 'Member 1', avatar: '/images/dumy-profile.png' },

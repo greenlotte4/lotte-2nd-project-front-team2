@@ -68,8 +68,8 @@ const useChatWebSocket = ({
             try {
               const response = JSON.parse(message.body);
               setMessageList((prev) => [...prev, response]);
-              markAsRead();
               shouldScrollToBottomRef.current = true;
+              markAsRead();
             } catch (error) {
               console.error("Failed to parse message:", error);
             }

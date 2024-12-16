@@ -2,7 +2,7 @@
 /* eslint-disable react/prop-types */
 /* eslint-disable react-hooks/exhaustive-deps */
 import "@/pages/message/Message.scss";
-import {
+import React, {
   useCallback,
   useContext,
   useEffect,
@@ -20,6 +20,7 @@ import useChatWebSocket from "../../util/useChatWebSocket";
 import { useMutation } from "@tanstack/react-query";
 import useUserStore from "../../store/useUserStore";
 import { UnreadCountContext } from "../../components/message/UnreadCountContext";
+import { debounce } from "lodash";
 
 export default function Message() {
   const [isOpen, setIsOpen] = useState(false);
@@ -190,6 +191,7 @@ export default function Message() {
         console.log(response);
 
         if (response.data === "") {
+          setIsLoading(false);
           return;
         } else {
           const rooms = response.data;
@@ -250,12 +252,17 @@ export default function Message() {
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0); // 읽지 않은 메시지 수
-  const shouldScrollToBottomRef = useRef(true);
+  const shouldScrollToBottomRef = useRef(false);
   const chatContainerRef = useRef(null);
   const lastTimeStampRef = useRef(null);
   const stompClientRef = useRef(null);
   const isInitialLoadRef = useRef(true); // 초기 로드 플래그
+  const isLoadingOlderMessagesRef = useRef(false);
+  const isNewMessageRef = useRef(false);
   const inputRef = useRef(null);
+  const previousScrollHeightRef = useRef(0);
+  const systemMessageRef = useRef(null);
+  const scrollToSystemRef = useRef(false);
 
   const {
     unreadCounts,
@@ -277,7 +284,7 @@ export default function Message() {
         lastTimeStamp: lastTimeStamp[room.id] ?? room.lastTimeStamp,
       }))
     );
-  }, [unreadCounts, lastMessages]);
+  }, [unreadCounts, lastMessages, lastTimeStamp]);
 
   const { mutate } = useMutation({
     mutationFn: async (inputText) => {
@@ -405,7 +412,6 @@ export default function Message() {
       axiosInstance
         .get(`/api/message/roomInfo/${selectedRoomId}`)
         .then((resp) => {
-          console.log("Fetched room info:", resp.data);
           setRoomInfo(resp.data);
           setMembers([...resp.data.members, resp.data.leader]);
         })
@@ -428,55 +434,72 @@ export default function Message() {
   }, [selectedRoomId]);
 
   // 메시지 로드 함수
-  const loadMessages = async () => {
-    console.log("loadMessages called with selectedRoomId:", selectedRoomId);
-
+  const loadMessages = useCallback(async () => {
     if (loading || !hasMore || !selectedRoomId) {
       console.log(
         "loadMessages aborted: loading =",
         loading,
         ", hasMore =",
         hasMore,
-        ", selectedRoomId =",
+        ", chatRoomId =",
         selectedRoomId
       );
       return;
     }
     setLoading(true);
+    isLoadingOlderMessagesRef.current = true;
 
     try {
       const params = lastTimeStampRef.current
-        ? { chatRoomId: selectedRoomId, before: lastTimeStampRef.current }
-        : { chatRoomId: selectedRoomId };
+        ? {
+            chatRoomId: selectedRoomId,
+            uid: uid,
+            before: lastTimeStampRef.current, // 이전 메시지 로드 시 before 파라미터 사용
+          }
+        : { chatRoomId: selectedRoomId, uid: uid };
 
-      console.log("API params:", params);
-
-      // 이전 스크롤 높이 저장
+      // 이전 스크롤 높이 저장 (오래된 메시지를 로드할 때 사용)
       const container = chatContainerRef.current;
-      console.log("container : ", container);
-
-      const previousScrollHeight = container ? container.scrollHeight : 0;
-      console.log("previousScrollHeight : ", previousScrollHeight);
+      if (container && lastTimeStampRef.current) {
+        previousScrollHeightRef.current = container.scrollHeight;
+      }
 
       const response = await axiosInstance.get("/api/message/getMessage", {
         params,
       });
 
-      console.log("API response:", response);
-
       const newMessages = response.data.messages;
-      console.log("불러온 메시지 : ", newMessages);
 
       if (newMessages.length > 0) {
-        setMessageList((prev) => [...newMessages.reverse(), ...prev]);
+        // 기존 메시지와 중복되지 않도록 필터링
+        setMessageList((prev) => {
+          const existingMessageIds = new Set(prev.map((msg) => msg.id));
+          const filteredNewMessages = newMessages.filter(
+            (msg) => !existingMessageIds.has(msg.id)
+          );
+          return [...filteredNewMessages, ...prev];
+        });
+        // 마지막으로 로드한 메시지의 타임스탬프 설정
         lastTimeStampRef.current =
           newMessages[newMessages.length - 1].timeStamp;
       }
       setHasMore(response.data.hasMore);
-      // 새로운 스크롤 높이 계산 후 위치 조정
-      if (container) {
-        const newScrollHeight = container.scrollHeight;
-        container.scrollTop = newScrollHeight - previousScrollHeight;
+
+      // 초기 로드 시 시스템 메시지로 스크롤 이동 또는 최하단으로 스크롤
+      if (isInitialLoadRef.current && newMessages.length > 0) {
+        const hasUnread = newMessages.some((msg) => msg.status === 2);
+        if (hasUnread) {
+          scrollToSystemRef.current = true;
+          shouldScrollToBottomRef.current = false; // 자동 스크롤 방지
+        } else {
+          shouldScrollToBottomRef.current = true; // 최하단으로 스크롤
+        }
+        isInitialLoadRef.current = false;
+      }
+
+      // 새로운 메시지가 로드된 경우 (이전 메시지가 아닌 새로운 메시지 추가)
+      if (!lastTimeStampRef.current && newMessages.length > 0) {
+        shouldScrollToBottomRef.current = true;
       }
     } catch (error) {
       console.error("메시지 로드 실패:", error);
@@ -484,42 +507,71 @@ export default function Message() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [loading, hasMore, selectedRoomId, uid]);
 
+  // 새로운 메시지가 추가될 때 최하단으로 스크롤
   useEffect(() => {
-    const container = chatContainerRef.current;
-    console.log(shouldScrollToBottomRef);
-
-    if (container && shouldScrollToBottomRef.current) {
-      // 특정 이벤트 발생 시 스크롤을 맨 아래로 설정
-      container.scrollTop = container.scrollHeight;
+    if (shouldScrollToBottomRef.current) {
+      const container = chatContainerRef.current;
+      if (container) {
+        container.scrollTop = container.scrollHeight;
+      }
+      shouldScrollToBottomRef.current = false;
     }
   }, [messageList]);
 
-  const handleScroll = () => {
-    const container = chatContainerRef.current;
-    if (container.scrollTop === 0 && hasMore && !loading) {
-      const currentScrollHeight = container.scrollHeight;
-      loadMessages().then(() => {
-        // 메시지 추가 후 스크롤 위치 유지
-        container.scrollTop = container.scrollHeight - currentScrollHeight;
-      });
-    }
-  };
+  // 스크롤 이벤트 핸들러 (디바운싱 적용)
+  const handleScroll = useCallback(
+    debounce(() => {
+      const container = chatContainerRef.current;
+      if (container.scrollTop === 0 && hasMore && !loading) {
+        previousScrollHeightRef.current = container.scrollHeight;
+        shouldScrollToBottomRef.current = false;
+        loadMessages();
+      }
+    }, 200),
+    [hasMore, loading, loadMessages]
+  );
 
-  // 메시지 목록이 변경될 때 스크롤 처리
+  useEffect(() => {
+    const container = chatContainerRef.current;
+    if (!container) return;
+
+    container.addEventListener("scroll", handleScroll);
+    return () => {
+      container.removeEventListener("scroll", handleScroll);
+    };
+  }, [handleScroll]);
+
   useLayoutEffect(() => {
+    const container = chatContainerRef.current;
+    if (!container) return;
+
     if (isInitialLoadRef.current) {
       // 초기 로드 이후에는 이미 스크롤이 설정되었으므로 무시
       return;
     }
 
-    if (shouldScrollToBottomRef.current) {
-      if (chatContainerRef.current) {
-        chatContainerRef.current.scrollTop =
-          chatContainerRef.current.scrollHeight;
+    const unreadMessageIndex = messageList.findIndex((msg) => msg.status === 2);
+    if (unreadMessageIndex !== -1) {
+      if (scrollToSystemRef.current && systemMessageRef.current) {
+        systemMessageRef.current.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+        scrollToSystemRef.current = false;
+        shouldScrollToBottomRef.current = false; // 스크롤 이동 후 자동 스크롤 방지
       }
-      shouldScrollToBottomRef.current = false; // 스크롤 이동 후 플래그 초기화
+    }
+
+    // 이전 메시지를 로드한 후 스크롤 위치 유지
+    if (isLoadingOlderMessagesRef.current && previousScrollHeightRef.current) {
+      const newScrollHeight = container.scrollHeight;
+      const scrollDifference =
+        newScrollHeight - previousScrollHeightRef.current;
+      container.scrollTop = scrollDifference;
+      previousScrollHeightRef.current = 0;
+      isLoadingOlderMessagesRef.current = false;
     }
   }, [messageList]);
 
@@ -555,45 +607,49 @@ export default function Message() {
           <h3>즐겨찾기</h3>
           <div className="rooms">
             {isLoading ? <div>Loading...</div> : null}
-            {roomData && roomData.length > 0
-              ? roomData
-                  .filter((room) => room.chatRoomFavorite === 1)
-                  .map((room) => (
-                    <div
-                      className={`room ${
-                        selectedRoomId === room.id ? "selected" : null
-                      }`}
-                      key={room.id}
-                      onClick={(e) => selectRoomHandler(e, room.id)}
-                    >
-                      <img
-                        className="profile"
-                        src="../images/sample_item1.jpg"
-                        alt=""
-                      />
-                      <div className="name_preview">
-                        <div className="name">
-                          <span>{room.chatRoomName}</span>
-                          <img
-                            className="frequentImg"
-                            src="../images/gold_star.png"
-                            alt=""
-                            onClick={(e) => frequentHandler(e, room)}
-                          />
-                        </div>
-                        <div className="preview">{room.lastMessage}</div>
+            {roomData && roomData.length > 0 ? (
+              roomData
+                .filter((room) => room.chatRoomFavorite === 1)
+                .map((room) => (
+                  <div
+                    className={`room ${
+                      selectedRoomId === room.id ? "selected" : null
+                    }`}
+                    key={room.id}
+                    onClick={(e) => selectRoomHandler(e, room.id)}
+                  >
+                    <img
+                      className="profile"
+                      src="../images/sample_item1.jpg"
+                      alt=""
+                    />
+                    <div className="name_preview">
+                      <div className="name">
+                        <span>{room.chatRoomName}</span>
+                        <img
+                          className="frequentImg"
+                          src="../images/gold_star.png"
+                          alt=""
+                          onClick={(e) => frequentHandler(e, room)}
+                        />
                       </div>
-                      <div className="date_unRead">
-                        <span className="date">
-                          {formatTime(room.lastTimeStamp)}
-                        </span>
+                      <div className="preview">{room.lastMessage}</div>
+                    </div>
+                    <div className="date_unRead">
+                      <span className="date">
+                        {formatTime(room.lastTimeStamp)}
+                      </span>
+                      {room.unreadCount ? (
                         <div className="unReadCnt">
                           <span>{room.unreadCount}</span>
                         </div>
-                      </div>
+                      ) : null}
                     </div>
-                  ))
-              : null}
+                  </div>
+                ))
+            ) : (
+              <div className="noRoom">대화방이 존재하지 않습니다.</div>
+            )}
           </div>
         </div>
 
@@ -601,45 +657,49 @@ export default function Message() {
           <h3>대화방</h3>
           <div className="rooms">
             {isLoading ? <div>Loading...</div> : null}
-            {roomData && roomData.length > 0
-              ? roomData
-                  .filter((room) => room.chatRoomFavorite === 0)
-                  .map((room) => (
-                    <div
-                      className={`room ${
-                        selectedRoomId === room.id ? "selected" : null
-                      }`}
-                      key={room.id}
-                      onClick={(e) => selectRoomHandler(e, room.id)}
-                    >
-                      <img
-                        className="profile"
-                        src="../images/sample_item1.jpg"
-                        alt=""
-                      />
-                      <div className="name_preview">
-                        <div className="name">
-                          <span>{room.chatRoomName}</span>
-                          <img
-                            className="frequentImg"
-                            src="../images/gray_star.png"
-                            alt=""
-                            onClick={(e) => frequentHandler(e, room)}
-                          />
-                        </div>
-                        <div className="preview">
-                          <span>{room.lastMessage}</span>
-                        </div>
+            {roomData && roomData.length > 0 ? (
+              roomData
+                .filter((room) => room.chatRoomFavorite === 0)
+                .map((room) => (
+                  <div
+                    className={`room ${
+                      selectedRoomId === room.id ? "selected" : null
+                    }`}
+                    key={room.id}
+                    onClick={(e) => selectRoomHandler(e, room.id)}
+                  >
+                    <img
+                      className="profile"
+                      src="../images/sample_item1.jpg"
+                      alt=""
+                    />
+                    <div className="name_preview">
+                      <div className="name">
+                        <span>{room.chatRoomName}</span>
+                        <img
+                          className="frequentImg"
+                          src="../images/gray_star.png"
+                          alt=""
+                          onClick={(e) => frequentHandler(e, room)}
+                        />
                       </div>
-                      <div className="date_unRead">
-                        <span>{formatTime(room.lastTimeStamp)}</span>
-                        <div className="unReadCnt">
-                          <span>{room.chatRoomReadCnt}</span>
-                        </div>
+                      <div className="preview">
+                        <span>{room.lastMessage}</span>
                       </div>
                     </div>
-                  ))
-              : null}
+                    <div className="date_unRead">
+                      <span>{formatTime(room.lastTimeStamp)}</span>
+                      {room.unreadCount ? (
+                        <div className="unReadCnt">
+                          <span>{room.unreadCount}</span>
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                ))
+            ) : (
+              <div className="noRoom">대화방이 존재하지 않습니다.</div>
+            )}
           </div>
         </div>
         {isOpen == true ? <InviteModal {...propsObject} /> : null}
@@ -712,51 +772,106 @@ export default function Message() {
           >
             {loading && <div className="chatLoading">로딩 중...</div>}
             {!hasMore && (
-              <div className="end-message">이전 메시지가 없습니다.</div>
+              <div className="system-message">이전 메시지가 없습니다.</div>
             )}
             {messageList && messageList.length > 0
-              ? processedMessages.map((message) => (
-                  <div
-                    className={
-                      message.isOwnMessage
-                        ? "my-message_profile"
-                        : "others-messages"
-                    }
-                    key={message.id}
-                  >
+              ? processedMessages.map((message) => {
+                  if (message.status === 2) {
+                    return (
+                      <React.Fragment key={`fragment-${message.id}`}>
+                        <div ref={systemMessageRef} className="system-message">
+                          여기부터 읽지 않은 메시지
+                        </div>
+                        <div
+                          className={
+                            message.isOwnMessage
+                              ? "my-message_profile"
+                              : "others-messages"
+                          }
+                          key={message.id}
+                        >
+                          <div
+                            className={
+                              message.isOwnMessage
+                                ? "my-messages_readTime"
+                                : "others-messages_readTime"
+                            }
+                          >
+                            <div
+                              className={
+                                message.isOwnMessage
+                                  ? "my-message"
+                                  : "others-message"
+                              }
+                            >
+                              {message.content}
+                            </div>
+                            {message.isLast ? (
+                              <div className="readTime">
+                                {formatTime(message.timeStamp)}
+                              </div>
+                            ) : null}
+                          </div>
+                          {message.isFirst ? (
+                            <div className="profileDiv">
+                              <img
+                                className="message-profile"
+                                src="../images/sample_item1.jpg"
+                                alt=""
+                              />
+                            </div>
+                          ) : (
+                            <div className="profileDiv"></div>
+                          )}
+                        </div>
+                      </React.Fragment>
+                    );
+                  }
+                  return (
                     <div
                       className={
                         message.isOwnMessage
-                          ? "my-messages_readTime"
-                          : "others-messages_readTime"
+                          ? "my-message_profile"
+                          : "others-messages"
                       }
+                      key={message.id}
                     >
                       <div
                         className={
-                          message.isOwnMessage ? "my-message" : "others-message"
+                          message.isOwnMessage
+                            ? "my-messages_readTime"
+                            : "others-messages_readTime"
                         }
                       >
-                        {message.content}
-                      </div>
-                      {message.isLast ? (
-                        <div className="readTime">
-                          {formatTime(message.timeStamp)}
+                        <div
+                          className={
+                            message.isOwnMessage
+                              ? "my-message"
+                              : "others-message"
+                          }
+                        >
+                          {message.content}
                         </div>
-                      ) : null}
-                    </div>
-                    {message.isFirst ? (
-                      <div className="profileDiv">
-                        <img
-                          className="message-profile"
-                          src="../images/sample_item1.jpg"
-                          alt=""
-                        />
+                        {message.isLast ? (
+                          <div className="readTime">
+                            {formatTime(message.timeStamp)}
+                          </div>
+                        ) : null}
                       </div>
-                    ) : (
-                      <div className="profileDiv"></div>
-                    )}
-                  </div>
-                ))
+                      {message.isFirst ? (
+                        <div className="profileDiv">
+                          <img
+                            className="message-profile"
+                            src="../images/sample_item1.jpg"
+                            alt=""
+                          />
+                        </div>
+                      ) : (
+                        <div className="profileDiv"></div>
+                      )}
+                    </div>
+                  );
+                })
               : null}
           </div>
           <div className="send-message">

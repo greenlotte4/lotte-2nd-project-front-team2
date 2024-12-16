@@ -1,7 +1,9 @@
 import { useState } from "react";
+import useOnClickOutSide from "../message/useOnClickOutSide";
 
-export const MyPlanModal = ({ isOpen, onClose , text }) => {
+export const MyPlanModal = ({ isOpen, onClose , text, showMoreRef }) => {
     if (!isOpen) return null;
+    useOnClickOutSide(showMoreRef, onClose);
 
     const [selected, setSelected] = useState(''); // 선택된 플랜 이름 저장
     const handlePlanSelection = (planName) => {
@@ -10,7 +12,8 @@ export const MyPlanModal = ({ isOpen, onClose , text }) => {
 
 return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 modal-custom-fixed">
-      <div className="bg-white rounded-t-xl rounded-b-md shadow-lg max-w-2xl w-full modal-custom-width">
+      <div ref={showMoreRef} 
+      className="bg-white rounded-t-xl rounded-b-md shadow-lg max-w-2xl w-full modal-custom-width">
         <div className="flex justify-between items-center mb-8 py-5 px-12 bg-white rounded-t-xl">
             <span className="text-lg text-gray-700 font-bold">{text}</span>
             <button 

@@ -427,3 +427,12 @@ input[type='radio']:checked {
     // 그림자로 테두리를 직접 만들어야 함 (퍼지는 정도를 0으로 주면 테두리처럼 보입니다.)
     // 그림자가 없으면 그냥 설정한 색상이 꽉 찬 원으로만 나옵니다.
 }
+
+.alert-container {
+    opacity: 1;
+    transition: opacity 0.3s ease-in-out;
+  }
+  
+.alert-container.fade-out {
+opacity: 0;
+}

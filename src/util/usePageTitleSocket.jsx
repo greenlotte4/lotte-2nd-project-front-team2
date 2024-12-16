@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { Client } from '@stomp/stompjs';
 import axiosInstance from '@/services/axios.jsx';
 
-const usePageSocket = ({ initialDestination, initialMessage , setReceiveData}) => {
+const usePageTitleSocket = ({ initialDestination, initialMessage , setReceiveData }) => {
     const [destination, setDestination] = useState(initialDestination);
     const [sendMessage, setSendMessage] = useState(initialMessage);
     const [isConnected, setIsConnected] = useState(false);
@@ -44,13 +44,14 @@ const usePageSocket = ({ initialDestination, initialMessage , setReceiveData}) =
 
     const updateSubscriptions = (client) => {
         if (pageId) {
-            client.unsubscribe(`/topic/page/${pageId}`);
+            client.unsubscribe(`/topic/page/title/${pageId}`);
         }
     
         if (pageId) {
-            client.subscribe(`/topic/page/${pageId}`, (message) => {
+            client.subscribe(`/topic/page/title/${pageId}`, (message) => {
                 try {
                     const response = JSON.parse(message.body);
+                    console.log(response)
                     setReceiveData(response)
                 } catch (error) {
                     console.error("Failed to parse user message:", error);
@@ -101,8 +102,7 @@ const usePageSocket = ({ initialDestination, initialMessage , setReceiveData}) =
     const updatePageId = (newIds) => {
         setPageId(newIds);
     };
-
-
+    
     return {
         stompClient,
         setDestination,
@@ -115,4 +115,4 @@ const usePageSocket = ({ initialDestination, initialMessage , setReceiveData}) =
     };
 };
 
-export default usePageSocket;
+export default usePageTitleSocket;

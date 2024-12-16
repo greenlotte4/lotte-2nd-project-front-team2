@@ -13,22 +13,23 @@ const profileURL = 'http://3.35.170.26:90/profileImg/';
 export default function Home() {
   const navigate = useNavigate();
   const [progress, setProgress] = useState(80);
-  const timeRef = useRef(null); // 시간 DOM 참조
-  const dateRef = useRef(null); // 시간 DOM 참조
   const [isActive, setIsActive] = useState(true); // 페이지 활성화 상태 관리
   const user = useUserStore((state)=> state.user);
-  const currentDate = new Date();
-  const formattedDate = new Intl.DateTimeFormat('ko-KR', {
-    timeZone: 'Asia/Seoul',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    weekday: 'short'
-  }).format(currentDate);
 
-  const dateParts = formattedDate.split('.');
-  const finalDate = `${dateParts[0]}-${dateParts[1]}-${dateParts[2]}`;
-  const weekday = dateParts[3].trim(); 
+  // const timeRef = useRef(null); // 시간 DOM 참조
+  // const dateRef = useRef(null); // 시간 DOM 참조
+  // const currentDate = new Date();
+  // const formattedDate = new Intl.DateTimeFormat('ko-KR', {
+  //   timeZone: 'Asia/Seoul',
+  //   year: 'numeric',
+  //   month: '2-digit',
+  //   day: '2-digit',
+  //   weekday: 'short'
+  // }).format(currentDate);
+
+  // const dateParts = formattedDate.split('.');
+  // const finalDate = `${dateParts[0]}-${dateParts[1]}-${dateParts[2]}`;
+  // const weekday = dateParts[3].trim(); 
 
   const decodeAccessToken = useAuthStore((state)=>state.decodeAccessToken);
   const getAccessToken = useAuthStore((state)=>state.getAccessToken);
@@ -44,53 +45,44 @@ export default function Home() {
     return resp.data;
   }
 
-  
+  const [currentDateTime, setCurrentDateTime] = useState({ date: '', time: '' });
+
+  const updateDateTime = () => {
+    const now = new Date();
+
+    // 날짜 포맷팅 (예: 2024-12-16 월요일)
+    const formattedDate = new Intl.DateTimeFormat('ko-KR', {
+      timeZone: 'Asia/Seoul',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      weekday: 'short',
+    }).format(now);
+
+    // 시간 포맷팅 (예: 16:22:22)
+    const formattedTime = [
+      now.getHours().toString().padStart(2, '0'),
+      now.getMinutes().toString().padStart(2, '0'),
+      now.getSeconds().toString().padStart(2, '0'),
+    ].join(':');
+
+    setCurrentDateTime({
+      date: formattedDate,
+      time: formattedTime,
+    });
+  };
+
   useEffect(() => {
-    const access = getAccessToken();
-    const decode = decodeAccessToken(access);
-
-    console.log(decode);
-
-    
-    let timeoutId;
-    const updateTime = () => {
-      if (!isActive || !timeRef.current) return; // 활성 상태가 아니거나 DOM이 없으면 중단
-
-      const currentDate = new Date();
-      const currentTimeString =
-        currentDate.getHours().toString().padStart(2, '0') +
-        ':' +
-        currentDate.getMinutes().toString().padStart(2, '0') +
-        ':' +
-        currentDate.getSeconds().toString().padStart(2, '0');
-
-      timeRef.current.innerText = currentTimeString; // DOM 업데이트
-      timeoutId = setTimeout(updateTime, 1000); // 1초마다 시간 갱신
-    };
-
-    if (dateRef.current) {
-      dateRef.current.innerText = `${finalDate} ${weekday}`; // 초기 날짜 설정
-    }
-
-    updateTime(); // 초기 시간 설정
-
-    // 페이지 활성화 상태 설정
-    setIsActive(true);
-
-    return () => {
-      clearTimeout(timeoutId); // 타이머 정리
-      setIsActive(false); // 비활성화 상태로 변경
-    };
-  }, [isActive]);
-
+    const timer = setInterval(updateDateTime, 1000);
+    updateDateTime(); // 초기값 설정
+    return () => clearInterval(timer); // 컴포넌트 언마운트 시 타이머 정리
+  }, []);
   
   const { data, error, isLoading, isError } = useQuery({
-    queryKey: [`${user.uid}`],  // 캐싱에 사용할 키
-    queryFn: todayAttendanceAPI,  // 데이터를 가져오는 함수
-    staleTime: 1000 * 60 * 5,  // 5분 동안 데이터가 신선하다고 간주
-    cacheTime: 1000 * 60 * 60, // 10분 후에 캐시가 만료되도록 설정
+    queryKey: [`attendance-${user.uid}`],
+    queryFn: todayAttendanceAPI,
+    enabled: Boolean(user?.uid),
   });
-
   
   const getUserAPI = async () => {
     if (!user?.uid) {
@@ -102,10 +94,10 @@ export default function Home() {
   }
 
   const { data: userData, isError: userError, isLoading: userLoading } = useQuery({
-    queryKey: [`${user.uid}`],
+    queryKey: [`user-${user.uid}`],
     queryFn: getUserAPI,
-    enabled: !!user?.uid,
-  })
+    enabled: Boolean(user?.uid),
+  });
 
 
   if (isLoading) {
@@ -122,7 +114,8 @@ export default function Home() {
       try{
         const resp = await axiosInstance.post('/api/attendance/checkIn', null);
         console.log("출근하기! "+resp.data)
-        setAlert({message: `${resp.data} \n \n \n출근이 완료되었습니다.`,type: 'success',isOpen: true, onClose: false,})
+        refetch();
+        setAlert({message: `${resp.data} \n출근이 완료되었습니다.`,type: 'success',isOpen: true, onClose: false,})
       }catch(err){
         console.log("에러 "+JSON.stringify(err.response.data))
         setAlert({message: `${err.response.data}`,type: 'warning',isOpen: true,onClose: false,})
@@ -137,6 +130,7 @@ export default function Home() {
       try{
         const resp = await axiosInstance.post('/api/attendance/checkOut', null);
         console.log("퇴근하기! "+resp.data)
+        refetch();
         setAlert({message: `${resp.data} \n 퇴근완료! `,type: 'success',isOpen: true, onClose: false,})
       }catch(err){
         console.log("에러 "+JSON.stringify(err.response.data))
@@ -265,30 +259,39 @@ export default function Home() {
               
             </div>
             <div className='home-commute border'>
-              <div className='flex flex-col items-center h-[80px] mt-1'>
-                <span className='' ref={dateRef}></span>
-                <p  className='flex items-end' ref={timeRef}></p>
-              </div>
+            <div className='flex flex-col items-center h-[80px]'>
+              <span className='font-light'>{currentDateTime.date}</span> {/* 현재 날짜 */}
+              {/* <span className='text-xs font-extralight'>현재시각 (UTC/GMT +09:00) Asia/Seoul</span> */}
+              <p className='relative bottom-5'>{currentDateTime.time}</p> {/* 현재 시간 */}
+            </div>
               <div className='commute-inbox flex justify-center'>
+                {userLoading  ? (
+                    <p>로딩 중...</p>
+                ) : userError ? (
+                    <p>데이터를 불러오는 데 실패했습니다.</p>
+                ) : (
+                <>
                 <div className='commute-check flex items-center mr-10'>
                   <div className='checktime flex flex-col'>
                     <span className='text-lg w-full h-full text-center flex items-center justify-center text-gray-600'>
                       출근시간</span>
                     <span className='text-2xl w-full h-full text-center text-gray-600 font-extralight'>
-                    {data.checkInTime}</span>
+                    {data?.checkInTime||'-'}</span>
                   </div>
                   <img src='/images/arrowRight.png' alt='allow' className='commute-allow'></img>
                   <div className='checktime flex flex-col'>
                     <span className='text-lg w-full h-full text-center flex items-center justify-center text-gray-600'>
                       퇴근시간</span>
                     <span className='text-2xl w-full h-full text-center text-gray-600 font-extralight'>
-                    {data.checkOutTime}</span>
+                    {data?.checkOutTime||'-'}</span>
                   </div>
                 </div>
                 <div className='flex flex-col justify-between w-[200px]'>
                   <button onClick={goToWorkHandler} className='btn-commute bg-indigo-500 text-white'>출근하기</button>
                   <button onClick={leaveWorkHandler} className='btn-commute border border-gray-300 text-gray-500 mt-10'>퇴근하기</button>
                 </div>
+                </>
+                )}
               </div>
             </div>
           </article>

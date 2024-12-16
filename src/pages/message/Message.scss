@@ -322,8 +322,10 @@
     }
   }
 
-  .end-message {
+  .system-message,
+  .noRoom {
     justify-self: center;
+    margin-top: 5px;
     border-radius: 8px;
     padding: 5px;
     color: white;

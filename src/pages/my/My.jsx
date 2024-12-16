@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import '@/pages/my/My.scss'
 import MyAside from '@/components/my/MyAside.jsx';
 import { useNavigate, useParams } from "react-router-dom";
@@ -55,6 +55,7 @@ export default function MyMain() {
       event.preventDefault();
       setPlan(true);
   }
+  const showMoreRef = useRef();
   const planClose = () => {
       setPlan(false)
   }
@@ -177,6 +178,7 @@ export default function MyMain() {
                     isOpen={plan}
                     onClose={planClose}
                     text="요금제 변경"
+                    showMoreRef={showMoreRef}
                 />
         </div>
       </section>

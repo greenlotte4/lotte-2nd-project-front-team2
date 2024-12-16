@@ -1,13 +1,17 @@
 import { now } from "lodash";
+import useOnClickOutSide from "../message/useOnClickOutSide"; 
 
 
-export const MyModal = ({ isOpen, onClose , text }) => {
+
+export const MyModal = ({ isOpen, onClose , text,  showMoreRef }) => {
     if (!isOpen) return null;
     const date = new Date();
 
+    useOnClickOutSide(showMoreRef, onClose);
 return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 modal-custom-fixed">
-      <div className="bg-white rounded-t-xl rounded-b-md shadow-lg max-w-2xl w-full modal-custom-width">
+      <div ref={showMoreRef}  
+      className="bg-white rounded-t-xl rounded-b-md shadow-lg max-w-2xl w-full modal-custom-width">
         <div className="flex justify-between items-center py-5 px-12 bg-white rounded-t-xl">
             <span className="text-lg text-gray-700 font-bold">{text}</span>
             <button 
@@ -18,17 +22,6 @@ return (
             </button>
         </div>
         <div className="mx-12">
-          {text === '비밀번호 변경' &&
-            <>
-              <div className="alert-yeollow rounded-lg mt-10 w-full h-[50px] flex items-center px-[20px] py-10">
-              보안 강화를 위해 영문, 숫자를 포함하여 8자리 이상의 비밀번호를 만드세요.
-              </div>
-              <input type="password" className="border w-full h-[40px] indent-3 mt-[20px]" placeholder="비밀번호를 입력해주세요." />
-              <input type="password" className="border w-full h-[40px] indent-3 mt-10" placeholder="비밀번호를 다시 입력해주세요." />
-              <span className="text-sm font-light ml-10 text-gray-500">비밀번호가 일치합니다.</span>
-              <button className="float-right btn-profile bg-indigo-500 text-white mt-[50px] mb-[20px]">비밀번호 변경</button>
-            </>
-          }
           {text === '결제정보 등록' &&
             <>
               <p className='text-sm custom-mt-30'>결제 정보를 입력해주세요.</p>

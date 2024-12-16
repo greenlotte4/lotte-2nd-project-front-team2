@@ -119,7 +119,7 @@ export default function PageView({pageId, userId}){
 
 
     return (<>
-         <PageLayout>
+        <PageLayout>
         <section className="newPage-main-container w-full h-full bg-white">
           {/* Title Input Section */}
           <div className="titleHeader flex">
