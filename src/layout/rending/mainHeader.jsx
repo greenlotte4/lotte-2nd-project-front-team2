@@ -77,39 +77,63 @@ export default function MainHeader() {
             고객센터
           </Link>
         </nav>
-
-        {/* 로그인 및 회원가입 버튼 */}
         {userName == null ? (
           <div className="flex items-center space-x-4">
-            <Link to="/user/login" className="px-4 py-2 border border-gray-400 rounded text-gray-700 hover:bg-[#666bff] hover:text-white transition duration-300">
+            <Link
+              to="/user/login"
+              className="px-4 py-2 border border-gray-400 rounded text-gray-700 hover:bg-[#666bff] hover:text-white transition duration-300"
+            >
               로그인
             </Link>
-            <Link to="/user/terms" className="px-4 py-2 border border-gray-400 rounded text-gray-700 hover:bg-[#666bff] hover:text-white transition duration-300">
+            <Link
+              to="/user/terms"
+              className="px-4 py-2 border border-gray-400 rounded text-gray-700 hover:bg-[#666bff] hover:text-white transition duration-300"
+            >
               회원가입
             </Link>
           </div>
         ) : (
           <div className="flex items-center space-x-4">
-            <div className="flex justify-end gap-[13px] items-center">
-              {name && <div className="flex items-center text-[12px]">{name}님 안녕하세요.</div>}
-              <div className="w-[45px] h-[45px] flex items-center justify-center overflow-hidden rounded-full">
-                <img className="w-full h-full object-cover" src={userName?.profileImgPath ? `${profileURL}${userName.profileImgPath}` : "/images/default-profile.png"} alt="프로필 이미지" />
-              </div>
-
-              {/* 관리자인 경우만 관리자 대시보드 버튼 보이기 */}
-              {user?.role === 'ADMIN' && (
+            <div className="flex justify-end gap-[10px] items-center">
+              <button
+                onClick={logoutHandler}
+                className="px-4 py-2 border border-gray-400 rounded text-gray-700 hover:bg-[#666bff] hover:text-white transition duration-300"
+              >
+                로그아웃
+              </button>
+              {user.role === 'ADMIN'? (
                 <Link to="/admin/dashboard" className="px-4 py-2 border border-gray-400 rounded text-gray-700 hover:bg-[#666bff] hover:text-white transition duration-300">
                   관리자 전용
                 </Link>
+              ):(
+                <>
+                  <Link
+                    to="/home"
+                    className="px-4 py-2 border border-gray-400 rounded text-gray-700 hover:bg-[#666bff] hover:text-white transition duration-300"
+                  >
+                    PLANTRY
+                  </Link>
+                  <div className="flex items-center">
+                    <div className="border-2 border-white bg-green-500 rounded-full w-[13px] h-[13px] relative top-[15px] left-[50px] z-[100]"></div>
+                    <div className="drop-shadow-lg bg-white w-[45px] h-[45px] flex items-center justify-center overflow-hidden rounded-full">
+                      <img
+                        className="w-full h-full object-cover flex items-center between-center"
+                        src={
+                          userName?.profileImgPath
+                            ? `${profileURL}${userName.profileImgPath}`
+                            : "/images/default-profile.png"
+                        }
+                        alt="프로필 이미지"
+                      />
+                    </div>
+                  </div>
+                </>
               )}
-
-              <button onClick={logoutHandler} className="px-4 py-2 border border-gray-400 rounded text-gray-700 hover:bg-[#666bff] hover:text-white transition duration-300">
-                로그아웃
-              </button>
             </div>
           </div>
-        )}
+          )}
       </div>
+      {/* </div> */}
     </header>
   );
 }
