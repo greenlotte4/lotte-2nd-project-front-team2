@@ -44,7 +44,7 @@ const initState = {
   lastName:"",
   name: "",
   hp:"",
-  country:"",
+  country:"NotSelected",
   addr1:"",
   addr2:"",
   grade:"",

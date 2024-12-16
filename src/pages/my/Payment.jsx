@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import MyAside from "../../components/my/MyAside";
 import { MyModal } from "@/components/my/Modal";
 import { MyPlanModal } from "@/components/my/PlanModal";
@@ -15,6 +15,7 @@ export default function MyPayment(){
         setCard(false)
     }
 
+    const showMoreRef = useRef();
     const [plan, setPlan] = useState(false);
     const upgradePlan = (event) => {
         event.preventDefault();
@@ -137,6 +138,7 @@ export default function MyPayment(){
                     isOpen={card}
                     onClose={cardClose}
                     text="결제정보 등록"
+                    showMoreRef={showMoreRef}
                 />
             </div>
             <div className='plan-modal'>
@@ -144,6 +146,7 @@ export default function MyPayment(){
                     isOpen={plan}
                     onClose={planClose}
                     text="요금제 변경"
+                    showMoreRef={showMoreRef}
                 />
             </div>
 
