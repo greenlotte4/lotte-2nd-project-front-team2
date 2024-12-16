@@ -25,7 +25,13 @@ export default function QNAWrite() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
+    // 유효성 검사
+    if (!formData.title || !formData.content || !formData.email || !formData.name) {
+        alert('모든 필드를 채워 주세요.');
+        return;
+    }
+
     // FormData 객체 생성
     const formDataToSend = new FormData();
     formDataToSend.append('title', formData.title);
@@ -42,17 +48,21 @@ export default function QNAWrite() {
 
     try {
         const response = await axios.post(
-            'http://localhost:8080/api/send-qna', 
-            formDataToSend,
-            {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                },
-            }
+          'http://13.124.94.213:90/api/send-qna',  // 배포된 서버의 URL로 수정
+          formDataToSend,
+          {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+            },
+          }
         );
         
         if (response.status === 200) {
-            alert('문의가 성공적으로 전송되었습니다.');
+            alert('귀하의 문의가 접수되었습니다. 빠른 시일 내에 답변 드리겠습니다.');
+
+            // 자동 응답 이메일 전송
+            await axios.post('http://13.124.94.213:90/api/send-auto-reply', { email: formData.email });
+
             // 폼 초기화
             setFormData({
                 category: "",
@@ -66,7 +76,7 @@ export default function QNAWrite() {
         }
     } catch (error) {
         console.error('문의 전송 실패:', error);
-        alert('문의 전송에 실패했습니다.');
+        alert('문의 전송에 실패했습니다. 다시 시도해주세요.');
     }
   };
 

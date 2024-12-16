@@ -25,9 +25,22 @@ export default function ProductServicesWrite() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
+    // 유효성 검사
+    if (!formData.productName || !formData.productType || !formData.serviceType || !formData.purchaseDate || !formData.title || !formData.content || !formData.email || !formData.name) {
+        alert('모든 필드를 채워 주세요.');
+        return;
+    }
+
+    // 환경에 맞게 API URL을 설정
+    const apiUrl = process.env.NODE_ENV === 'test'
+      ? 'http://test-server-url/api/send-product-service'  // 테스트 서버 URL
+      : process.env.NODE_ENV === 'production'
+      ? 'http://13.124.94.213:90/api/send-product-service'  // 배포된 서버 URL
+      : 'http://localhost:8080/api/send-product-service';  // 로컬 서버 URL
+
     try {
-      const response = await fetch('http://localhost:8080/api/send-product-service', {
+      const response = await fetch(apiUrl, {  // 선택된 URL로 요청
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -38,7 +51,18 @@ export default function ProductServicesWrite() {
       const data = await response.json();
 
       if (response.ok) {
-        alert(data.message);
+        alert('문의가 성공적으로 전송되었습니다. 답변은 1~2일 이내에 받으실 수 있습니다.');
+
+        // 자동 응답 이메일 전송
+        await fetch('http://13.124.94.213:90/api/send-auto-reply', {  // 자동 응답 이메일 API URL
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email: formData.email })
+        });
+
+        // 폼 초기화
         setFormData({
           productName: "",
           productType: "",

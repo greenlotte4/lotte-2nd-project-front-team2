@@ -1,111 +1,130 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import EditorJS from "@editorjs/editorjs";
-import Header from "@editorjs/header";
-import List from "@editorjs/list";
-import ImageTool from "@editorjs/image";
-import Table from "@editorjs/table";
-import Paragraph from "@editorjs/paragraph";
-import Delimiter from "./Delimiter";
 import styled from "styled-components";
 import axiosInstance from "../../services/axios";
 import useUserStore from "../../store/useUserStore";
+import { useParams } from "react-router-dom";
+import debounce from "lodash.debounce";
 import usePageSocket from "../../util/usePageSocket";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 
-// 스타일 정의
 const EditorContainer = styled.div`
   width: 100%;
   max-width: 1440px;
-  // margin: 0 auto;
   padding: 20px;
 `;
 
-const Editor = ({  title, content, setContent,selectId,userId }) => {
+const Editor = () => {
   const editorInstance = useRef(null);
-  const saveTimeout = useRef(null);
-  const [currentPageId, setCurrentPageId] = useState(null);
-  const { sendWebSocketMessage } = usePageSocket({});
-  const [sendData, setSendData] = useState();
-  const queryClient = useQueryClient();
+  const [receiveData, setReceiveData] = useState(null);
+  const { sendWebSocketMessage, updatePageId, isConnected } = usePageSocket({ setReceiveData });
+  const { pageId } = useParams();
+  const userId = useUserStore((state) => state.user?.uid);
+  const [editorData, setEditorData] = useState(null);
 
-  useEffect(()=>{
-    if(selectId){
-      setCurrentPageId(selectId)
-      return () => {
-        if (editorInstance.current) {
-          editorInstance.current.destroy();
-          editorInstance.current = null;
-        }
-      };
+  const isReceivedData = useRef(false);
+  const preventRecursiveSyncRef = useRef(false);
+
+  const fetchPageData = async (pageId) => {
+    try {
+      const response = await axiosInstance.get(`/api/page/content/${pageId}`);
+      return response.data;
+    } catch (err) {
+      console.error("Error fetching page data:", err);
+      return null;
     }
-  },[selectId])
+  };
+
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ['page-data', pageId],
+    queryFn: () => fetchPageData(pageId),
+    enabled: !!pageId,
+  });
+
+  const saveDataDebounced = useCallback(
+    debounce(async (updatedData) => {
+      try {
+        const response = await axiosInstance.put(`/api/page/content/${pageId}`, { content: updatedData });
+        console.log('Data saved:', response.data);
+      } catch (error) {
+        console.error('Error saving data:', error);
+      }
+    }, 1000),
+    [pageId]
+  );
 
   useEffect(() => {
-    if (typeof content === 'object' && content !== null && !editorInstance.current && currentPageId != null) {
-      // EditorJS가 아직 초기화되지 않았으면 초기화
+    if (pageId && data) {
       editorInstance.current = new EditorJS({
         holder: "editorjs",
-        tools: {
-          header: { class: Header, inlineToolbar: ["link", "bold"] },
-          list: { class: List, inlineToolbar: true },
-          image: { class: ImageTool },
-          paragraph: { class: Paragraph, inlineToolbar: true },
-          table: { class: Table, inlineToolbar: true },
-          delimiter: Delimiter,
-        },
-        data: content || { blocks: [] }, // 처음 데이터 설정
-        placeholder: "여기에 내용을 입력하세요...",
+        data: JSON.parse(data.content) || { blocks: [] },
         autofocus: true,
+        onReady: () => {
+          console.log("Editor is ready!");
+          updatePageId(pageId);
+        },
         onChange: async () => {
-          try {
-            const savedData = await editorInstance.current.save();
-            setSendData(savedData)
-          } catch (error) {
-            console.error("Error while getting content from EditorJS:", error);
+          if (preventRecursiveSyncRef.current) {
+            preventRecursiveSyncRef.current = false;
+            return;
+          }
+
+          const updatedData = await editorInstance.current.save();
+          setEditorData(updatedData);
+          saveDataDebounced(updatedData);
+
+          if (isConnected) {
+            sendWebSocketMessage(
+              {
+                type: 'update',
+                pageId,
+                content: updatedData,
+                uid: userId,
+              },
+              "/app/page/update"
+            );
           }
         },
       });
     }
-    
-  }, [currentPageId]);
 
-
-  const putPageContent = useMutation({
-    mutationFn : async () => {
-        try {
-            const resp = await axiosInstance.put("/api/page/content",{
-                content : JSON.stringify(sendData),
-                title : title,
-                id : selectId
-            })
-            return resp.data
-        } catch (err) {
-            return err
-        }
-    },
-    onSuccess : (data) => {
-      queryClient.invalidateQueries(['page-content'])
-    },
-    onError : (err) => {
-
-    }
-  })
-
-  useEffect(()=>{
-    if(sendData&&currentPageId){
-      const data = {
-        sendData,
-        selectId,
-        userId
+    return () => {
+      if (editorInstance.current) {
+        editorInstance.current.destroy();
+        editorInstance.current = null;
       }
-      sendWebSocketMessage(data,"/app/page/update")
-      putPageContent.mutate();
+    };
+  }, [pageId, data, saveDataDebounced]);
+
+  useEffect(() => {
+    if (receiveData && editorInstance.current) {
+      // 자신의 메시지는 무시
+      if (receiveData.uid === userId) return;
+
+      // 재귀적 동기화 방지 플래그 설정
+      preventRecursiveSyncRef.current = true;
+
+      const updatedBlocks = receiveData.content.blocks;
+      editorInstance.current.blocks.clear();
+      
+      updatedBlocks.forEach((block) => {
+        editorInstance.current.blocks.insert(block.type, block.data);
+      });
     }
-  },[sendData])
+  }, [receiveData, userId]);
+
+  // 로딩 및 에러 상태 처리
+  if (isLoading) {
+    return <EditorContainer>로딩 중...</EditorContainer>;
+  }
+
+  if (isError) {
+    return <EditorContainer>페이지 데이터를 불러오는 데 실패했습니다.</EditorContainer>;
+  }
 
   return (
     <EditorContainer>
-    <div id="editorjs"></div> {/* 반드시 ID가 존재해야 함 */}
+      <div id="editorjs"></div>
     </EditorContainer>
   );
 };

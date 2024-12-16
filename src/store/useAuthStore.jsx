@@ -45,7 +45,6 @@ export const useAuthStore = create((set) => ({
     //토큰 만료 검증
     isTokenExpired: () => {
         const token = useAuthStore.getState().getAccessToken();
-        console.log("현재 토큰:", token);
         if (!token) return true; // 토큰이 없으면 만료 처리
 
         try {
@@ -59,16 +58,13 @@ export const useAuthStore = create((set) => ({
             if (isExpired) {
                 // 만료 시 상태 초기화
                 useAuthStore.getState().removeAccessToken();
-                console.log("토큰이 만료되었습니다.");
             } else {
                 // 남은 시간 계산
                 const timeLeft = expirationTime - now;
-                console.log(`토큰은 ${timeLeft}초 후 만료됩니다.`);
             }
 
             return isExpired;
         } catch (e) {
-            console.error("잘못된 토큰 형식");
             useAuthStore.getState().removeAccessToken(); // 잘못된 토큰 형식도 삭제
             return true;
         }
@@ -78,8 +74,6 @@ export const useAuthStore = create((set) => ({
     refreshAccessToken: async () => {
         try {
             const response = await axios.post(`${baseURL}/api/auth/refresh`,{},{withCredentials: true});
-
-            console.log("Response status:", response.status); // 상태 코드 출력
 
             if (response.status === 200 && response.data.accessToken) {
                 useAuthStore.getState().setAccessToken(response.data.accessToken); // 새 액세스 토큰 상태 갱신

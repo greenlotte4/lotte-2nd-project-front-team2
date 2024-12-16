@@ -2,12 +2,13 @@ import { useEffect, useState, useCallback } from 'react';
 import { Client } from '@stomp/stompjs';
 import axiosInstance from '@/services/axios.jsx';
 
-const usePageSocket = ({ initialDestination, initialMessage , setReceiveData}) => {
+const usePageUsersSocket = ({ initialDestination, initialMessage , setReceiveUsers}) => {
     const [destination, setDestination] = useState(initialDestination);
     const [sendMessage, setSendMessage] = useState(initialMessage);
     const [isConnected, setIsConnected] = useState(false);
     const [receiveMessage, setReceiveMessage] = useState([]);
     const [pageId, setPageId] = useState();
+    const [userId, setUserId] = useState();
 
     const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
     const wsUrl = "ws://" + apiBaseUrl.replace("http://", "") + "/ws-page";
@@ -43,15 +44,16 @@ const usePageSocket = ({ initialDestination, initialMessage , setReceiveData}) =
     }, [wsUrl]);
 
     const updateSubscriptions = (client) => {
-        if (pageId) {
-            client.unsubscribe(`/topic/page/${pageId}`);
+        if (userId) {
+            client.unsubscribe(`/topic/page/user/${userId}`);
         }
     
-        if (pageId) {
-            client.subscribe(`/topic/page/${pageId}`, (message) => {
+        if (userId) {
+            client.subscribe(`/topic/page/user/${userId}`, (message) => {
                 try {
                     const response = JSON.parse(message.body);
-                    setReceiveData(response)
+                    console.log(response)
+                    setReceiveUsers(response.message)
                 } catch (error) {
                     console.error("Failed to parse user message:", error);
                 }
@@ -84,7 +86,7 @@ const usePageSocket = ({ initialDestination, initialMessage , setReceiveData}) =
         if (stompClient && isConnected) {
             updateSubscriptions(stompClient);
         }
-    }, [ pageId, isConnected, stompClient]);
+    }, [ userId, isConnected, stompClient]);
 
     const sendWebSocketMessage = useCallback((message, path) => {
         if (isConnected && stompClient) {
@@ -97,11 +99,9 @@ const usePageSocket = ({ initialDestination, initialMessage , setReceiveData}) =
         }
     }, [stompClient, isConnected]);
 
-
-    const updatePageId = (newIds) => {
-        setPageId(newIds);
+    const updateUserId = (newUser) => {
+        setUserId(newUser);
     };
-
 
     return {
         stompClient,
@@ -110,9 +110,9 @@ const usePageSocket = ({ initialDestination, initialMessage , setReceiveData}) =
         isConnected,
         receiveMessage,
         sendWebSocketMessage,
-        updatePageId,
+        updateUserId,
         initializeStompClient
     };
 };
 
-export default usePageSocket;
+export default usePageUsersSocket;

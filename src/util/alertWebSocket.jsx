@@ -27,7 +27,6 @@ const alertWebSocket = ({ initialDestination, initialMessage, initialCalendarId,
             brokerURL: wsUrl,
             connectHeaders: headers,
             debug: function (str) {
-                console.log(str)
             },
             onConnect: () => {
                 setIsConnected(true);
@@ -46,7 +45,6 @@ const alertWebSocket = ({ initialDestination, initialMessage, initialCalendarId,
             client.subscribe(`/topic/alert`, (message) => {
                 try {
                     const response = JSON.parse(message.body);
-                    console.log(userId)
                     const filteredResponses = response.filter(item => {
                         // userIds 배열이 존재하고, userId가 포함되어 있는지 확인
                         const userIdsArray = item.userIds;

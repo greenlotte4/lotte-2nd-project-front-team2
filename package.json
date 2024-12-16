@@ -17,13 +17,10 @@
     "@editorjs/image": "^2.10.1",
     "@editorjs/list": "^2.0.2",
     "@editorjs/table": "^2.4.2",
-
+    "@emailjs/browser": "^4.4.1",
     "@fortawesome/fontawesome-svg-core": "^6.7.1",
     "@fortawesome/free-solid-svg-icons": "^6.7.1",
     "@fortawesome/react-fontawesome": "^0.2.2",
-
-    "@emailjs/browser": "^4.4.1",
-
     "@fullcalendar/core": "^6.1.15",
     "@fullcalendar/daygrid": "^6.1.15",
     "@fullcalendar/interaction": "^6.1.15",
@@ -35,7 +32,7 @@
     "@reduxjs/toolkit": "^2.3.0",
     "@stomp/stompjs": "^7.0.0",
     "@tailwindcss/line-clamp": "^0.4.4",
-    "@tanstack/react-query": "^5.61.3",
+    "@tanstack/react-query": "^5.62.7",
     "@tanstack/react-query-devtools": "^5.61.3",
     "aos": "^2.3.4",
     "apexcharts": "^4.1.0",
@@ -52,14 +49,11 @@
     "js-cookie": "^3.0.5",
     "jwt-decode": "^4.0.0",
     "lodash": "^4.17.21",
+    "lodash.isequal": "^4.5.0",
     "lucide-react": "^0.462.0",
-
+    "nodemailer": "^6.9.16",
     "parchment": "^3.0.0",
     "quill": "^2.0.3",
-
-    "nodemailer": "^6.9.16",
- 
-
     "react": "^18.3.1",
     "react-apexcharts": "^1.6.0",
     "react-comments-section": "^3.2.0",
@@ -82,7 +76,7 @@
     "tailwind-scrollbar-hide": "^1.1.7",
     "tinymce": "^7.5.1",
     "uuid": "^11.0.3",
-    "zustand": "^5.0.1"
+    "zustand": "^5.0.2"
   },
   "devDependencies": {
     "@eslint/js": "^9.13.0",
