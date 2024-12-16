@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom"; // 페이지 이동을 위한 useNavigate 추가
+import { useNavigate } from "react-router-dom"; // 페이지 이동을 위한 useNavigate 훅
 
 export default function CancellationReturnWrite() {
   const [formData, setFormData] = useState({
@@ -24,20 +24,42 @@ export default function CancellationReturnWrite() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
+    // 유효성 검사
+    if (
+      !formData.orderNumber ||
+      !formData.title ||
+      !formData.content ||
+      !formData.email ||
+      !formData.name ||
+      !formData.returnReason ||
+      !formData.productName
+    ) {
+      alert("모든 필드를 채워 주세요.");
+      return;
+    }
+
+    // 환경에 따라 URL을 다르게 설정
+    const apiUrl =
+      process.env.NODE_ENV === "production"
+        ? "http://13.124.94.213:90/api/send-cancellation" // 배포 환경 URL
+        : "http://localhost:8080/api/send-cancellation"; // 로컬 환경 URL
+
     try {
-      const response = await fetch('http://localhost:8080/api/send-cancellation', {
-        method: 'POST',
+      const response = await fetch(apiUrl, {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(formData),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        alert(data.message);
+        alert(
+          "문의가 성공적으로 전송되었습니다. 답변은 1~2일 이내에 받으실 수 있습니다."
+        );
         setFormData({
           orderNumber: "",
           title: "",
@@ -51,8 +73,8 @@ export default function CancellationReturnWrite() {
         throw new Error(data.message);
       }
     } catch (error) {
-      console.error('문의 전송 실패:', error);
-      alert('문의 전송에 실패했습니다. 다시 시도해주세요.');
+      console.error("문의 전송 실패:", error);
+      alert("문의 전송에 실패했습니다. 다시 시도해주세요.");
     }
   };
 
@@ -75,7 +97,7 @@ export default function CancellationReturnWrite() {
 
   const handleMenuClick = (index, path) => {
     setActiveIndex(index);
-    navigate(path);
+    navigate(path); // 클릭 시 페이지 이동
   };
 
   return (
@@ -117,9 +139,7 @@ export default function CancellationReturnWrite() {
                   <img
                     src={menu.icon}
                     alt={menu.title}
-                    className={`w-6 h-6 mr-3 ${
-                      activeIndex === index ? "brightness-150" : ""
-                    }`}
+                    className={`w-6 h-6 mr-3 ${activeIndex === index ? "brightness-150" : ""}`}
                   />
                   <span className="text-base font-medium">{menu.title}</span>
                 </li>
