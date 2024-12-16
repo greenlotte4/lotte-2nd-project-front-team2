@@ -115,18 +115,26 @@ export default function Document() {
         }
     }
 
-    // 폴더 및 파일 데이터 가져오기
-    const { data : drives = [], isLoading, isError } = useQuery({
-        queryKey: ['folders', folderId],
+    const { data: folderResponse = { folderDtoList: [], shareFolderDtoList: [], uid: "" }, isLoading, isError } = useQuery({
+        queryKey: ["driveList"], // 동일한 queryKey
         queryFn: async () => {
-            const response = await axiosInstance.get(
-                `/api/drive/folders`
-            );
+            const response = await axiosInstance.get("/api/drive/folders");
             return response.data;
         },
-        staleTime: 300000, // 데이터가 5분 동안 신선하다고 간주
+        staleTime: 300000,
     });
 
+
+    const sharedFolderDtoList = folderResponse?.shareFolderDtoList || [];
+    const filteredSharedFolders = sharedFolderDtoList.filter(
+        (folder) =>
+            !sharedFolderDtoList.some(
+                (parent) =>
+                    folder.path !== parent.path && folder.path.startsWith(parent.path)
+            )
+    );
+    const personalFolders = folderResponse?.folderDtoList || [];
+    const combinedSharedFolders = [...personalFolders, ...filteredSharedFolders];
     
 
     // driveList 데이터 가져오기
@@ -295,7 +303,7 @@ export default function Document() {
 
    
     return (
-        <DocumentLayout isDetailVisible={isDetailVisible} selectedFolder={selectedFolder} uid={drives.uid} closeDetailView={closeDetailView}>
+        <DocumentLayout isDetailVisible={isDetailVisible} selectedFolder={selectedFolder} uid={user.uid}  shared={selectedFolder?.sharedUsers } closeDetailView={closeDetailView}>
                 <section className='flex gap-4 items-center'>
                     <span className=' text-[24px] ml-4 mt-4'>나의 드라이브 </span>
                 </section>
@@ -340,9 +348,9 @@ export default function Document() {
                 </section>
                 
                 {viewType === 'box' ? ( <>
-                 <section className='flex gap-6 ml-16 mt-12'>
-                 {drives?.folderDtoList?.length > 0 ? (
-                        drives.folderDtoList.map((drive) => (
+                 <section className='flex gap-2 ml-16 mt-12 flex-wrap'>
+                 {combinedSharedFolders?.length > 0 ? (
+                        combinedSharedFolders.map((drive) => (
                             <DocumentCard3
                                 key={drive.id}
                                 cnt={drive.fileCount || 0}
@@ -365,22 +373,22 @@ export default function Document() {
                     <table className="docList mx-[20px] w-[98%]">
                     <thead className="h-[48px] bg-[#F2F4F8] sticky top-0 z-10">
                         <tr>
-                            <th><input type="checkbox"  /></th>
-                            <th>Title</th>
-                            <th>Type</th>
-                            <th>Size</th>
-                            <th>Last Modified</th>
+                            <th className='w-[5%]'><input type="checkbox"  /></th>
+                            <th className='w-[30%]'>Title</th>
+                            <th className='w-[10%]'>Size</th>
+                            <th className='w-[20%]'>Owner</th>
+                            <th className='w-[25%]'>Last Modified</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {[...drives].map((item) => (
+                        {[...combinedSharedFolders].map((item) => (
                              <tr
                                 key={folder.id}
                                 draggable
                                 onDragStart={() => handleDragStart(folder)} // 드래그 시작 핸들러
                                 onDragOver={(e) => handleDragOver(e)} // 드래그 오버 핸들러
                                 onDrop={(e) => handleDrop(folder, "before")} // 드롭 시 동작 (리스트에서는 기본적으로 "before")
-                                className="draggable-row"
+                                className="draggable-row text-center"
                             >
                                 <td><input type="checkbox"  /></td>
                                 <td>
@@ -388,9 +396,9 @@ export default function Document() {
                                         {item.name}
                                     </Link>
                                 </td>
-                                <td>{item.type}</td>
                                 <td>{item.size || '-'}</td>
-                                <td>{item.lastModified || 'Unknown'}</td>
+                                <td>{item.ownerId}</td>
+                                <td>{item.updatedAt || 'Unknown'}</td>
                             </tr>
                         ))}
                     </tbody>

@@ -60,8 +60,8 @@ export const DocumentCard3 = ({
         navigate(`/document/list/${folderId}`,{
             state: {
                 cnt,
-                folderName,
-                folderId,
+                folderName : folder.name,
+                folderId : folder.id,
                 updatedAt,
             }
         });

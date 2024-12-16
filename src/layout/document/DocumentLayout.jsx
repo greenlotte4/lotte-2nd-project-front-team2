@@ -9,7 +9,7 @@ import ErrorBoundary from "@/services/ErrorBoundary";
 import FileDetails from "../../components/document/FileDetails";
 import FolderDetails from "../../components/document/FolderDetails";
 
-export default function DocumentLayout({children, isDetailVisible , selectedFolder,selectedFile, parentfolder,path, uid ,closeDetailView , storageInfo}){
+export default function DocumentLayout({children, isDetailVisible , selectedFolder, selectedFile, shared ,parentfolder, path, uid ,closeDetailView ,sharedUsers, storageInfo}){
     console.log("유아이디!!!",uid);
     console.log("selectedFolder:", selectedFolder);    
     console.log("selectedFile:", selectedFile);
@@ -76,13 +76,14 @@ export default function DocumentLayout({children, isDetailVisible , selectedFold
                     {children}
             </section>
             {isDetailVisible && (
-                    <section className="document-detail">
+                    <section className="document-detail border border-color-[#ddd]">
                         {selectedFolder && !selectedFile && (
                             <FolderDetails
                                 folder={selectedFolder}
                                 parentfolder = {parentfolder}
                                 uid={uid}
                                 closeDetailView={closeDetailView}
+                                shared={shared}
                                 navigate={navigate}
                             />
                         )}

@@ -1,4 +1,6 @@
-function FolderDetails({ folder, uid, closeDetailView, navigate,parentfolder,path }) {
+function FolderDetails({ folder, uid, closeDetailView,shared, navigate,parentfolder,path }) {
+
+    console.log("folder" , folder);
     const linkHandler = (file) => {
         navigate(path,{state : folder});
    
@@ -15,7 +17,39 @@ function FolderDetails({ folder, uid, closeDetailView, navigate,parentfolder,pat
         }
 
         if (folder.isShared === 1 && folder.ownerId === uid) {
-            return "나, 홍합";
+            console.log("공유대상",shared);
+            return <>
+             {folder.ownerId === uid && folder.isShared === 1 && (
+            <>
+                {folder.sharedUsers && folder.sharedUsers.length > 0 ? (
+                    <ul className="mt-2 space-y-2 flex w-max-[250px] overflow-scroll-y">
+                        {folder.sharedUsers.map((user, index) => (
+                            <li
+                                key={user.id || `shared-user-${index}`}
+                                className="relative flex items-center gap-4 p-2"
+                            >
+                                {/* 프로필 이미지 */}
+                                <div className="relative group">
+                                    <img
+                                        src={user.profile}
+                                        alt="Profile"
+                                        className="w-8 h-8 rounded-full"
+                                    />
+                                    {/* 호버 시 표시할 이름과 권한 */}
+                                    <div className="absolute w-[80px] left-1/2 transform-translate-x-1/2 top-10 hidden group-hover:flex flex-col items-center bg-gray-800 text-white text-xs rounded-lg shadow-lg p-2 z-10">
+                                        <span className="font-semibold">{user.name}</span>
+                                        <span className="text-gray-400">{user.permission || "권한 없음"}</span>
+                                    </div>
+                                </div>
+                            </li>
+                        ))}
+                    </ul>
+                ) : (
+                    <p className="text-sm text-gray-500">아직 공유된 사용자가 없습니다.</p>
+                )}
+            </>
+        )}
+            </>;
         }
 
         return null;
@@ -45,6 +79,7 @@ function FolderDetails({ folder, uid, closeDetailView, navigate,parentfolder,pat
                 <span className="text-[15px]">액세스 권한이 있는 사용자</span>
                 <br />
                 <span className="text-[14px]">{getAccessMessage()}</span>
+               
             </div>
             <hr />
             <section>

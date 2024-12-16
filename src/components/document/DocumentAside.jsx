@@ -38,7 +38,7 @@ export default function DocumentAside({onStorageInfo}){
 
 
   // React Query를 사용하여 폴더 데이터 가져오기
-    const { data: folderResponse = { folderDtoList: [], uid: "" }, isLoading, isError } = useQuery({
+    const { data: folderResponse = { folderDtoList: [],shareFolderDtoList:[], uid: "" }, isLoading, isError } = useQuery({
         queryKey: ["driveList", location.pathname],
         queryFn: async () => {
             const response = await axiosInstance.get("/api/drive/folders");
@@ -46,6 +46,7 @@ export default function DocumentAside({onStorageInfo}){
         },
         staleTime: 300000, // 데이터 신선 유지 시간 (5분)+
     });
+
 
     const { data: size , isDataLoading, isDataError } = useQuery({
         queryKey: ["driveSize", user.uid],
@@ -70,8 +71,17 @@ export default function DocumentAside({onStorageInfo}){
 
     console.log("Current user:", user.grade);
     // 폴더 필터링 (공유 및 개인)
-    const sharedFolders = folderResponse?.folderDtoList?.filter((folder) => folder.isShared === 1) || [];
-    const personalFolders = folderResponse?.folderDtoList?.filter((folder) => folder.isShared === 0) || [];
+    const sharedFolderDtoList = folderResponse?.shareFolderDtoList || [];
+    const filteredSharedFolders = sharedFolderDtoList.filter(
+        (folder) =>
+            !sharedFolderDtoList.some(
+                (parent) =>
+                    folder.path !== parent.path && folder.path.startsWith(parent.path)
+            )
+    );
+
+    const personalFolders = folderResponse?.folderDtoList || [];
+
     const setStorageInfo = useStorageStore((state) => state.setStorageInfo);
 
  
@@ -306,7 +316,7 @@ export default function DocumentAside({onStorageInfo}){
                 </section>
                 <section className='flex justify-between items-center p-4 mb-2 mt-4'>
                     <div>
-                        <p className='text-2xl font-bold'>공유 드라이브 <span className='text-xs font-normal opacity-60'>({sharedFolders.length})</span></p>
+                        <p className='text-2xl font-bold'>공유 드라이브 <span className='text-xs font-normal opacity-60'>({filteredSharedFolders.length})</span></p>
                     </div>
                     <div>
                     <img
@@ -323,7 +333,7 @@ export default function DocumentAside({onStorageInfo}){
                         className={`mypageArea flex flex-col px-8  overflow-scroll scrollbar-none transition-all duration-300 ${
                             isSharedOpen ? "max-h-[180px] " : "max-h-0"
                         }`}>
-                     {sharedFolders.map((folder) => (
+                     {filteredSharedFolders.map((folder) => (
                         <div className="flex gap-4 items-center mb-1" key={folder.id}  onContextMenu={(e) => handleContextMenu(e, folder)}>
                             <Link   to={`/document/list/${folder.id}`}
                                     state={{ folderName: folder.name }} // folder.name 전달
@@ -333,7 +343,7 @@ export default function DocumentAside({onStorageInfo}){
                             </Link>
                         </div>
                         ))}  
-                        {sharedFolders.length === 0 && <p className="opacity-60">Shared 폴더가 없습니다.</p>}
+                        {filteredSharedFolders.length === 0 && <p className="opacity-60">Shared 폴더가 없습니다.</p>}
                 </section>
 
                 
