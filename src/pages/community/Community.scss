@@ -731,24 +731,24 @@
     margin-bottom: 20px;
 
     .list-table th:first-child {
-      border-top-left-radius: 10px; /* 왼쪽 상단 라운드 */
-      border-bottom-left-radius: 10px; /* 왼쪽 하단 라운드 */
+      border-top-left-radius: 10px;
+      border-bottom-left-radius: 10px;
     }
 
     .list-table th:last-child {
-      border-top-right-radius: 10px; /* 오른쪽 상단 라운드 */
-      border-bottom-right-radius: 10px; /* 오른��� 하단 라운드 */
+      border-top-right-radius: 10px;
+      border-bottom-right-radius: 10px;
     }
 
     th {
-      background-color: #f9f9f9; /* 헤더 배경색 */
-      font-weight: bold; /* 헤더 텍스트 굵게 */
+      background-color: #f9f9f9; 
+      font-weight: bold; 
       padding: 12px;
       text-align: center;
     }
 
     td {
-      border-bottom: 1px solid #ddd; /* 아래쪽 선만 추가 */
+      border-bottom: 1px solid #ddd; 
       padding: 12px;
 
       text-align: center;
@@ -763,7 +763,7 @@
     overflow-y: auto;
   }
   .list-footer {
-    background-color: white; /* 버튼 영역 배경색 */
+    background-color: white;
     padding: 10px;
     display: flex;
     justify-content: space-between;
@@ -778,6 +778,7 @@
       font-size: 14px;
       gap: 8px;
       text-align: center;
+      height: 40px;
 
       cursor: pointer;
 
@@ -1023,7 +1024,7 @@
 
   .view-footer {
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
     padding: 24px 0;
     margin-bottom: 40px;
@@ -1191,6 +1192,8 @@
   }
 
   .comments-section {
+    position: relative;
+    max-height: 600px;
     h3 {
       font-size: 20px;
       font-weight: 600;
@@ -1199,6 +1202,8 @@
       display: flex;
       align-items: center;
       gap: 8px;
+      overflow-y: auto;
+      max-height: 500px;
 
       .comment-count {
         font-size: 14px;
@@ -1361,6 +1366,72 @@
         }
       }
     }
+  }
+}
+
+.pagination {
+  position: sticky;
+  bottom: 0;
+  background: white;
+  padding: 90px 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-top: 20px;
+  border-top: 1px solid #f0f0f7;
+  flex-wrap: wrap;
+
+  .pagination-button {
+    min-width: 2.5rem;
+    height: 2.5rem;
+    border: 1px solid #e2e8f0;
+    background-color: white;
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &:hover {
+      background-color: #f7fafc;
+    }
+
+    &.active {
+      background-color: #4a90e2;
+      color: white;
+      border-color: #4a90e2;
+    }
+  }
+
+  .pagination-arrow {
+    min-width: 2.5rem;
+    height: 2.5rem;
+    border: 1px solid #e2e8f0;
+    background-color: white;
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &:hover:not(:disabled) {
+      background-color: #f7fafc;
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+  }
+
+  .pagination-ellipsis {
+    min-width: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 }
 .community-modify {

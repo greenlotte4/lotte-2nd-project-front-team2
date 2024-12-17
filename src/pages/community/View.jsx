@@ -1,20 +1,22 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import CommunitySidebar from "@/components/community/CommunitySidebar";
 import "@/pages/community/Community.scss";
 import useUserStore from "../../store/useUserStore";
 import axiosInstance from "../../services/axios";
+
 import {
   Heart,
   Share2,
   Paperclip,
   MessageCircle,
   MoreHorizontal,
-  Bookmark,
   Send,
   Image,
   Star,
   Smile,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 
 function CommunityView() {
@@ -34,11 +36,32 @@ function CommunityView() {
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [commentLikes, setCommentLikes] = useState({});
   const [error, setError] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [commentsPerPage] = useState(10);
+  const [replyingTo, setReplyingTo] = useState(null);
 
-  // 상수
+  const currentComments = useMemo(() => {
+    const indexOfLastComment = currentPage * commentsPerPage;
+    const indexOfFirstComment = indexOfLastComment - commentsPerPage;
+    return comments.slice(indexOfFirstComment, indexOfLastComment);
+  }, [comments, currentPage, commentsPerPage]);
+
+  // totalPages도 useMemo로 계산
+  const totalPages = useMemo(() => {
+    return Math.ceil(comments.length / commentsPerPage);
+  }, [comments.length, commentsPerPage]);
+
+  const paginate = (pageNumber) => {
+    if (pageNumber < 1 || pageNumber > totalPages) return;
+    setCurrentPage(pageNumber);
+    const commentsSection = document.querySelector(".comments-section");
+    if (commentsSection) {
+      commentsSection.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
   const emojis = ["👍", "❤️", "😊", "🎉", "👏", "✨", "💫", "🌟"];
 
-  // API 호출
   const fetchPost = async () => {
     try {
       const response = await axiosInstance.get(
@@ -50,14 +73,19 @@ function CommunityView() {
       console.error("게시글 조회 실패:", error);
     }
   };
-  console.log(boardId, postId); // 콘솔에 1과 6이 출력되는지 확인
+  console.log(boardId, postId);
 
-  const fetchComments = async () => {
+  const fetchComments = async (page = 0) => {
     try {
       const response = await axiosInstance.get(
         `/api/community/posts/${postId}/comments`
       );
       console.log("들어오나안들어오나" + response.data);
+
+      // 최신순으로 댓글 정렬 (createdAt을 기준으로 내림차순 정렬)
+      const sortedComments = response.data.sort(
+        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+      );
 
       setComments(response.data || []);
     } catch (error) {
@@ -75,7 +103,7 @@ function CommunityView() {
   };
 
   // 이벤트 핸들러
-  const handleCommentSubmit = async (e) => {
+  const handleCommentSubmit = async (e, parentId) => {
     e.preventDefault();
     if (!newComment.trim()) return;
     console.log("에라모르겟다");
@@ -91,10 +119,11 @@ function CommunityView() {
         postId: postId,
         userId: user?.id,
         writer: user?.name,
-        parentId: null,
+        parentId: parentId,
       });
 
       setNewComment("");
+      setReplyingTo(null);
       fetchComments();
     } catch (error) {
       console.error("댓글 작성 실패:", error);
@@ -127,27 +156,33 @@ function CommunityView() {
     }
   };
 
-  const handleCommentLike = async (postId, commentId) => {
-    console.log("Comment ID:", commentId); // Debugging: Log the commentId
+  const handleCommentLike = async (postId, commentId, userId) => {
+    const url = `/api/community/posts/${postId}/comments/${commentId}/like?userId=${userId}`;
+    console.log("요청 URL:", url);
+    console.log("좋아요 요청:", { postId, commentId });
 
     try {
-      const response = await fetch(
-        `/api/community/posts/${postId}/comments/${commentId}/like`,
+      const response = await axiosInstance.post(
+        url,
+        {},
         {
-          method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
         }
       );
 
-      if (response.ok) {
+      // 응답 상태 코드 로깅
+      console.log("응답 상태:", response.status);
+
+      if (response.status === 200) {
+        console.log("좋아요가 성공적으로 처리되었습니다.");
         location.reload(); // 새로 고침
       } else {
         console.error("서버 오류:", response.status);
       }
     } catch (error) {
-      console.error("좋아요 처리 중 오류 발생:", error);
+      console.error("네트워크 오류:", error);
     }
   };
 
@@ -345,7 +380,7 @@ function CommunityView() {
             {comments.length === 0 ? (
               <p className="no-comments">첫 번째 댓글을 작성해보세요!</p>
             ) : (
-              comments.map((comment) => (
+              currentComments.map((comment) => (
                 <div key={comment.commentId} className="comment">
                   <div className="comment-header">
                     <div className="user-info">
@@ -361,7 +396,13 @@ function CommunityView() {
                   <p>{comment.content}</p>
                   <div className="comment-actions">
                     <button
-                      onClick={() => handleCommentLike(comment.commentId)}
+                      onClick={() =>
+                        handleCommentLike(
+                          post.postId,
+                          comment.commentId,
+                          user.id
+                        )
+                      }
                       className={`reply-button ${
                         comment.likes > 0 ? "liked" : ""
                       }`}
@@ -385,6 +426,56 @@ function CommunityView() {
                 </div>
               ))
             )}
+          </div>
+          {/* 페이지네이션 UI */}
+          <div className="pagination">
+            <button
+              onClick={() => paginate(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="pagination-arrow"
+            >
+              <ChevronLeft size={20} />
+            </button>
+
+            {[...Array(totalPages)].map((_, index) => {
+              const pageNum = index + 1;
+              // 현재 페이지 주변의 페이지 번호만 표시
+              if (
+                pageNum === 1 ||
+                pageNum === totalPages ||
+                (pageNum >= currentPage - 2 && pageNum <= currentPage + 2)
+              ) {
+                return (
+                  <button
+                    key={pageNum}
+                    onClick={() => paginate(pageNum)}
+                    className={`pagination-button ${
+                      currentPage === pageNum ? "active" : ""
+                    }`}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              } else if (
+                (pageNum === currentPage - 3 && currentPage > 4) ||
+                (pageNum === currentPage + 3 && currentPage < totalPages - 3)
+              ) {
+                return (
+                  <span key={pageNum} className="pagination-ellipsis">
+                    ...
+                  </span>
+                );
+              }
+              return null;
+            })}
+
+            <button
+              onClick={() => paginate(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="pagination-arrow"
+            >
+              <ChevronRight size={20} />
+            </button>
           </div>
         </div>
       </div>

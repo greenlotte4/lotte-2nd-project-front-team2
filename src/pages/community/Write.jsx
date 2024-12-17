@@ -9,21 +9,21 @@ import axiosInstance from "../../services/axios";
 import { useQuery } from "@tanstack/react-query";
 
 function CommunityWrite() {
-  const { boardId } = useParams(); // URL에서 boardId 추출
-  const currentUser = useUserStore((state) => state.user); // 사용자 정보 가져오기
-  const navigate = useNavigate(); // 라우팅용 navigate
-  const [title, setTitle] = useState(""); // 제목
-  const [content, setContent] = useState(""); // 내용
-  const [files, setFiles] = useState([]); // 첨부 파일
+  const { boardId } = useParams();
+  const currentUser = useUserStore((state) => state.user);
+  const navigate = useNavigate();
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
+  const [files, setFiles] = useState([]);
   const [fileCount, setFileCount] = useState(0);
-  const [isPinned, setIsPinned] = useState(false); // 필독 등록 여부
-  const [isCommentEnabled, setIsCommentEnabled] = useState(false); // 댓글 활성화 여부
-  const [commentOption, setCommentOption] = useState("모두"); // 댓글 설정 옵션
-  const [showModal, setShowModal] = useState(false); // 모달 상태
-  const [selectedBoardId, setSelectedBoardId] = useState(""); // 게시판 ID 상태 관리
+  const [isPinned, setIsPinned] = useState(false);
+  const [isCommentEnabled, setIsCommentEnabled] = useState(false);
+  const [commentOption, setCommentOption] = useState("모두");
+  const [showModal, setShowModal] = useState(false);
+  const [selectedBoardId, setSelectedBoardId] = useState("");
 
-  const handleModalOpen = () => setShowModal(true); // 모달 열기
-  const handleModalClose = () => setShowModal(false); // 모달 닫기
+  const handleModalOpen = () => setShowModal(true);
+  const handleModalClose = () => setShowModal(false);
 
   const fetchBoards = async () => {
     const response = await axiosInstance(`/api/community/write`);
@@ -31,7 +31,6 @@ function CommunityWrite() {
     return response.data;
   };
 
-  // useQuery를 사용하여 데이터를 불러옴
   const { data, error, isLoading, isError } = useQuery({
     queryKey: ["boards"],
     queryFn: fetchBoards,
@@ -73,14 +72,14 @@ function CommunityWrite() {
         fileCount: fileCount,
         favoritePost: false,
         isMandatory: isPinned,
-        writer: currentUser.username, // 사용자 이름
+        writer: currentUser.username, 
         uid: currentUser?.id,
       };
 
       console.log("전송 데이터 " + JSON.stringify(postData));
 
-      // Authorization 헤더에 토큰을 포함시킴
-      const token = localStorage.getItem("token"); // 혹은 현재 상태에서 가져올 수 있는 방법으로 토큰을 불러옵니다.
+   
+      const token = localStorage.getItem("token"); 
       if (token) {
         try {
           const response = await axiosInstance.post(
@@ -89,14 +88,14 @@ function CommunityWrite() {
             {
               headers: {
                 "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`, // JWT 토큰을 Authorization 헤더에 추가
+                Authorization: `Bearer ${token}`, 
               },
             }
           );
           console.log("작성 성공:", response.data);
 
           alert("글 작성이 완료되었습니다!");
-          navigate(`/community/${selectedBoardId}/list`); // 글 작성 후 리스트 페이지로 이동
+          navigate(`/community/${selectedBoardId}/list`); 
         } catch (error) {
           console.error("작성 실패:", error);
           alert("글 작성에 실패했습니다. 다시 시도해주세요.");
@@ -112,14 +111,14 @@ function CommunityWrite() {
 
   return (
     <div id="community-container">
-      {/* 사이드바 */}
+
       <CommunitySidebar currentUser={currentUser} boardId={boardId} />
 
-      {/* 작성 폼 */}
+
       <div className="community-main">
         <h2>{`${boardId} 작성`}</h2>
         <form onSubmit={handleSubmit}>
-          {/* 게시판 유형 선택 및 필독 등록 */}
+         
           <div className="form-group">
             <label>유형</label>
             <div className="select-pinned-wrapper">
@@ -127,7 +126,7 @@ function CommunityWrite() {
                 value={selectedBoardId}
                 onChange={(e) => {
                   setSelectedBoardId(e.target.value);
-                  console.log("Updated selectedBoardId:", e.target.value); // 값 변경 확인
+                  console.log("Updated selectedBoardId:", e.target.value); 
                 }}
                 required
               >
@@ -157,7 +156,7 @@ function CommunityWrite() {
             </div>
           </div>
 
-          {/* 모달 */}
+
           {showModal && (
             <div className="modal-overlay">
               <div className="modal-content">
@@ -188,7 +187,7 @@ function CommunityWrite() {
             </div>
           )}
 
-          {/* 제목 입력 */}
+
           <div className="form-group">
             <label>제목</label>
             <input
@@ -201,7 +200,7 @@ function CommunityWrite() {
             />
           </div>
 
-          {/* 파일 첨부 */}
+          
           <div className="form-group">
             <div className="file-upload-wrapper">
               <label htmlFor="file-upload" className="file-upload-label">
@@ -222,7 +221,7 @@ function CommunityWrite() {
             </div>
           </div>
 
-          {/* CKEditor (내용 입력) */}
+         
           <div className="form-group">
             <label>내용</label>
             <CKEditor
