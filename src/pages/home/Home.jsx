@@ -7,6 +7,7 @@ import axiosInstance from '@/services/axios.jsx'
 import CustomAlert from '../../components/Alert';
 import { useQuery } from '@tanstack/react-query';
 import useUserStore from '../../store/useUserStore';
+import HomeCalendar from '../../components/home/HomeCalendar';
 
 const profileURL = 'http://3.35.170.26:90/profileImg/';
 
@@ -105,9 +106,13 @@ export default function Home() {
   }
 
   if (isError) {
-    return <div>Error: {error.message}</div>;
-  }
-
+    console.error("Error Object:", error);
+    return (
+        <div>
+            Error: {error?.message || JSON.stringify(error) || "오류가 발생했습니다."}
+        </div>
+    );
+}
   const goToWorkHandler = async (e) => {
     e.preventDefault();
     if(confirm("출근하시겠습니까?")){
@@ -344,7 +349,7 @@ export default function Home() {
             </div>
           </div>
           <div className='home-bot border'>
-            <h2 className='text-2xl'>Calendar</h2>
+            <HomeCalendar/>
           </div>
         </section>
       </div>

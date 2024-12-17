@@ -1,0 +1,95 @@
+.react-calendar {
+    background-color: #fff;
+    border: none;
+  }
+
+/* 년-월 */
+.react-calendar__navigation__label > span {
+    color: #6366F1;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.react-calendar__navigation button:enabled:hover{
+    background-color: #fff;
+    width: 15px;
+    border-radius: 3px;
+}
+
+/* 요일 */
+.react-calendar__month-view__weekdays__weekday{
+    /* color: #fff;
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 10px; */
+}
+
+.react-calendar__month-view__days__day--weekend {
+    /* color: #fff;
+    font-size: 18px;
+    font-weight: bold;
+    width: 44px;
+    height: 44px;
+    text-align: center; */
+  }
+  
+/* 이번 달 일자 */
+.react-calendar__tile{
+    color: #000;
+    height: 40px;
+    line-height: 13px;
+}
+
+/* 저번 달 & 다음 달 일자 */
+.react-calendar__month-view__days__day--neighboringMonth{
+    color: #999;
+}
+.react-calendar__tile{
+    border-radius: 10px;
+}
+
+  /* 오늘 날짜 */
+  .react-calendar__tile--now{
+    background-color: #fff;
+    
+    border: 1px solid #6366F1;
+  }
+  .react-calendar__tile--now:enabled:hover,
+  .react-calendar__tile--now:enabled:focus {
+    background-color: #fff;
+    color: #000;
+    border: 1px solid #6366F1;
+    border-radius: 10px;
+  }
+
+  .react-calendar__tile--now{
+    background-color: #fff;
+    color: #000;
+    border: 1px solid #6366F1;
+  }
+
+  /* 선택된 날짜의 배경색 변경 */
+  .react-calendar__tile--active {
+    background-color: #6366F1;
+    color: #fff;
+    
+    border-radius: 10px;
+  }
+
+  .react-calendar__tile--hasActive {
+    background: #6366F1;
+  }
+  
+  .react-calendar__tile--active:enabled:hover, .react-calendar__tile--active:enabled:focus{
+    background: #6366F1;
+  }
+
+  /* 일정 있는 날 표시 점 */
+  .dot {
+    height: 8px;
+    width: 8px;
+    background-color: #6366F1;
+    border-radius: 50%;
+    text-align: center;
+    margin-top: 3px;
+  }

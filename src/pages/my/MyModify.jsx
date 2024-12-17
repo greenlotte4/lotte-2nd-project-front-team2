@@ -215,6 +215,11 @@ export default function MyModify() {
         }
     }
 
+    const socialLinkHandler = async () => {
+        const resp = await axiosInstance.post('api/auth/link',null);
+        console.log(resp.data);
+    }
+
   return <>
     <div id='my-modify-container'>
         <section className='my-modify1 border'>
@@ -435,7 +440,9 @@ export default function MyModify() {
                         </li>
                     </Link>
                     <Link to={`${socialURL}google`}>
-                        <li className='flex justify-between items-center border p-2 rounded-lg mt-10'>
+                        <li 
+                        // onClick={socialLinkHandler} 
+                        className='flex justify-between items-center border p-2 rounded-lg mt-10'>
                             <div className='flex'>
                                 <img src="/images/google-icon-box.png" alt="icon" className='icon-size-50 rounded-lg mr-10'/>
                                 <div>
