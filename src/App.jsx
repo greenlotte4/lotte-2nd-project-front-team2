@@ -7,6 +7,7 @@ import Login from "@/pages/user/Login.jsx";
 
 import AdminIndex from "./pages/admin/Index";
 import MainIndex from "./pages";
+import AdminFAQ from "./pages/admindashboard/adminfaq";
 import AdminUser from "./pages/admin/User";
 import AdminProject from "./pages/admin/Project";
 import AdminOutSourcing from "./pages/admin/OutSourcing";
@@ -248,7 +249,9 @@ function App() {
             <Route path="attendance" element={<AdminAttendance />} />
             <Route path="outside" element={<AdminOutSide />} />
           </Route>
-
+          
+           {/* 관리자/FAQ */}
+          <Route path="/admindashboard/adminfaq" element={<AdminFAQ />} />
           {/* 커뮤니티 (게시판) */}
           <Route path="/community" element={<Main />}>
             <Route index element={<CommunityIndex />} />

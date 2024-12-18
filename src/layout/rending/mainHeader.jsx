@@ -14,11 +14,11 @@ export default function MainHeader() {
   const queryClient = useQueryClient(); // useQueryClient 훅 임포트 및 사용
 
   // 유저 정보 쿼리
-  const {
-    data: userName,
-    isLoading: isLoadingUserName,
-    isError: isErrorUserName,
-    error: userNameError,
+  const { 
+    data: userName, 
+    isLoading: isLoadingUserName, 
+    isError: isErrorUserName, 
+    error: userNameError 
   } = useQuery({
     queryKey: [`user-${user?.uid}`], // queryKey에 user.uid 반영
     queryFn: async () => {
@@ -95,14 +95,6 @@ export default function MainHeader() {
               <div className="w-[45px] h-[45px] flex items-center justify-center overflow-hidden rounded-full">
                 <img className="w-full h-full object-cover" src={userName?.profileImgPath ? `${profileURL}${userName.profileImgPath}` : "/images/default-profile.png"} alt="프로필 이미지" />
               </div>
-
-              {/* 관리자인 경우만 관리자 대시보드 버튼 보이기 */}
-              {user?.role === 'ADMIN' && (
-                <Link to="/admin/dashboard" className="px-4 py-2 border border-gray-400 rounded text-gray-700 hover:bg-[#666bff] hover:text-white transition duration-300">
-                  관리자 전용
-                </Link>
-              )}
-
               <button onClick={logoutHandler} className="px-4 py-2 border border-gray-400 rounded text-gray-700 hover:bg-[#666bff] hover:text-white transition duration-300">
                 로그아웃
               </button>
