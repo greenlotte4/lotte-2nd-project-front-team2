@@ -13,14 +13,13 @@ export default function MainHeader() {
   const [name, setName] = useState(null);
   const queryClient = useQueryClient(); // useQueryClient 훅 임포트 및 사용
 
-  // 유저 정보 쿼리
   const {
     data: userName,
     isLoading: isLoadingUserName,
     isError: isErrorUserName,
     error: userNameError,
   } = useQuery({
-    queryKey: [`user-${user?.uid}`], // queryKey에 user.uid 반영
+    queryKey: [`user-${user?.uid}`],
     queryFn: async () => {
       try {
         const resp = await axiosInstance.get("/api/user/name");
@@ -28,10 +27,10 @@ export default function MainHeader() {
         return resp.data;
       } catch (err) {
         console.error("API 요청 에러:", err);
-        throw err; // 에러를 React Query로 전달
+        throw err;
       }
     },
-    enabled: !!user?.uid, // user 객체와 uid가 존재할 때만 쿼리 실행
+    enabled: !!user?.uid,
     retry: false,
   });
 
@@ -43,7 +42,7 @@ export default function MainHeader() {
 
   const logoutHandler = async (e) => {
     e.preventDefault();
-    queryClient.invalidateQueries(`user-${user?.uid}`); // queryKey와 동일하게 설정
+    queryClient.invalidateQueries(`user-${user?.uid}`);
     useUserStore.setState({ user: null });
     setName(null);
     logout();
@@ -77,6 +76,7 @@ export default function MainHeader() {
             고객센터
           </Link>
         </nav>
+
         {userName == null ? (
           <div className="flex items-center space-x-4">
             <Link
@@ -101,39 +101,30 @@ export default function MainHeader() {
               >
                 로그아웃
               </button>
-              {user.role === 'ADMIN'? (
-                <Link to="/admin/dashboard" className="px-4 py-2 border border-gray-400 rounded text-gray-700 hover:bg-[#666bff] hover:text-white transition duration-300">
-                  관리자 전용
-                </Link>
-              ):(
-                <>
-                  <Link
-                    to="/home"
-                    className="px-4 py-2 border border-gray-400 rounded text-gray-700 hover:bg-[#666bff] hover:text-white transition duration-300"
-                  >
-                    PLANTRY
-                  </Link>
-                  <div className="flex items-center">
-                    <div className="border-2 border-white bg-green-500 rounded-full w-[13px] h-[13px] relative top-[15px] left-[50px] z-[100]"></div>
-                    <div className="drop-shadow-lg bg-white w-[45px] h-[45px] flex items-center justify-center overflow-hidden rounded-full">
-                      <img
-                        className="w-full h-full object-cover flex items-center between-center"
-                        src={
-                          userName?.profileImgPath
-                            ? `${profileURL}${userName.profileImgPath}`
-                            : "/images/default-profile.png"
-                        }
-                        alt="프로필 이미지"
-                      />
-                    </div>
-                  </div>
-                </>
-              )}
+              <Link
+                to="/home"
+                className="px-4 py-2 border border-gray-400 rounded text-gray-700 hover:bg-[#666bff] hover:text-white transition duration-300"
+              >
+                PLANTRY
+              </Link>
+              <div className="flex items-center">
+                <div className="border-2 border-white bg-green-500 rounded-full w-[13px] h-[13px] relative top-[15px] left-[50px] z-[100]"></div>
+                <div className="drop-shadow-lg bg-white w-[45px] h-[45px] flex items-center justify-center overflow-hidden rounded-full">
+                  <img
+                    className="w-full h-full object-cover flex items-center between-center"
+                    src={
+                      userName?.profileImgPath
+                        ? `${profileURL}${userName.profileImgPath}`
+                        : "/images/default-profile.png"
+                    }
+                    alt="프로필 이미지"
+                  />
+                </div>
+              </div>
             </div>
           </div>
-          )}
+        )}
       </div>
-      {/* </div> */}
     </header>
   );
 }

@@ -7,6 +7,7 @@ import Login from "@/pages/user/Login.jsx";
 
 import AdminIndex from "./pages/admin/Index";
 import MainIndex from "./pages";
+import AdminFAQ from "./pages/admindashboard/adminfaq.jsx";
 import AdminUser from "./pages/admin/User";
 import AdminProject from "./pages/admin/Project";
 import AdminOutSourcing from "./pages/admin/OutSourcing";
@@ -62,7 +63,6 @@ import CancellationReturnWrite from "./components/render/cancellationreturnwrite
 import QNAWrite from "./components/render/qnawrite";
 import ProductServicesWrite from "./components/render/productserviceswrite";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import ValidateLinkPage from "./pages/tmp";
 const MainIndexComponent = lazy(() => import("./components/render/main"));
 
 function App() {
@@ -78,6 +78,8 @@ function App() {
   const [customAlertMessage, setCustomAlertMessage] = useState("");
   const [isToken, setIsToken] = useState(false);
   const queryClient = useQueryClient();
+
+  const [selectedRoomId, setSelectedRoomId] = useState("");
 
   // 검증 제외 경로
   const excludedRoutesSet = new Set([
@@ -99,18 +101,14 @@ function App() {
       } // 제외 경로는 검증하지 않음
 
       const tokenExpired = isTokenExpired();
-      const redirectParam = new URLSearchParams(location.search).get("redirect");
-
 
       if (tokenExpired) {
         const refreshToken = await refreshAccessToken();
-
         if (!refreshToken) {
           console.error("액세스 토큰 재발급 실패함. Redirecting to login...");
           alert("로그인 세션이 만료되었습니다. 다시 로그인해주세요.");
           logout();
-          const currentPath = location.pathname + location.search;
-          navigate(`/user/login?redirect=${encodeURIComponent(currentPath)}`);
+          navigate("/user/login");
         } else {
           setIsToken(true);
         }
@@ -167,17 +165,17 @@ function App() {
   const postAlarm = useMutation({
     mutationFn: async () => {
       try {
-        const resp = await axiosInstance.post("/api/alarm", receiveMessage[0]);
-        return resp.data;
+        const resp = await axiosInstance.post("/api/alarm",receiveMessage[0])
+        return resp.data
       } catch (err) {
         return err;
       }
     },
-    onSuccess: (data) => {
-      queryClient.fetchQuery(["alarm"]);
-      queryClient.fetchQuery(["alarm-cnt"]);
-    },
-  });
+    onSuccess : (data)=>{
+      queryClient.fetchQuery(['alarm'])
+      queryClient.fetchQuery(['alarm-cnt'])
+    }
+  })
 
   return (
     <div id="app-container m-0 xl2:mx-auto">
@@ -185,7 +183,7 @@ function App() {
         type={customAlertType}
         message={customAlertMessage}
         isOpen={customAlert}
-        onClose={() => setCustomAlert(false)}
+        onClose={()=>setCustomAlert(false)}
       />
       {/* 채팅 관련 웹소켓 전역적 위치에서 연결 */}
       <UnreadCountProvider>
@@ -207,16 +205,11 @@ function App() {
             <Route path="faq" element={<FAQLayout />}>
               <Route index element={<FAQPage />} />
               <Route path="write/payment" element={<PaymentWrite />} />
-              <Route
-                path="write/cancellation"
-                element={<CancellationReturnWrite />}
-              />
+              <Route path="write/cancellation" element={<CancellationReturnWrite />} />
               <Route path="write/qna" element={<QNAWrite />} />
               <Route path="write/services" element={<ProductServicesWrite />} />
             </Route>
           </Route>
-          <Route path="/accept-invitation/:invitationId" element={<ValidateLinkPage />} />
-
 
           {/* 홈 */}
           <Route path="/home" element={<Main />}>
@@ -255,11 +248,12 @@ function App() {
             <Route path="attendance" element={<AdminAttendance />} />
             <Route path="outside" element={<AdminOutSide />} />
           </Route>
-
+          
+           {/* 관리자/FAQ */}
+          <Route path="/admindashboard/adminfaq" element={<AdminFAQ />} />
           {/* 커뮤니티 (게시판) */}
           <Route path="/community" element={<Main />}>
             <Route index element={<CommunityIndex />} />
-            <Route path=":boardId" element={<CommunityIndex />} />
             <Route path=":boardId/write" element={<CommunityWrite />} />
             <Route path=":boardId/list" element={<CommunityList />} />
             <Route path=":boardId/view/:postId" element={<CommunityView />} />
@@ -273,7 +267,15 @@ function App() {
 
           {/* 메신저 */}
           <Route path="/message" element={<Main />}>
-            <Route index element={<Message />} />
+            <Route
+              index
+              element={
+                <Message
+                  selectedRoomId={selectedRoomId}
+                  setSelectedRoomId={setSelectedRoomId}
+                />
+              }
+            />
           </Route>
 
           {/* 문서작업 */}
