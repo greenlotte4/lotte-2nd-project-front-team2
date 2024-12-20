@@ -52,7 +52,7 @@ const HomeNotice = () => {
                             const create = n.createdAt.split("T")[0];
                             index ++
                             return (
-                                <li className='border rounded-lg flex flex-col py-2 px-5 mt-1 h-[60px]'>
+                                <li className='border rounded-lg flex flex-col py-1 px-5 mt-1 h-[55px]'>
                                     <div className="flex items-center justify-between">
                                         <div className="flex">
                                             <span className="mr-[20px] text-gray-500">{index}</span>
@@ -71,27 +71,6 @@ const HomeNotice = () => {
                         })}
                     </>
                 )}
-                {/* // <li className='border rounded-lg flex flex-col py-2 px-5 mt-1'>
-                // <div className='flex justify-between'>
-                //     <p>이번 달 대체공휴일 공지</p>
-                //     <span className='text-gray-400 font-extralight'>2024.11.18</span>
-                // </div>
-                // <p className='text-right'>전체공지</p>
-                // </li>
-                // <li className='border rounded-lg flex flex-col py-2 px-5 mt-1'>
-                // <div className='flex justify-between'>
-                //     <p>이번 달 대체공휴일 공지</p>
-                //     <span className='text-gray-400 font-extralight'>2024.11.18</span>
-                // </div>
-                // <p className='text-right'>전체공지</p>
-                // </li>
-                // <li className='border rounded-lg flex flex-col py-2 px-5 mt-1'>
-                // <div className='flex justify-between'>
-                //     <p>이번 달 대체공휴일 공지</p>
-                //     <span className='text-gray-400 font-extralight'>2024.11.18</span>
-                // </div>
-                // <p className='text-right'>전체공지</p>
-                // </li> */}
             </ul>
         </>
     )
