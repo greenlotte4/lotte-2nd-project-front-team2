@@ -127,7 +127,7 @@ function CommunityView() {
 
   const handleCommentEdit = async (commentId, newContent) => {
     try {
-      await axiosInstance.patch(
+      await axiosInstance.put(
         `/api/community/posts/${postId}/comments/${commentId}`,
         {
           content: newContent,
@@ -205,12 +205,21 @@ function CommunityView() {
     if (!window.confirm("댓글을 삭제하시겠습니까?")) return;
 
     try {
+      console.log(
+        `Deleting comment with postId: ${postId}, commentId: ${commentId}`
+      );
+
       await axiosInstance.delete(
         `/api/community/posts/${postId}/comments/${commentId}`
       );
       fetchComments();
     } catch (error) {
       console.error("댓글 삭제 실패:", error);
+      alert(
+        `댓글 삭제에 실패했습니다: ${
+          error.response?.data?.message || error.message
+        }`
+      );
     }
   };
 

@@ -10,7 +10,6 @@ import { useQuery } from "@tanstack/react-query";
 import Table from '@editorjs/table';
 import Header from '@editorjs/header';
 import Image from '@editorjs/image';
-// import TextColor from 'editorjs-text-color-plugin';
 import TextColor from "editorjs-color";
 import Warning from '@editorjs/warning';
 import Checklist from '@editorjs/checklist';
@@ -19,13 +18,45 @@ import Delimiter from '@editorjs/delimiter';
 import RawTool from '@editorjs/raw';
 import AttachesTool from '@editorjs/attaches';
 import InlineCode from '@editorjs/inline-code';
-
+import AIText from '@alkhipce/editorjs-aitext'
+import DragDrop from "editorjs-drag-drop";
+import LinkTool from '@editorjs/link';
+import Comment from 'editorjs-comment';
+import CustomServerLinkTool from '@/util/CustomServerLinkTool'
 
 const EditorContainer = styled.div`
   width: 100%;
   max-width: 1420px;
   padding: 20px;
 `;
+
+class CustomLinkTool {
+  constructor({ endpoint }) {
+    this.endpoint = endpoint;
+  }
+
+  // 링크를 입력받았을 때 호출되는 메서드
+  async createLink(inputText) {
+    try {
+      // 백엔드에 API 요청 보내기
+      const response = await axiosInstance.get(this.endpoint+"?url="+inputText);
+
+      const data = await response.data
+      const generatedUrl = data.url; // 백엔드에서 반환된 URL을 받아옴
+
+      // Editor.js에 링크 추가
+      this.insertLink(generatedUrl);
+    } catch (error) {
+      console.error('링크 생성 실패:', error);
+    }
+  }
+
+  // 생성된 URL을 Editor.js에 삽입하는 메서드
+  insertLink(url) {
+    // Editor.js에 링크 삽입하는 로직
+    // 예: 'editor.blocks.insert' 등을 사용하여 링크 블록을 삽입
+  }
+}
 
 const Editor = () => {
   const editorInstance = useRef(null);
@@ -105,8 +136,17 @@ const Editor = () => {
         onReady: () => {
           console.log("Editor is ready!");
           updatePageId(pageId);
+          new DragDrop(editorInstance.current);
+          document.body.addEventListener('click', (event) => {
+            const target = event.target;
+            if (target && target.tagName === 'A') {
+                event.preventDefault();
+                window.location.href = target.href;
+            }
+        });
         },
-        inlineToolbar:true,
+        initialBlock: 'aiText',
+        inlineToolbar: true,
         tools: {
           table: Table, // Table tool 추가
           header: {
@@ -127,6 +167,34 @@ const Editor = () => {
               tag: "SPAN"
             }
           },
+          
+          aiText: {
+            // if you do not use TypeScript you need to remove "as unknown as ToolConstructable" construction
+            class: AIText,
+            config: {
+              preserveBlank: true,
+              inlineToolbar: true, 
+              callback: (text) => {
+                return new Promise((resolve, reject) => {
+                  axiosInstance.post(`/api/page/ai?text=${text}`)
+                    .then((response) => {
+                      // AI 응답을 받은 후, 그 값을 resolve로 전달
+                      console.log(response.data)
+                     resolve("<br> AI: "+response.data.choices[0].message.content);  // 서버 응답에서 AI 텍스트를 추출해서 반환
+                    })
+                    .catch((error) => {
+                      // 오류 발생 시 reject로 에러 처리
+                      console.error('Error fetching AI response:', error);
+                      reject('AI text generation failed');  // 실패 메시지 반환
+                    });
+                });
+              },
+            }
+          },
+          childPage: {
+            class: CustomServerLinkTool,
+            inlineToolbar: true,
+          }, // Link Tool 추가
           inlineCode: {
             class: InlineCode,
             shortcut: 'CMD+SHIFT+M',
@@ -164,7 +232,7 @@ const Editor = () => {
                 },
               },
             },
-          },
+          },     
           raw: RawTool,
           code: CodeTool,
           warning: {

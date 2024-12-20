@@ -79,12 +79,8 @@ const CommunityComment = ({
               <div className="menu-dropdown">
                 <button onClick={startEdit}>수정</button>
                 <button
-                  onClick={() => {
-                    if (window.confirm("댓글을 삭제하시겠습니까?")) {
-                      handleCommentDelete(comment.commentId);
-                    }
-                    setShowMenu(false);
-                  }}
+                  onClick={() => handleCommentDelete(comment.commentId)}
+                  className="delete-button"
                 >
                   삭제
                 </button>
