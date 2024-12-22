@@ -23,15 +23,17 @@ const HomeNotice = () => {
 
     return(
         <>
-            <div className="flex items-center justify-between mb-3">
-                <h2 className='text-2xl'>Notice</h2>
-                <Link to={"/community/1/list"}className='flex justify-between items-center text-gray-600 border border-gray-400 rounded-lg px-3 h-[28px]'>
+            <div className="flex items-center justify-between mb-2">
+                <h2 className='text-2xl ml-[5px]'>Notice</h2>
+                {/* <Link to={"/community/1/list"}className='flex justify-between items-center text-gray-600 border border-gray-400 rounded-lg px-3 h-[28px]'>
 
                     <span>전체보기</span>
                     <img className='ml-2 w-[20px] h-[20px]' src="/images/ArrowForward.png" alt="allow" />
-                </Link>    
+                </Link>     */}
             </div>
-            <ul className="">
+            <ul 
+            // className="border rounded-lg"
+            >
                 {isLoading ? (
                     <p>로딩 중...</p>
                 ) : isError ? (
@@ -51,22 +53,38 @@ const HomeNotice = () => {
                         {data.map((n, index) => {
                             const create = n.createdAt.split("T")[0];
                             index ++
+                            
                             return (
-                                <li className='border rounded-lg flex flex-col py-1 px-5 mt-1 h-[55px]'>
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex">
-                                            <span className="mr-[20px] text-gray-500">{index}</span>
-                                            <p>{n.title}</p>
+                                <Link to={`/community/1/view/${n.postId}`}>
+                                    <li className='border bg-white rounded-lg mb-1 px-3 flex flex-col py-1 justify-center h-[48px]'>
+                                        <div className="flex items-center justify-between ">
+                                            <div className="flex items-center ">
+                                                <div className={`px-2 h-[23px] rounded flex items-center mr-2 ${n.mandatory? 'bg-indigo-400':'bg-gray-300'}`}>
+                                                    <span className="text-white text-sm">{ n.mandatory ? '필독' : '공지'}</span>
+                                                </div>
+                                                {/* <span className="mr-[20px] text-indigo-500 font-bold">{index}</span> */}
+                                                <p>{n.title}</p>
+                                                {/* <span className="text-gray-600 text-xs">{n.content}</span> */}
+                                            </div>
+                                            <div className="flex flex-col items-end">
+                                                    <span className='text-gray-400 text-xs font-extralight'>{create}</span>
+                                                
+                                                    {/* <span className='text-sm mr-10 text-gray-500'>{n.writer}</span> */}
+                                                    {/* <p className='text-xs'>Plantry</p> */}
+                                                    <div className="flex items-center">
+                                                        <span className="text-xs flex mr-10">
+                                                            <img className="w-[15px] h-[15px] mr-2" src="/images/people-icon.png" alt="" />
+                                                            0
+                                                        </span>
+                                                        <span className="text-xs flex">
+                                                            <img className="w-[15px] h-[15px] mr-2" src="/images/people-icon.png" alt="" />
+                                                            0
+                                                        </span>
+                                                    </div>
+                                            </div>
                                         </div>
-                                        <div className="flex flex-col items-end">
-                                                <span className='text-gray-400 font-extralight'>{create}</span>
-                                            
-                                                {/* <span className='text-sm mr-10 text-gray-500'>{n.writer}</span> */}
-                                                <p className='text-xs'>Plantry</p>
-                                            
-                                        </div>
-                                    </div>
-                                </li>
+                                    </li>
+                                </Link>
                             );
                         })}
                     </>

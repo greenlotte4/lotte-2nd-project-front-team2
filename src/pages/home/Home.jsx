@@ -9,6 +9,7 @@ import HomeAttendance from '../../components/home/HomeAttendance';
 import HomeSchedule from '../../components/home/HomeSchedule';
 import HomeProject from '../../components/home/HomeProject';
 import HomeNotice from '../../components/home/HomeNotice';
+import HomePage from '../../components/home/HomePage';
 
 const profileURL = 'http://3.35.170.26:90/profileImg/';
 
@@ -16,6 +17,7 @@ export default function Home() {
   const navigate = useNavigate();
   const [isActive, setIsActive] = useState(true); // 페이지 활성화 상태 관리
   const user = useUserStore((state)=> state.user);
+  const role = user.role;
 
   const getUserAPI = async () => {
     if (!user?.uid) {
@@ -31,6 +33,7 @@ export default function Home() {
     queryFn: getUserAPI,
     enabled: Boolean(user?.uid),
   });
+
 
     return (
       <div id='home-container'>
@@ -76,8 +79,12 @@ export default function Home() {
           </article>
         </section>
         <section className='home-index-bot'>
-          <div className='home-bot border' >
-          <HomeNotice/>
+          <div className='home-bot2 border' >
+            {role === 'USER' ? (
+              <HomePage/>
+            ) : (
+              <HomeNotice/>
+            )}
           </div>
           <div className='home-bot border'>
             <HomeSchedule/>

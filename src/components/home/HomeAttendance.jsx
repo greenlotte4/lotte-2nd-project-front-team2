@@ -6,6 +6,7 @@ import CustomAlert from "../Alert";
 
 const HomeAttendance = () => {
 
+    const [checkIn, setCheckIn] = useState('')
     const user = useUserStore((state)=> state.user);
 
     const [alert, setAlert] = useState({message : '', type: '', isOpen: false, onClose: false})
@@ -57,7 +58,7 @@ const HomeAttendance = () => {
     return resp.data;
     }
 
-    const { data, isLoading, isError } = useQuery({
+    const { data, isLoading, isError, refetch } = useQuery({
     queryKey: [`attendance-${user.uid}`],
     queryFn: todayAttendanceAPI,
     enabled: Boolean(user?.uid),
@@ -69,9 +70,19 @@ const HomeAttendance = () => {
         if(confirm("출근하시겠습니까?")){
           try{
             const resp = await axiosInstance.post('/api/attendance/checkIn', null);
-            console.log("출근하기! "+resp.data)
-            refetch();
-            setAlert({message: `${resp.data} \n출근이 완료되었습니다.`,type: 'success',isOpen: true, onClose: false,})
+            if (!resp || !resp.data) {
+                throw new Error("API 응답 데이터가 없습니다.");
+            }
+
+            // 알림 먼저 설정
+            setAlert({
+                message: `${resp.data} \n 출근이 완료되었습니다.`,
+                type: 'success',
+                isOpen: true,
+                onClose: false,
+            });
+
+            await refetch();
           }catch(err){
             console.log("에러 "+JSON.stringify(err.response.data))
             setAlert({message: `${err.response.data}`,type: 'warning',isOpen: true,onClose: false,})
@@ -82,20 +93,33 @@ const HomeAttendance = () => {
       }
       const leaveWorkHandler = async (e) => {
         e.preventDefault();
-        if(confirm("퇴근하시겠습니까?")){
-          try{
-            const resp = await axiosInstance.post('/api/attendance/checkOut', null);
-            console.log("퇴근하기! "+resp.data)
-            refetch();
-            setAlert({message: `${resp.data} \n 퇴근완료! `,type: 'success',isOpen: true, onClose: false,})
-          }catch(err){
-            console.log("에러 "+JSON.stringify(err.response.data))
-            setAlert({message:  JSON.stringify(err.response.data),type: 'warning',isOpen: true,onClose: false,})
-          }
-        }else{
-          return;
+        if (confirm("퇴근하시겠습니까?")) {
+            try {
+                const resp = await axiosInstance.post('/api/attendance/checkOut', null);
+                if (!resp || !resp.data) {
+                    throw new Error("API 응답 데이터가 없습니다.");
+                }
+    
+                // 알림 먼저 설정
+                setAlert({
+                    message: `${resp.data} \n 퇴근완료! `,
+                    type: 'success',
+                    isOpen: true,
+                    onClose: false,
+                });
+    
+                await refetch();
+            } catch (err) {
+                console.log("에러 발생: ", err.response?.data || err.message || err);
+                setAlert({
+                    message: err.response?.data || "알 수 없는 오류가 발생했습니다.",
+                    type: 'warning',
+                    isOpen: true,
+                    onClose: false,
+                });
+            }
         }
-      }
+      };
 
     return (
         <>
@@ -117,7 +141,9 @@ const HomeAttendance = () => {
                         <span className='text-lg w-full h-full text-center flex items-center justify-center text-gray-600'>
                             출근시간</span>
                         <span className='text-2xl w-full h-full text-center text-gray-600 font-extralight'>
-                        {data?.checkInTime||'-'}</span>
+                        {data?.checkInTime||'-'}
+                        {/* {checkIn} */}
+                        </span>
                         </div>
                         <img src='/images/arrowRight.png' alt='allow' className='commute-allow'></img>
                         <div className='checktime flex flex-col'>
