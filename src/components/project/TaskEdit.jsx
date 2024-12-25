@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { CustomSVG } from "./_CustomSVG";
 import useUserStore from "@/store/useUserStore"
 import { createPortal } from "react-dom";
+import { PROFILE_URI } from "../../api/_URI";
 
 function Portal({ children }) {
   return createPortal(children, document.body);
@@ -146,6 +147,7 @@ const handleDeleteTag = (index) => {
   const colClassName =
     "flex gap-1.5 items-start pt-1.5 mt-1.5 max-w-full tracking-normal leading-none rounded-lg min-h-[26px] text-gray-600/60 w-[231px]";
 
+  const ProfileURI = PROFILE_URI;
   return (
     <form
       onSubmit={handleSubmit}
@@ -237,7 +239,8 @@ const handleDeleteTag = (index) => {
                     key={user.id}
                     className="flex items-center flex-shrink-0 gap-[2px] px-2 py-[2px] rounded-2xl bg-indigo-200/70 text-xs text-indigo-500"
                   >
-                    <img src={user.img} className="h-[24px]" />
+                    <img src={user.profile!=null?ProfileURI+user.profile:"/images/user_face_icon.png"}
+                               className="h-[24px] w-[24px] object-cover rounded-full" />
                     <span className="">{user.name}</span>
                     <span className="text-indigo-400">({user?.group})</span>
                     <button onClick={() => handleDeleteTag(index)}>
@@ -264,9 +267,9 @@ const handleDeleteTag = (index) => {
                                       ? "bg-indigo-100 hover:border-indigo-300"
                                       : "bg-gray-100 hover:border-gray-300"}`}>
                                   <img
-                                    src={m?.img}
+                                    src={m.profile!=null?ProfileURI+m.profile:"/images/user_face_icon.png"}
                                     alt="user-img"
-                                    className="w-[12px] h-[12px]"
+                                    className="w-[20px] h-[20px] rounded-full object-cover"
                                   />
                                   <div className="ml-10 flex flex-col text-left">
                                     <span className="font-light text-black text-xs">

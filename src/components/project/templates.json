@@ -34,7 +34,7 @@
           ]
       },{
         "title": "대기 중", 
-        "color": "#0070F5",
+        "color": "#",
         "role": 2,
         "position":2,
         "tasks": []

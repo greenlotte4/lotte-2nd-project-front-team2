@@ -7,6 +7,7 @@ import { useInfiniteQuery } from "@tanstack/react-query";
 import axiosInstance from "@/services/axios.jsx";
 import templates from "./templates.json";
 import { PROFILE_URI } from "../../api/_URI";
+import { name } from "file-loader";
 
 export const TemplateSelection = ({isOpen,onClose,onSelectTemplate}) => {
   if (!isOpen) return null;
@@ -222,11 +223,11 @@ export const AddProjectModal = ({
   const ProfileURI = PROFILE_URI;
   const loginUser = useUserStore((state) => state.user)
   const [searchKeyword, setSearchKeyword] = useState("");
-  const [selectedGroupId, setSelectedGroupId] = useState(type==null&&type==1?loginUser.groupId:0);
+  const [selectedGroupId, setSelectedGroupId] = useState((type==null||type===1)?loginUser.groupId:0);
   const [listType, setListType] = useState(1);
   const [project, setProject] = useState({
     title: "새 프로젝트",
-    type: type,
+    type: type||1,
     template: selectedTemplate,
     coworkers: selectedUsers,
     ...(selectedTemplate && { columns: templates[selectedTemplate].columns }) // selectedTemplate이 있을 때만 columns 설정
@@ -371,10 +372,10 @@ export const AddProjectModal = ({
     if(loginUser.grade==1&&project.coworkers.length>2){alert('해당 플랜은 작업자를 최대 3명까지만 지정할 수 있습니다!'); return;}
     else if(loginUser.grade==2&&project.coworkers.length>9){alert('해당 플랜은 작업자를 최대 10명까지만 지정할 수 있습니다!'); return;}
     setProject((prev) => {
-      const isSelected = prev.coworkers.some((user) => user.userId === member.id);
+      const isSelected = prev.coworkers.some((user) => user.userId == member.id);
       const updatedCoworkers = isSelected
-        ? prev.coworkers.filter((user) => user.id !== member.id) // 선택 해제
-        : [...prev.coworkers, member]; // 선택 추가
+        ? prev.coworkers.filter((user) => user.userId != member.id) // 선택 해제
+        : [...prev.coworkers, {userId:member.id, name:member.name, group:member.group, profile:member.profile, level:member.level, email:member.email}]; // 선택 추가
       
       return {
         ...prev,
@@ -503,7 +504,7 @@ export const AddProjectModal = ({
                         key={index}
                         className="flex items-center flex-shrink-0 gap-[2px] px-2 py-[2px] rounded-2xl bg-indigo-200 bg-opacity-70 text-xs text-indigo-500"
                       >
-                        <img src={`${ProfileURI}${user.profileImgPath}`} className="h-[24px]" />
+                        <img src={`${ProfileURI}${user.profile}`} className="h-[24px] w-[24px] object-cover rounded-full" />
                         <span className="">{user.name}</span>
                         <span className="text-indigo-400">({user.group})</span>
                         <button onClick={() => handleDeleteTag(index)}>
@@ -540,7 +541,7 @@ export const AddProjectModal = ({
                     key={index}
                     className="flex items-center flex-shrink-0 gap-[2px] px-2 py-[2px] rounded-2xl bg-indigo-200 bg-opacity-70 text-xs text-indigo-500"
                   >
-                    <img src={user.img} className="h-[24px]" />
+                    <img src={`${ProfileURI}${user.profile}`} className="h-[24px] w-[24px] object-cover rounded-full" />
                         <span className="">{user.name}</span>
                         <span className="text-indigo-400"> ({user.group})</span>
                     <button onClick={() => handleDeleteTag(index)}>
@@ -596,9 +597,9 @@ export const AddProjectModal = ({
                             }`}
                           >
                             <img
-                              src={m?.img}
+                              src={m.profile!=null?ProfileURI+m.profile:"/images/user_face_icon.png"}
                               alt="user-img"
-                              className="w-[45px] h-[45px]"
+                              className="w-[45px] h-[45px] rounded-full object-cover"
                             />
                             <div className="ml-10 flex flex-col text-left">
                               <p className="font-light text-black">
@@ -673,9 +674,9 @@ export const AddProjectModal = ({
                                         }`}
                                       >
                                         <img
-                                          src={m.img}
+                                          src={m.profile!=null?ProfileURI+m.profile:"/images/user_face_icon.png"}
                                           alt="user-img"
-                                          className="w-[45px] h-[45px]"
+                                          className="w-[45px] h-[45px] rounded-full"
                                         />
                                         <div className="ml-10 flex flex-col text-left">
                                           <p className="font-light text-black">

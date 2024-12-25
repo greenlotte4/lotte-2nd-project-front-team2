@@ -313,7 +313,7 @@ const DynamicTask = React.memo(
                         
                   {((assign || []).map(item => item.user)||[]).length>0 && (
                         (assign || []).map(item => item.user).map((asso, index) => (
-                          <img key={asso.id} src={asso.profile!==null?PROFILE_URI+asso.profile:"/images/document-folder-profile.png"} title={asso.name} alt={asso.name}
+                          <img key={asso.id} src={asso.profile!==null?PROFILE_URI+asso.profile:"/images/user_face_icon.png"} title={asso.name} alt={asso.name}
                             className="w-8 h-8 rounded-full border-2 border-white -ml-3 first:ml-0"
                             style={{zIndex: ((assign || []).map(item => item.user)).length - index,}}
                           />
