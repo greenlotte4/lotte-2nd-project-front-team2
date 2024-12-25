@@ -11,25 +11,23 @@ export const ProjectColumn = ({
   color = "#000000",
   count = 0,
   children,
+  role,
   index,
   coworkers=[],
   clearTasks,
   status = "basic",
   onDelete,
   handleTaskUpsert,
+  setIsNewColumnAdded,
+  onAddColumn,
 }) => {
   const initialData =
     status == "new"
-      ? { title: title, color: color, count: count, projects: [] }
-      : { title: title, color: color, count: count };
+      ? { title: title, color: color, count: count, role:5 }
+      : { title: title, color: color, count: count, role:role };
   const [column, setColumn] = useState(initialData);
   const [isNewTaskAdded, setIsNewTaskAdded] = useState(false);
   const [mode, setMode] = useState(status);
-   // 모달 닫기 핸들러
-   const handleCloseColumnEdit = () => {
-    setMode("basic");
-    setIsNewTaskAdded(false);
-  };
 
   const handleIsAddTask = () => {
     if (!isNewTaskAdded) {
@@ -54,8 +52,10 @@ export const ProjectColumn = ({
           column={column}
           setColumn={setColumn}
           setMode={setMode}
-          onSave={handleCloseColumnEdit}
+          onClose={()=>{setColumn(null);setIsNewColumnAdded(false)
+            setMode("basic");}}
           mode={mode}
+          onAddColumn={onAddColumn}
         />
       )}
 

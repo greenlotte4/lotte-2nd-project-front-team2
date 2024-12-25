@@ -58,8 +58,8 @@ export const ModifyProjectModal = ({ isOpen, onClose, projectId, onChangeProject
   const [error, setError] = useState(null);
 
   const typeDescriptions = {
-    1: "부서 내부에서만 진행되는 프로젝트입니다. 이 프로젝트에서는 자신이 소속한 부서 내의 인원만 작업자로 초대할 수 있습니다.",
-    2: "회사 전체에서 공유 및 진행하는 프로젝트입니다. 이 프로젝트에서는 자신이이 소속한 회사의 모든 인원을 작업자로 초대할 수 있습니다.",
+    1: "부서 내부에서만 진행되는 프로젝트입니다. 이 프로젝트에서는 자신이 소속된 부서 내의 인원만 작업자로 초대할 수 있습니다.",
+    2: "회사 전체에서 공유 및 진행하는 프로젝트입니다. 이 프로젝트에서는 자신이 소속된 회사의 모든 인원을 작업자로 초대할 수 있습니다.",
     3: "다른 회사와 협력하여 진행하는 프로젝트입니다.",
     4: "팀 단위로 진행되는 프로젝트입니다.",
     5: "모두가 볼 수 있는 공개 프로젝트입니다.",
@@ -215,17 +215,18 @@ export const AddProjectModal = ({
   setSelectedUsers,
   projectId,
   onItemClick,
+  type
 }) => {
   if (!isOpen) return null;
 
   const ProfileURI = PROFILE_URI;
   const loginUser = useUserStore((state) => state.user)
   const [searchKeyword, setSearchKeyword] = useState("");
-  const [selectedGroupId, setSelectedGroupId] = useState(loginUser.groupId);
+  const [selectedGroupId, setSelectedGroupId] = useState(type==null&&type==1?loginUser.groupId:0);
   const [listType, setListType] = useState(1);
   const [project, setProject] = useState({
     title: "새 프로젝트",
-    type: 1,
+    type: type,
     template: selectedTemplate,
     coworkers: selectedUsers,
     ...(selectedTemplate && { columns: templates[selectedTemplate].columns }) // selectedTemplate이 있을 때만 columns 설정
@@ -569,7 +570,7 @@ export const AddProjectModal = ({
               ) : null
             ) : (
               <>
-                {project.type === "2" && (
+                {project.type == "2" && (
                   <div className="cursor-pointer text-xs sticky bg-white top-0 text-left z-30 py-2 mt-0">
                     <span onClick={() => { setListType(1); selectGroup(0); }}> 전체 보기 </span> | 
                     <span onClick={() => setListType(2)}> 부서별 보기 </span>

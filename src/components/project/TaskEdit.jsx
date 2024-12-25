@@ -3,25 +3,39 @@ import { useEffect, useRef, useState } from "react";
 import { CustomSVG } from "./_CustomSVG";
 import useUserStore from "@/store/useUserStore"
 import { createPortal } from "react-dom";
-import useProjectData from "../../util/useProjectData";
 
 function Portal({ children }) {
   return createPortal(children, document.body);
+}
+
+function MoveTaskModal({ isOpen, onClose, task, onMoveTask }) {
+  if (!isOpen) return null;
+  
+  return (
+    <div className="modal-overlay">
+      <div className="modal-content">
+        <h2>이 태스크를 이동하시겠습니까?</h2>
+        <button onClick={onClose}>취소</button>
+        <button onClick={() => onMoveTask(task)}>이동</button>
+      </div>
+    </div>
+  );
 }
 
 export function DynamicTaskEditor({
   projectId,
   mode,
   taskToEdit,
+  onDeleteSubTask,
   columnIndex,
   columnId,
   setIsAdded,
   onSave,
   onClose,
   coworkers =[],
+  
 }) {
    
-  const {sendWebSocketMessage} = useProjectData(projectId);
   const loginUser = useUserStore((state) => state.user)
   const [task, setTask] = useState({
     columnId: columnId,
@@ -315,7 +329,7 @@ const handleDeleteTag = (index) => {
                   {subTask.name}
                 </label>
                 <button
-                    onClick={() => handleDeleteSubTask(subTask)}
+                    onClick={() => {onDeleteSubTask(subTask)}}
                     aria-label="Delete SubTask"
                     className="ml-auto text-sm"
                   >

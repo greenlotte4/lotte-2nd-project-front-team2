@@ -14,6 +14,14 @@ export const ColumnHeader = ({
 }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
+  const roleDescriptions = {
+    1: "작업자가 배정되지 않은 작업 목록",
+    2: "작업자가 배정된 작업 목록",
+    3: "진행중인 작업 목록",
+    4: "완료된 작업 목록록",
+    5: null,
+  };
+
   const toggleDropdown = (e) => {
     e.stopPropagation(); // 클릭 이벤트 전파 방지
     setIsDropdownOpen((prev) => !prev);
@@ -35,7 +43,7 @@ export const ColumnHeader = ({
       <div className="flex gap-3 items-center w-full min-h-[32px] relative">
         <div className="relative flex flex-1 shrink gap-2 items-start justify-between self-stretch my-auto basis-0 w-full handle">
           <div>
-            <span className="text-black text-opacity-80 text-sm font-[550]">
+            <span className="text-black text-opacity-80 text-sm font-[550]" title={roleDescriptions[column.role]}>
               {column.title}
             </span>
           </div>
@@ -102,12 +110,18 @@ export const ColumnHeaderEdit = ({
   column = [],
   setMode,
   mode,
-  onSave,
+  onAddColumn,
+  onClose,
 }) => {
   const [formData, setFormData] = useState(column);
-  const {sendWebSocketMessage} = useProjectData(projectId);
   
-
+  const roleDescriptions = {
+    1: "작업자가 배정되지 않은 작업 목록",
+    2: "작업자가 배정된 작업 목록",
+    3: "진행중인 작업 목록",
+    4: "완료된 작업 목록",
+    5: "자유롭게 쓸 수 있는 작업 목록",
+  };
   const text = mode == "new" ? "생성" : "수정";
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -118,16 +132,10 @@ export const ColumnHeaderEdit = ({
   };
 
   // 버튼 클릭 시 처리 함수
-  const handleSubmit = async() => {
-    sendWebSocketMessage(formData, `/app/project/${projectId}/column/added`);
+  const handleSubmit = () => {
+    onAddColumn(formData);
     setMode("basic");
-  };
-  const handleClose = () => {
-    if (mode == "new") {
-      onSave();
-    } else {
-      ()=>{setMode("basic");}
-    }
+    onClose()
   };
 
   return (
@@ -153,7 +161,7 @@ export const ColumnHeaderEdit = ({
         </div>
         {/* 닫기 버튼 */}
         <button
-          onClick={handleClose} // 상태 초기화 (모드 변경)
+          onClick={onClose} // 상태 초기화 (모드 변경)
           aria-label="닫기"
           className="p-2focus:outline-none"
         >
@@ -184,6 +192,30 @@ export const ColumnHeaderEdit = ({
             className="w-[60px] p-1 text-xs border rounded-md"
           />
         </div>
+      </div>
+      
+      <div className="flex gap-2 items-center mt-2">
+        <span className="text-sm text-black text-opacity-50 w-fit">역할</span>
+        <div className="flex justify-between items-center min-h-[24px]">
+          <select
+            name="role"
+            value={formData.role}
+            onChange={handleChange}
+            className="border rounded-md mr-2 text-xs outline-none p-1"
+            required
+          >
+            <option value={1}>To Do</option>
+            <option value={2}>Ready</option>
+            <option value={3}>Doing</option>
+            <option value={4}>Done</option>
+            <option value={5}>Etc.</option>
+          </select>
+        </div>
+      </div>
+      
+      <div className="flex gap-2 items-center mt-1">
+        <div className="text-sm text-transparent">설명</div>
+        <span className="text-xs text-black/50">{roleDescriptions[formData.role]}</span>
       </div>
 
       {/* Action Button Section */}

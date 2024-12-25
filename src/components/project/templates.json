@@ -11,6 +11,7 @@
       { 
           "title": "할 일",
           "color": "#F5234B",
+          "role": 1,
           "position":1,
           "tasks": [
                       {
@@ -34,18 +35,21 @@
       },{
         "title": "대기 중", 
         "color": "#0070F5",
+        "role": 2,
         "position":2,
         "tasks": []
     },
       {
           "title": "진행 중", 
           "color": "#ffdd00",
+          "role": 3,
           "position":3,
           "tasks": []
       },
       {
           "title": "✅ 완료",
           "color": "#1EC337",
+          "role": 4,
           "position":4,
           "tasks": []
       }

@@ -89,6 +89,7 @@ const DynamicTask = React.memo(
     columnIndex,
     onAddSubTask,
     onClickSubTask,
+    onDeleteSubTask,
     onAddComment,
     onDeleteComment,
     onDeleteTask,
@@ -178,6 +179,7 @@ const DynamicTask = React.memo(
               onSaveTask(updatedTask,columnIndex);
               setIsEditing(false);
             }}
+            onDeleteSubTask={onDeleteSubTask}
             onClose={handleEditToggle}
           />
         ) : (
