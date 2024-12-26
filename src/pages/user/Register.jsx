@@ -438,7 +438,7 @@ export default function Register() {
 
   async function sendEmail (field, value){
         try {
-          const response = await axios.post(`${baseURL}/api/auth/sendMail`,
+          const response = await axios.post(`${baseURL}/api/auth/sendmail`,
             { email: value },
             { headers: { 'Content-Type': 'application/json' } }
           );
@@ -622,6 +622,13 @@ export default function Register() {
       console.error('Error Message:', error.message);
     }
   };
+
+  const CompanyChangeHandler = (e) => {
+    const value = e.target.value;
+    setUser({...user, company:value});
+    setValidationCompany({company:true});
+    console.log(value, user, validationCompany,"컴퍼니 코드");
+  }
     return (
       <form>
         <div className='register-container'>
@@ -908,7 +915,7 @@ export default function Register() {
                     <>
                       <p className='text-sm custom-mt-30'>Plantry에서 제공한 회사코드를 입력해주세요.</p>
                       <input type='text' placeholder='회사코드 입력'
-                      name='company' value={user.company} onChange={ChangeHandler}
+                      name='company' value={user.company} onChange={CompanyChangeHandler}
                       className="signup-input-lg mt-10" ></input>
                     </>
                   }
