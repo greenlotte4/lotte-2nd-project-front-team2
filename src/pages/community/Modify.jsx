@@ -4,22 +4,21 @@ import CommunitySidebar from "@/components/community/CommunitySidebar";
 import useUserStore from "../../store/useUserStore";
 import axiosInstance from "../../services/axios";
 import ReactQuill from "react-quill";
-import { list } from "postcss";
 
 function CommunityModify() {
   const navigate = useNavigate();
   const { boardId, postId } = useParams();
+  const [isPinned, setIsPinned] = useState(false);
   const currentUser = useUserStore((state) => state.user);
   const [isCommentEnabled, setIsCommentEnabled] = useState(false);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  const [file, setFile] = useState(null);
-  const [showModal, setShowModal] = useState(false);
-  const [selectedBoardId, setSelectedBoardId] = useState(boardId);
   const [files, setFiles] = useState([]);
-  const [data, setData] = useState([]); // To store board data
+  const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [boardName, setBoardName] = useState("게시판");
+  const [selectedBoardId, setSelectedBoardId] = useState(boardId);
+  const [error, setError] = useState(null);
 
   // 게시글 데이터 불러오기
   useEffect(() => {
@@ -28,84 +27,168 @@ function CommunityModify() {
         const response = await axiosInstance.get(
           `/api/community/posts/${boardId}/${postId}`
         );
-        setTitle(response.data.title);
-        setContent(response.data.content);
-        setIsCommentEnabled(response.data.isCommentEnabled);
-        setSelectedBoardId(response.data.boardId);
+        console.log("불러온 게시글 데이터:", response.data);
+
+        if (response.data) {
+          setTitle(response.data.title || "");
+          setContent(response.data.content || "");
+          setIsCommentEnabled(!!response.data.isCommentEnabled);
+          setSelectedBoardId(response.data.boardId || boardId);
+          setIsPinned(!!response.data.isPinned);
+        }
       } catch (error) {
-        console.error("게시글 불러오기 실패:", error);
+        console.error(
+          "게시글 불러오기 실패:",
+          error.response?.data || error.message
+        );
+        setError("게시글을 불러오는데 실패했습니다.");
+        alert("게시글을 불러오는데 실패했습니다.");
+        navigate(-1);
       }
     };
 
-    fetchPost(); // 함수 호출
-  }, [boardId, postId]);
+    if (boardId && postId) {
+      fetchPost();
+    }
+  }, [boardId, postId, navigate]);
 
   // 게시판 목록 불러오기
   useEffect(() => {
     const fetchBoards = async () => {
       try {
         const response = await axiosInstance.get(`/api/community/boards`);
-        setData(response.data);
+        console.log("게시판 목록 응답:", response.data);
 
-        console.log("selectedBoardId:", selectedBoardId);
-        console.log("API 응답 데이터:", response.data);
-        // 선택된 게시판 ID에 따라 이름 설정
-        const currentBoard = response.data.find(
-          (board) => board.boardId === parseInt(selectedBoardId)
-        );
-        if (currentBoard) {
-          setBoardName(currentBoard.boardName); // 게시판 이름 설정
-        } else {
-          setBoardName("알 수 없음"); // 기본값
+        if (Array.isArray(response.data)) {
+          setData(response.data);
+
+          const currentBoard = response.data.find(
+            (board) => board.boardId === parseInt(selectedBoardId)
+          );
+
+          if (currentBoard) {
+            setBoardName(currentBoard.boardName);
+          } else {
+            setBoardName("알 수 없는 게시판");
+          }
         }
-
-        setLoading(false); // 로딩 상태 갱신
       } catch (error) {
         console.error("게시판 목록 불러오기 실패:", error);
-        setBoardName("알 수 없음"); // 기본값 설정
+        setError("게시판 목록을 불러오는데 실패했습니다.");
+        setBoardName("알 수 없는 게시판");
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchBoards(); // 게시판 목록 불러오기
+    fetchBoards();
   }, [selectedBoardId]);
 
-  const handleFileChange = (e) => {
-    const selectedFiles = Array.from(e.target.files);
-
-    if (selectedFiles.length > 2) {
-      alert("파일은 최대 두 개까지만 첨부할 수 있습니다.");
-      return;
+  const validateFiles = (files) => {
+    if (files.length > 2) {
+      throw new Error("파일은 최대 두 개까지만 첨부할 수 있습니다.");
     }
 
-    setFiles(selectedFiles);
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    for (const file of files) {
+      if (file.size > maxSize) {
+        throw new Error(`${file.name}의 크기가 5MB를 초과합니다.`);
+      }
+    }
+
+    return true;
   };
 
-  // 수정 완료 핸들러
+  const handleFileChange = (e) => {
+    try {
+      const selectedFiles = Array.from(e.target.files);
+      validateFiles(selectedFiles);
+      setFiles(selectedFiles);
+      console.log(
+        "선택된 파일:",
+        selectedFiles.map((f) => ({ name: f.name, size: f.size }))
+      );
+    } catch (error) {
+      alert(error.message);
+      e.target.value = ""; // input 초기화
+      setFiles([]);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (!title.trim()) {
+      alert("제목을 입력해주세요!");
+      return;
+    }
+
+    if (!content.trim()) {
+      alert("내용을 입력해주세요!");
+      return;
+    }
+
+    const formData = new FormData();
+
+    // 로깅을 통한 데이터 검증
+    console.log("전송 전 데이터 확인:", {
+      boardId: selectedBoardId,
+      title,
+      content,
+      isPinned,
+      writer: currentUser.username,
+      uid: currentUser?.id,
+      files: files.map((f) => f.name),
+    });
+
+    // FormData에 데이터 추가
+    formData.append("boardId", Number(selectedBoardId));
+    formData.append("title", title);
+    formData.append("content", content);
+    formData.append("isPinned", isPinned);
+    formData.append("writer", currentUser.username);
+    formData.append("uid", currentUser?.id);
+
+    // 파일 처리
+    if (files && files.length > 0) {
+      files.forEach((file, index) => {
+        console.log(`첨부 파일 ${index + 1}:`, file.name, file.size);
+        formData.append("files", file);
+      });
+    }
+
+    // FormData 내용 최종 확인
+    for (let pair of formData.entries()) {
+      console.log("FormData entry:", pair[0] + ": " + pair[1]);
+    }
+
     try {
-      const formData = new FormData();
-      formData.append("title", title);
-      formData.append("content", content);
-      formData.append("boardId", parseInt(selectedBoardId)); // 숫자로 변환
-
-      if (files.length > 0) {
-        files.forEach((file) => formData.append("files", file));
-      }
-
-      await axiosInstance.put(
+      const response = await axiosInstance.put(
         `/api/community/posts/${boardId}/view/${postId}`,
-        formData
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
       );
 
-      alert("게시글이 수정되었습니다.");
-      navigate(`/community/${selectedBoardId}/list`, { state: { boardName } });
+      console.log("서버 응답:", response.data);
+      alert("게시글 수정이 완료되었습니다!");
+      navigate(`/community/${boardId}/list`);
     } catch (error) {
-      console.error("게시글 수정 실패:", error);
-      alert("게시글 수정에 실패했습니다.");
+      console.error("게시글 수정 실패:", {
+        error: error,
+        response: error.response?.data,
+        status: error.response?.status,
+      });
+      alert("게시글 수정에 실패했습니다. 다시 시도해주세요.");
     }
   };
+
+  if (error) {
+    return <div className="error-message">{error}</div>;
+  }
 
   return (
     <div id="community-container">
@@ -126,7 +209,6 @@ function CommunityModify() {
                 <option value="" disabled>
                   게시판을 선택하세요
                 </option>
-                {/* Only render options when data is available */}
                 {!loading && data.length > 0 ? (
                   data.map((board) => (
                     <option key={board.boardId} value={board.boardId}>
@@ -134,7 +216,7 @@ function CommunityModify() {
                     </option>
                   ))
                 ) : (
-                  <option>Loading...</option> // Show loading if data is still loading
+                  <option value="">로딩중...</option>
                 )}
               </select>
             </div>
@@ -152,10 +234,11 @@ function CommunityModify() {
               required
             />
           </div>
+
           {/* 파일 첨부 */}
           <div className="form-group">
             <label htmlFor="file-upload" className="file-upload-label">
-              파일 선택(최대 2개)
+              파일 선택(최대 2개, 각 5MB 이하)
             </label>
             <input
               id="file-upload"
@@ -165,11 +248,16 @@ function CommunityModify() {
               onChange={handleFileChange}
             />
             {files.length > 0 && (
-              <span className="file-selected">
-                {files.map((file) => file.name).join(", ")}
-              </span>
+              <div className="file-selected">
+                {files.map((file, index) => (
+                  <div key={index}>
+                    {file.name} ({(file.size / 1024 / 1024).toFixed(2)}MB)
+                  </div>
+                ))}
+              </div>
             )}
           </div>
+
           {/* 내용 입력 */}
           <div className="form-group">
             <label>내용</label>
@@ -190,6 +278,10 @@ function CommunityModify() {
                 ],
               }}
               formats={[
+                "header",
+                "font",
+                "list",
+                "align",
                 "bold",
                 "italic",
                 "underline",
@@ -197,22 +289,20 @@ function CommunityModify() {
                 "blockquote",
                 "code-block",
                 "link",
-                "header",
-                "list",
-                "align",
                 "indent",
                 "direction",
-                "clean",
               ]}
             />
           </div>
 
+          {/* 버튼 그룹 */}
           <div className="button-group">
             <button
               type="button"
               onClick={() => {
-                alert("취소했습니다!");
-                navigate(-1);
+                if (confirm("수정을 취소하시겠습니까?")) {
+                  navigate(-1);
+                }
               }}
             >
               취소
