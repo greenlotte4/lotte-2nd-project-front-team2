@@ -194,7 +194,7 @@ export default function CommunitySidebar({
   const renderBoardItem = (board, isFavoriteSection = false) => (
     <div
       key={board.boardId}
-      className="flex items-center px-8 py-1 cursor-pointer"
+      className="flex items-center px-8 py-1 cursor-pointer group" // group 클래스 추가
       onClick={() => handleBoardClick(board)}
     >
       <img

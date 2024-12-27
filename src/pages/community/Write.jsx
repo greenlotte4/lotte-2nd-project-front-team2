@@ -119,15 +119,13 @@ function CommunityWrite() {
     formData.append("writer", currentUser.username);
     formData.append("uid", currentUser?.id);
 
-    // 선택된 파일 추가 (파일이 없으면 빈 배열 추가)
+    // 파일이 있을 때만 추가
     if (files.length > 0) {
       files.forEach((file) => {
         formData.append("files", file);
       });
-    } else {
-      // 파일이 없으면 빈 배열로 추가
-      formData.append("files", []);
     }
+
     console.log("FormData:", formData);
 
     try {
@@ -140,17 +138,16 @@ function CommunityWrite() {
           },
         }
       );
-      alert("글 작성이 완료되었습니다!");
 
-      // boardName도 함께 전달
-      navigate(`/community/${boardId}/list`, {
-        state: { boardName },
-      });
+      alert("글 작성이 완료되었습니다!");
+      // 글 작성 후 리디렉션 또는 추가 동작
+      // 예: navigate('/some-path');
     } catch (error) {
       console.error("작성 실패:", error);
-      alert("글 작성에 실패했습니다. 다시 시도해주세요.");
+      alert("글 작성에 실패했습니다.");
     }
   };
+
   return (
     <div id="community-container">
       <CommunitySidebar currentUser={currentUser} boardId={boardId} />
